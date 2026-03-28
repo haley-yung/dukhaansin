@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "photo-portfolio",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
-      "port": 3000
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "frontend", "--no-clipboard"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

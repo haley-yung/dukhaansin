@@ -64,4 +64,30 @@ async function deleteObjects(keys) {
   await Promise.all(keys.map(key => deleteObject(key)));
 }
 
-module.exports = { getJSON, putJSON, deleteObject, listObjects, getPresignedUploadUrl, deleteObjects };
+// Auto-create meta.json for a folder that has images but no metadata
+async function getOrCreateMeta(slug) {
+  const meta = await getJSON(`${slug}/meta.json`);
+  if (meta) return meta;
+
+  // Check if folder has any image files
+  const objects = await listObjects(`${slug}/`);
+  const images = objects.filter(o =>
+    !o.Key.endsWith('/meta.json') && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(o.Key)
+  );
+  if (!images.length) return null;
+
+  // Auto-create meta.json from the folder name and existing images
+  const title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const filenames = images.map(o => o.Key.split('/').pop());
+  const newMeta = {
+    title,
+    description: '',
+    order: filenames,
+    cover: filenames[0] || null,
+    createdAt: new Date().toISOString(),
+  };
+  await putJSON(`${slug}/meta.json`, newMeta);
+  return newMeta;
+}
+
+module.exports = { getJSON, putJSON, deleteObject, listObjects, getPresignedUploadUrl, deleteObjects, getOrCreateMeta };

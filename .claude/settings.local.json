@@ -14,7 +14,10 @@
       "Bash(grep -E '/bin/npm$')",
       "Bash(node create-samples.js)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(find /Users/yungha/Desktop/webpage/albums -name thumb_*)"
+      "Bash(find /Users/yungha/Desktop/webpage/albums -name thumb_*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(find /Users/yungha/Desktop/dukhaansin -type f -name .env*)"
     ]
   }
 }

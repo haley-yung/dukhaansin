@@ -1,5 +1,5 @@
 const { isAuthenticated } = require('./_utils/auth');
-const { listObjects, getJSON, putJSON } = require('./_utils/r2');
+const { listObjects, getJSON, putJSON, getOrCreateMeta } = require('./_utils/r2');
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') return handleList(req, res);
@@ -9,15 +9,20 @@ module.exports = async (req, res) => {
 
 async function handleList(req, res) {
   const objects = await listObjects('');
-  const metaKeys = objects
-    .map(o => o.Key)
-    .filter(k => k.endsWith('/meta.json'));
+
+  // Discover all unique folder slugs (any key with a slash has a folder)
+  const slugs = new Set();
+  for (const o of objects) {
+    const parts = o.Key.split('/');
+    if (parts.length >= 2 && parts[0]) {
+      slugs.add(parts[0]);
+    }
+  }
 
   const albums = [];
-  for (const key of metaKeys) {
-    const meta = await getJSON(key);
+  for (const slug of slugs) {
+    const meta = await getOrCreateMeta(slug);
     if (meta) {
-      const slug = key.replace('/meta.json', '');
       const photoCount = objects.filter(o =>
         o.Key.startsWith(slug + '/') &&
         !o.Key.endsWith('/meta.json') &&
