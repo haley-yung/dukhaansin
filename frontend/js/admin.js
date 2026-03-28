@@ -1,6 +1,10 @@
 // Admin JS — dashboard + album management
 
-(function () {
+(async function () {
+  // Gate all admin pages behind auth
+  const authRes = await fetch('/api/me');
+  if (!authRes.ok) return redirectToLogin();
+
   const page = detectPage();
   if (page === 'dashboard') initDashboard();
   if (page === 'album') initAlbumPage();
@@ -408,6 +412,6 @@
   // ─── Helpers ───────────────────────────────────────────
 
   function redirectToLogin() {
-    // Auth disabled — no-op
+    window.location.href = '/admin/login';
   }
 })();
