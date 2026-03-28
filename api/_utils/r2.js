@@ -64,21 +64,34 @@ async function deleteObjects(keys) {
   await Promise.all(keys.map(key => deleteObject(key)));
 }
 
-// Auto-create meta.json for a folder that has images but no metadata
+// Auto-create or repair meta.json for a folder
 async function getOrCreateMeta(slug) {
   const meta = await getJSON(`${slug}/meta.json`);
-  if (meta) return meta;
 
   // Check if folder has any image files
   const objects = await listObjects(`${slug}/`);
   const images = objects.filter(o =>
     !o.Key.endsWith('/meta.json') && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(o.Key)
   );
-  if (!images.length) return null;
 
-  // Auto-create meta.json from the folder name and existing images
-  const title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // If meta exists and has order/cover, return as-is
+  if (meta && meta.order && meta.order.length && meta.cover) return meta;
+
+  // No images at all — nothing to show
+  if (!images.length) return meta || null;
+
   const filenames = images.map(o => o.Key.split('/').pop());
+
+  if (meta) {
+    // Repair existing meta: fill in missing order/cover from actual images
+    if (!meta.order || !meta.order.length) meta.order = filenames;
+    if (!meta.cover) meta.cover = filenames[0];
+    await putJSON(`${slug}/meta.json`, meta);
+    return meta;
+  }
+
+  // Create new meta.json from the folder name and existing images
+  const title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   const newMeta = {
     title,
     description: '',

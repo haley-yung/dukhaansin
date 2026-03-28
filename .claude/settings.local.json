@@ -17,7 +17,11 @@
       "Bash(find /Users/yungha/Desktop/webpage/albums -name thumb_*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(find /Users/yungha/Desktop/dukhaansin -type f -name .env*)"
+      "Bash(find /Users/yungha/Desktop/dukhaansin -type f -name .env*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:dukhaansin-nu3dhwzmr-haley-yungs-projects.vercel.app)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:dukhaansin.vercel.app)"
     ]
   }
 }
