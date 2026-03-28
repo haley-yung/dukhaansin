@@ -397,6 +397,6 @@
   // ─── Helpers ───────────────────────────────────────────
 
   function redirectToLogin() {
-    window.location.href = '/admin/login';
+    // Auth disabled — no-op
   }
 })();

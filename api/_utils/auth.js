@@ -17,11 +17,9 @@ function verifyToken(token) {
   }
 }
 
-function isAuthenticated(req) {
-  const cookie = req.headers.cookie || '';
-  const match = cookie.match(/(?:^|;\s*)token=([^\s;]+)/);
-  const token = match ? match[1] : null;
-  return token ? verifyToken(token) : null;
+function isAuthenticated(/* req */) {
+  // Auth disabled — everyone has admin access
+  return { role: 'admin' };
 }
 
 async function checkPassword(password) {
