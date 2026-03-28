@@ -290,30 +290,41 @@
     fillEl.style.width = '0%';
 
     try {
-      // Upload each file through the server proxy (avoids R2 CORS issues)
+      // 1. Request presigned URLs for all files
+      textEl.textContent = 'Preparing upload...';
+      const presignRes = await fetch(`/api/albums/${slug}/photos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          files: files.map(f => ({
+            name: f.name || 'image.jpg',
+            contentType: f.type || 'image/jpeg',
+          })),
+        }),
+      });
+
+      if (presignRes.status === 401) return redirectToLogin();
+      if (!presignRes.ok) throw new Error('Failed to get upload URLs');
+
+      const { uploads } = await presignRes.json();
+
+      // 2. Upload each file directly to R2 via presigned URL
       const filenames = [];
       for (let i = 0; i < files.length; i++) {
         textEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
         fillEl.style.width = `${((i) / files.length) * 90}%`;
 
-        const ext = (files[i].name || 'image.jpg').split('.').pop().toLowerCase();
-        const uploadRes = await fetch(`/api/albums/${slug}/upload`, {
-          method: 'POST',
+        const putRes = await fetch(uploads[i].uploadUrl, {
+          method: 'PUT',
           body: files[i],
-          headers: {
-            'Content-Type': files[i].type || 'image/jpeg',
-            'X-File-Ext': ext,
-          },
+          headers: { 'Content-Type': files[i].type || 'image/jpeg' },
         });
 
-        if (uploadRes.status === 401) return redirectToLogin();
-        if (!uploadRes.ok) throw new Error('Upload failed');
-
-        const { filename } = await uploadRes.json();
-        filenames.push(filename);
+        if (!putRes.ok) throw new Error(`Upload failed for file ${i + 1}`);
+        filenames.push(uploads[i].filename);
       }
 
-      // Finalize — update metadata
+      // 3. Finalize — update metadata
       textEl.textContent = 'Finalizing...';
       fillEl.style.width = '95%';
 

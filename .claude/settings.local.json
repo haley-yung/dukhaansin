@@ -21,7 +21,16 @@
       "Bash(git push:*)",
       "WebFetch(domain:dukhaansin-nu3dhwzmr-haley-yungs-projects.vercel.app)",
       "Bash(gh api:*)",
-      "WebFetch(domain:dukhaansin.vercel.app)"
+      "WebFetch(domain:dukhaansin.vercel.app)",
+      "Bash(ls /Users/yungha/Desktop/dukhaansin/api/albums/[slug].js)",
+      "Bash(ls /Users/yungha/Desktop/dukhaansin/api/albums/[slug]/index.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://dukhaansin.com/api/albums/leica-m9/upload)",
+      "Bash(ls /Users/yungha/Desktop/dukhaansin/*.png /Users/yungha/Desktop/dukhaansin/*.jpg /Users/yungha/Desktop/dukhaansin/*.jpeg /Users/yungha/Desktop/dukhaansin/screenshots*)",
+      "Read(//Users/yungha/Desktop/**)",
+      "Bash(find /Users/yungha/Desktop -maxdepth 2 -name *.png -o -name *.jpeg -o -name *.jpg)",
+      "Bash(find /Users/yungha -maxdepth 3 \\\\\\(-name Screenshot* -o -name screen* \\\\\\) -newer /Users/yungha/Desktop/dukhaansin/vercel.json)",
+      "Bash(ls -la \"/Users/yungha/Desktop/dukhaansin/1212O.jpg\" \"/Users/yungha/Desktop/dukhaansin/1212O \\(1\\).jpg\" \"/Users/yungha/Desktop/dukhaansin/dJAn0.jpg\")",
+      "Bash(ls /Users/yungha/Desktop/*.jpg /Users/yungha/Desktop/*.JPG /Users/yungha/Desktop/*.png)"
     ]
   }
 }
