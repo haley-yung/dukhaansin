@@ -19,6 +19,7 @@
 
   function initDashboard() {
     loadAlbums();
+    loadStorageUsage();
     initLogout();
     initCreateAlbumForm();
   }
@@ -62,6 +63,24 @@
       document.getElementById('album-list').innerHTML =
         '<p class="empty-state">Failed to load albums.</p>';
     }
+  }
+
+  async function loadStorageUsage() {
+    try {
+      const res = await fetch('/api/storage');
+      if (!res.ok) return;
+      const { totalBytes, percentage } = await res.json();
+
+      const mb = (totalBytes / (1024 * 1024)).toFixed(1);
+      const gb = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
+      const display = totalBytes >= 1024 * 1024 * 1024 ? `${gb} GB` : `${mb} MB`;
+
+      document.getElementById('stat-storage').textContent = `${percentage}%`;
+      document.getElementById('storage-bar-fill').style.width = `${Math.min(percentage, 100)}%`;
+
+      const label = document.querySelector('#stats-row .stat-card:last-child .stat-label');
+      if (label) label.textContent = `${display} / 10 GB`;
+    } catch {}
   }
 
   function initCreateAlbumForm() {

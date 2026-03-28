@@ -12,7 +12,10 @@
 <body>
   <div class="admin-topbar">
     <h1>Dashboard</h1>
-    <button class="btn btn-outline btn-small" id="logout-btn">Logout</button>
+    <div class="topbar-actions">
+      <a href="/" class="btn btn-outline btn-small">Home</a>
+      <button class="btn btn-outline btn-small" id="logout-btn">Logout</button>
+    </div>
   </div>
 
   <main class="container">
@@ -25,6 +28,13 @@
       <div class="stat-card">
         <span class="stat-number" id="stat-photos">-</span>
         <span class="stat-label">Photos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-storage">-</span>
+        <span class="stat-label">Storage (10 GB)</span>
+        <div class="storage-bar">
+          <div class="storage-bar-fill" id="storage-bar-fill"></div>
+        </div>
       </div>
     </div>
 
