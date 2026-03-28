@@ -288,39 +288,32 @@
 
     progressEl.style.display = 'block';
     fillEl.style.width = '0%';
-    textEl.textContent = 'Requesting upload URLs...';
 
     try {
-      // 1. Get presigned upload URLs
-      const urlRes = await fetch(`/api/albums/${slug}/photos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          files: files.map(f => ({ name: f.name, contentType: f.type || 'image/jpeg' })),
-        }),
-      });
-
-      if (urlRes.status === 401) return redirectToLogin();
-      if (!urlRes.ok) throw new Error('Failed to get upload URLs');
-
-      const { uploads } = await urlRes.json();
-
-      // 2. Upload each file directly to R2
+      // Upload each file through the server proxy (avoids R2 CORS issues)
       const filenames = [];
       for (let i = 0; i < files.length; i++) {
         textEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
         fillEl.style.width = `${((i) / files.length) * 90}%`;
 
-        await fetch(uploads[i].uploadUrl, {
-          method: 'PUT',
+        const ext = (files[i].name || 'image.jpg').split('.').pop().toLowerCase();
+        const uploadRes = await fetch(`/api/albums/${slug}/upload`, {
+          method: 'POST',
           body: files[i],
-          headers: { 'Content-Type': files[i].type || 'image/jpeg' },
+          headers: {
+            'Content-Type': files[i].type || 'image/jpeg',
+            'X-File-Ext': ext,
+          },
         });
 
-        filenames.push(uploads[i].filename);
+        if (uploadRes.status === 401) return redirectToLogin();
+        if (!uploadRes.ok) throw new Error('Upload failed');
+
+        const { filename } = await uploadRes.json();
+        filenames.push(filename);
       }
 
-      // 3. Finalize — update metadata
+      // Finalize — update metadata
       textEl.textContent = 'Finalizing...';
       fillEl.style.width = '95%';
 
