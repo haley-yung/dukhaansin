@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — dukhaansin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="admin-topbar">
+    <h1>Dashboard</h1>
+    <button class="btn btn-outline btn-small" id="logout-btn">Logout</button>
+  </div>
+
+  <main class="container">
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <span class="stat-number" id="stat-albums">-</span>
+        <span class="stat-label">Albums</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-photos">-</span>
+        <span class="stat-label">Photos</span>
+      </div>
+    </div>
+
+    <!-- Create Album -->
+    <div class="admin-section">
+      <h2>Create New Album</h2>
+      <form id="create-album-form">
+        <div class="form-group">
+          <label for="album-title">Title</label>
+          <input type="text" id="album-title" name="title" required placeholder="Album title">
+        </div>
+        <div class="form-group">
+          <label for="album-desc">Description</label>
+          <input type="text" id="album-desc" name="description" placeholder="Optional description">
+        </div>
+        <button type="submit" class="btn btn-primary">Create Album</button>
+      </form>
+    </div>
+
+    <!-- Album List -->
+    <div class="admin-section">
+      <h2>Albums</h2>
+      <div id="album-list">
+        <p class="loading-text">Loading...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

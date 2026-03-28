@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(echo $PATH)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/**)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(source ~/.zshrc)",
+      "Bash(mdfind -name node)",
+      "Bash(grep -E '/bin/node$')",
+      "Bash(mdfind -name npm)",
+      "Bash(grep -E '/bin/npm$')",
+      "Bash(node create-samples.js)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(find /Users/yungha/Desktop/webpage/albums -name thumb_*)"
+    ]
+  }
+}
