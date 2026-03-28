@@ -17,9 +17,11 @@ function verifyToken(token) {
   }
 }
 
-function isAuthenticated(/* req */) {
-  // Auth disabled — everyone has admin access
-  return { role: 'admin' };
+function isAuthenticated(req) {
+  const cookie = req.headers.cookie || '';
+  const match = cookie.match(/(?:^|;\s*)token=([^\s;]+)/);
+  if (!match) return null;
+  return verifyToken(match[1]);
 }
 
 async function checkPassword(password) {
