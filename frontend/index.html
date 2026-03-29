@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8">
+  <link rel="stylesheet" href="/css/style.css?v=12">
 </head>
 <body>
   <nav class="nav">
@@ -51,7 +51,7 @@
           <a href="/album/${album.slug}" class="album-card">
             <div class="album-card-img">
               ${album.coverUrl
-                ? `<img src="${album.coverUrl}" alt="${album.title}" loading="lazy">`
+                ? `<img src="${album.coverUrl}" alt="${album.title}" loading="lazy" decoding="async">`
                 : '<div class="album-card-placeholder"></div>'}
             </div>
             <div class="album-card-info">

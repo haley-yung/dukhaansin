@@ -127,9 +127,8 @@
 
   // ── Album Management ──────────────────────────────────
 
-  const ROW_H = 2;
-  const GAP = 12;
   const SUB_COLS = 18;
+  const MARGIN = 6;
   const VALID_SPANS = [0.5, 0.67, 1, 1.33, 1.5, 2, 3];
   let currentGridSpans = {};
 
@@ -214,10 +213,11 @@
     const doApply = () => {
       const span = parseFloat(item.dataset.span) || 1;
       const subcols = spanToSubcols(span);
-      const colW = (grid.clientWidth - GAP * (SUB_COLS - 1)) / SUB_COLS * subcols + GAP * (subcols - 1);
-      const desiredH = img.naturalHeight / img.naturalWidth * colW;
-      const rows = Math.ceil((desiredH + GAP) / (ROW_H + GAP));
-      item.style.gridRowEnd = `span ${Math.max(2, rows)}`;
+      const cellW = grid.clientWidth / SUB_COLS * subcols;
+      const visibleW = cellW - MARGIN * 2;
+      const desiredH = img.naturalHeight / img.naturalWidth * visibleW;
+      const totalH = Math.ceil(desiredH + MARGIN * 2);
+      item.style.gridRowEnd = `span ${Math.max(2, totalH)}`;
     };
     if (img.complete && img.naturalWidth) doApply();
     else img.addEventListener('load', doApply);
@@ -229,7 +229,7 @@
 
     // Remove old subcol classes, add new one
     item.className = item.className.replace(/\bsubcol-\d+\b/g, '').trim();
-    if (subcols !== 4) item.classList.add(`subcol-${subcols}`);
+    if (subcols !== 6) item.classList.add(`subcol-${subcols}`);
 
     // Update label
     const label = item.querySelector('.span-label');
@@ -264,16 +264,17 @@
       return;
     }
 
-    grid.innerHTML = photos.map(p => {
+    grid.innerHTML = photos.map((p, i) => {
       const span = currentGridSpans[p.filename] || 1;
       const subcols = spanToSubcols(span);
-      const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
+      const cls = subcols !== 6 ? ` subcol-${subcols}` : '';
       const atMin = span <= VALID_SPANS[0];
       const atMax = span >= VALID_SPANS[VALID_SPANS.length - 1];
+      const loadAttr = i < 6 ? 'eager' : 'lazy';
 
       return `
       <div class="preview-item${cls}" draggable="true" data-filename="${p.filename}" data-span="${span}">
-        <img src="${p.src}" alt="${p.filename}" loading="lazy">
+        <img src="${p.src}" alt="${p.filename}" loading="${loadAttr}" decoding="async">
         <div class="preview-actions">
           <button class="preview-action-btn set-cover-btn ${p.isCover ? 'active' : ''}"
                   data-filename="${p.filename}" title="Set as cover">
@@ -341,40 +342,28 @@
       document.addEventListener('mouseup', onResizeEnd);
     });
 
+    function snapToNearestSpan(rawSpan) {
+      let best = VALID_SPANS[0], bestDist = Math.abs(rawSpan - best);
+      for (const vs of VALID_SPANS) {
+        const dist = Math.abs(rawSpan - vs);
+        if (dist < bestDist) { bestDist = dist; best = vs; }
+      }
+      return best;
+    }
+
     function onResizeMove(e) {
       if (!resizingItem) return;
-      const subcolWidth = (grid.clientWidth - GAP * (SUB_COLS - 1)) / SUB_COLS;
+      const subcolWidth = grid.clientWidth / SUB_COLS;
       const dx = e.clientX - startX;
       const subcolsDelta = Math.round(dx / subcolWidth);
       const startSubcols = spanToSubcols(startSpan);
       const rawSubcols = Math.max(1, Math.min(SUB_COLS, startSubcols + subcolsDelta));
-
-      // Snap to nearest valid span
-      const rawSpan = subcolsToSpan(rawSubcols);
-      let bestSpan = VALID_SPANS[0];
-      let bestDist = Math.abs(rawSpan - bestSpan);
-      for (const vs of VALID_SPANS) {
-        const dist = Math.abs(rawSpan - vs);
-        if (dist < bestDist) { bestDist = dist; bestSpan = vs; }
-      }
+      const bestSpan = snapToNearestSpan(subcolsToSpan(rawSubcols));
 
       const currentSpan = parseFloat(resizingItem.dataset.span) || 1;
       if (bestSpan !== currentSpan) {
-        const subcols = spanToSubcols(bestSpan);
-        resizingItem.dataset.span = bestSpan;
-        resizingItem.className = resizingItem.className.replace(/\bsubcol-\d+\b/g, '').trim();
-        if (subcols !== 4) resizingItem.classList.add(`subcol-${subcols}`);
+        updateItemSpan(resizingItem, bestSpan, grid, slug);
         resizingItem.classList.add('resizing');
-
-        const label = resizingItem.querySelector('.span-label');
-        if (label) label.textContent = getSpanLabel(bestSpan);
-
-        const minusBtn = resizingItem.querySelector('.size-minus');
-        const plusBtn = resizingItem.querySelector('.size-plus');
-        if (minusBtn) minusBtn.disabled = (bestSpan <= VALID_SPANS[0]);
-        if (plusBtn) plusBtn.disabled = (bestSpan >= VALID_SPANS[VALID_SPANS.length - 1]);
-
-        applyRowSpan(resizingItem, grid);
       }
     }
 
@@ -382,24 +371,9 @@
       if (!resizingItem) return;
       document.removeEventListener('mousemove', onResizeMove);
       document.removeEventListener('mouseup', onResizeEnd);
-
       resizingItem.classList.remove('resizing');
       resizingItem.setAttribute('draggable', 'true');
-
-      const filename = resizingItem.dataset.filename;
-      const newSpan = parseFloat(resizingItem.dataset.span) || 1;
-
-      if (newSpan === 1) delete currentGridSpans[filename];
-      else currentGridSpans[filename] = newSpan;
-
       resizingItem = null;
-
-      const newOrder = [...grid.querySelectorAll('.preview-item')].map(el => el.dataset.filename);
-      fetch(`/api/albums/${slug}/reorder`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: newOrder, gridSpans: currentGridSpans }),
-      }).catch(() => alert('Failed to save size'));
     }
   }
 

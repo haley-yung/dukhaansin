@@ -19,8 +19,6 @@ module.exports = async (req, res) => {
   if (gridSpans && typeof gridSpans === 'object') {
     meta.gridSpans = gridSpans;
   }
-  // Clean up legacy field
-  delete meta.gridSizes;
   await putJSON(`${slug}/meta.json`, meta);
   return res.json({ ok: true });
 };

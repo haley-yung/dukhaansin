@@ -2,9 +2,8 @@
   const slug = window.location.pathname.split('/album/')[1];
   if (!slug) return;
 
-  const ROW_H = 2;
-  const GAP = 12;
   const SUB_COLS = 18;
+  const MARGIN = 6; // px on each side of grid items
 
   const SPAN_MAP = { 0.5: 3, 0.67: 4, 1: 6, 1.33: 8, 1.5: 9, 2: 12, 3: 18 };
   function spanToSubcols(span) {
@@ -34,8 +33,11 @@
     grid.innerHTML = photos.map((p, i) => {
       const span = gridSpans[p.filename] || 1;
       const subcols = spanToSubcols(span);
-      const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
-      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`;
+      const cls = subcols !== 6 ? ` subcol-${subcols}` : '';
+      const eager = i < 6;
+      const loadAttr = eager ? 'eager' : 'lazy';
+      const priority = eager ? ' fetchpriority="high"' : '';
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="${loadAttr}" decoding="async"${priority}></div>`;
     }).join('');
 
     grid.querySelectorAll('.grid-item').forEach(item => {
@@ -43,10 +45,11 @@
       const setRows = () => {
         const span = parseFloat(item.dataset.span) || 1;
         const subcols = spanToSubcols(span);
-        const colW = (grid.clientWidth - GAP * (SUB_COLS - 1)) / SUB_COLS * subcols + GAP * (subcols - 1);
-        const desiredH = img.naturalHeight / img.naturalWidth * colW;
-        const rows = Math.ceil((desiredH + GAP) / (ROW_H + GAP));
-        item.style.gridRowEnd = `span ${Math.max(2, rows)}`;
+        const cellW = grid.clientWidth / SUB_COLS * subcols;
+        const visibleW = cellW - MARGIN * 2;
+        const desiredH = img.naturalHeight / img.naturalWidth * visibleW;
+        const totalH = Math.ceil(desiredH + MARGIN * 2);
+        item.style.gridRowEnd = `span ${Math.max(2, totalH)}`;
       };
       if (img.complete && img.naturalWidth) setRows();
       else img.addEventListener('load', setRows);
