@@ -59,12 +59,12 @@ img { display: block; max-width: 100%; }
 .album-description { color: var(--text-muted); margin-top: 8px; max-width: 600px; }
 
 /* — Masonry (CSS Grid) — */
-.masonry { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 8px; gap: 12px; padding-bottom: 80px; }
-.masonry-item { border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; }
-.masonry-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease, opacity .4s ease; }
+.masonry { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 4px; gap: 0 12px; padding-bottom: 80px; }
+.masonry-item { border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; margin-bottom: 12px; }
+.masonry-item img { width: 100%; display: block; transition: transform .4s ease, opacity .4s ease; }
 .masonry-item:hover img { transform: scale(1.02); opacity: .93; }
-.masonry-item.portrait img { width: 80%; margin: 0 auto; object-fit: contain; height: auto; }
-.masonry-item.landscape img { height: 100%; }
+.masonry-item.portrait { padding: 0 10%; }
+.masonry-item.portrait img { border-radius: var(--radius); }
 
 /* — Lightbox — */
 .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity .3s ease; }
