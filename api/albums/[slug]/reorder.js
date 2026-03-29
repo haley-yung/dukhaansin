@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const { slug } = req.query;
-  const { order } = req.body || {};
+  const { order, gridSpans } = req.body || {};
 
   if (!order || !Array.isArray(order)) {
     return res.status(400).json({ error: 'order array required' });
@@ -16,6 +16,11 @@ module.exports = async (req, res) => {
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
   meta.order = order;
+  if (gridSpans && typeof gridSpans === 'object') {
+    meta.gridSpans = gridSpans;
+  }
+  // Clean up legacy field
+  delete meta.gridSizes;
   await putJSON(`${slug}/meta.json`, meta);
   return res.json({ ok: true });
 };

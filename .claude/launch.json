@@ -4,9 +4,8 @@
     {
       "name": "photo-portfolio",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "frontend", "--no-clipboard"],
-      "port": 3000,
-      "autoPort": true
+      "runtimeArgs": ["vercel", "dev", "--yes", "--listen", "3456"],
+      "port": 3456
     }
   ]
 }

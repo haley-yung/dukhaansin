@@ -2,12 +2,20 @@
   const slug = window.location.pathname.split('/album/')[1];
   if (!slug) return;
 
-  const grid = document.getElementById('masonry-grid');
+  const ROW_H = 2;
+  const GAP = 12;
+  const SUB_COLS = 18;
+
+  const SPAN_MAP = { 0.5: 3, 0.67: 4, 1: 6, 1.33: 8, 1.5: 9, 2: 12, 3: 18 };
+  function spanToSubcols(span) {
+    return SPAN_MAP[span] || Math.round(span * 6);
+  }
+
+  const grid = document.getElementById('grid-gallery');
   const titleEl = document.getElementById('album-title');
   const descEl = document.getElementById('album-description');
   const encodedSlug = encodeURIComponent(slug);
 
-  // Fetch album metadata and photos in parallel
   Promise.all([
     fetch(`/api/albums/${encodedSlug}`).then(r => r.json()),
     fetch(`/api/albums/${encodedSlug}/photos`).then(r => r.json()),
@@ -16,14 +24,33 @@
     titleEl.textContent = album.title;
     descEl.textContent = album.description || '';
 
+    const gridSpans = album.gridSpans || {};
+
     if (!photos.length) {
       grid.innerHTML = '<p class="empty-state">No photos in this album yet.</p>';
       return;
     }
 
-    grid.innerHTML = photos.map((p, i) =>
-      `<div class="masonry-item" data-index="${i}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`
-    ).join('');
+    grid.innerHTML = photos.map((p, i) => {
+      const span = gridSpans[p.filename] || 1;
+      const subcols = spanToSubcols(span);
+      const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`;
+    }).join('');
+
+    grid.querySelectorAll('.grid-item').forEach(item => {
+      const img = item.querySelector('img');
+      const setRows = () => {
+        const span = parseFloat(item.dataset.span) || 1;
+        const subcols = spanToSubcols(span);
+        const colW = (grid.clientWidth - GAP * (SUB_COLS - 1)) / SUB_COLS * subcols + GAP * (subcols - 1);
+        const desiredH = img.naturalHeight / img.naturalWidth * colW;
+        const rows = Math.ceil((desiredH + GAP) / (ROW_H + GAP));
+        item.style.gridRowEnd = `span ${Math.max(2, rows)}`;
+      };
+      if (img.complete && img.naturalWidth) setRows();
+      else img.addEventListener('load', setRows);
+    });
 
     initLightbox(photos);
   }).catch(() => {
@@ -44,17 +71,15 @@
       lightbox.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
-
     function hide() {
       lightbox.classList.remove('active');
       document.body.style.overflow = '';
     }
-
     function prev() { show(current > 0 ? current - 1 : photos.length - 1); }
     function next() { show(current < photos.length - 1 ? current + 1 : 0); }
 
     grid.addEventListener('click', e => {
-      const item = e.target.closest('.masonry-item');
+      const item = e.target.closest('.grid-item');
       if (item) show(parseInt(item.dataset.index, 10));
     });
 
