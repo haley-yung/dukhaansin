@@ -25,15 +25,28 @@
       `<div class="masonry-item" data-index="${i}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`
     ).join('');
 
-    // Detect orientation and add classes once images load
+    // Calculate row spans based on image aspect ratio
     grid.querySelectorAll('.masonry-item img').forEach(img => {
       img.addEventListener('load', () => {
         const item = img.closest('.masonry-item');
-        if (img.naturalWidth > img.naturalHeight) {
+        const isLandscape = img.naturalWidth > img.naturalHeight;
+        const ratio = img.naturalHeight / img.naturalWidth;
+        const colWidth = grid.offsetWidth / 3;
+        const rowHeight = 8; // matches grid-auto-rows
+        const gap = 12; // matches grid gap
+
+        // Base span from natural aspect ratio
+        let baseSpan = Math.ceil((colWidth * ratio + gap) / (rowHeight + gap));
+
+        if (isLandscape) {
           item.classList.add('landscape');
+          baseSpan = Math.ceil(baseSpan * 1.2); // 20% larger
         } else {
           item.classList.add('portrait');
+          baseSpan = Math.ceil(baseSpan * 0.8); // 20% smaller
         }
+
+        item.style.gridRowEnd = `span ${baseSpan}`;
       });
     });
 
