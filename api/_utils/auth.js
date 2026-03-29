@@ -3,25 +3,16 @@ const bcrypt = require('bcryptjs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'Hysh1324@', 10);
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'change-me', 10);
 
 function createToken() {
   return jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
 }
 
-function verifyToken(token) {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
-  }
-}
-
 function isAuthenticated(req) {
-  const cookie = req.headers.cookie || '';
-  const match = cookie.match(/(?:^|;\s*)token=([^\s;]+)/);
+  const match = (req.headers.cookie || '').match(/(?:^|;\s*)token=([^\s;]+)/);
   if (!match) return null;
-  return verifyToken(match[1]);
+  try { return jwt.verify(match[1], JWT_SECRET); } catch { return null; }
 }
 
 async function checkPassword(password) {

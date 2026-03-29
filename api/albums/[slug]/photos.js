@@ -1,27 +1,24 @@
 const { isAuthenticated } = require('../../_utils/auth');
-const { getJSON, listObjects, getPresignedUploadUrl, getOrCreateMeta } = require('../../_utils/r2');
+const { listObjects, filterImages, getPresignedUploadUrl, getOrCreateMeta, getNextImageNumber } = require('../../_utils/r2');
 
 module.exports = async (req, res) => {
   const { slug } = req.query;
-
   if (req.method === 'GET') return handleGet(req, res, slug);
   if (req.method === 'POST') return handleUploadUrls(req, res, slug);
   return res.status(405).json({ error: 'Method not allowed' });
 };
 
 async function handleGet(req, res, slug) {
-  const meta = await getOrCreateMeta(slug);
+  const objects = await listObjects(`${slug}/`);
+  const meta = await getOrCreateMeta(slug, objects);
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
-  const objects = await listObjects(`${slug}/`);
-  const photos = objects
-    .filter(o => !o.Key.endsWith('/meta.json') && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(o.Key))
-    .map(o => {
-      const filename = o.Key.split('/').pop();
-      return { filename, key: o.Key };
-    });
+  const photos = filterImages(objects).map(o => {
+    const filename = o.Key.split('/').pop();
+    return { filename, key: o.Key };
+  });
 
-  if (meta.order && meta.order.length) {
+  if (meta.order?.length) {
     photos.sort((a, b) => {
       const ia = meta.order.indexOf(a.filename);
       const ib = meta.order.indexOf(b.filename);
@@ -40,28 +37,21 @@ async function handleGet(req, res, slug) {
   })));
 }
 
-// Returns presigned upload URLs for direct-to-R2 upload
 async function handleUploadUrls(req, res, slug) {
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-  const meta = await getOrCreateMeta(slug);
+  const objects = await listObjects(`${slug}/`);
+  const meta = await getOrCreateMeta(slug, objects);
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
   const { files } = req.body || {};
   if (!files || !Array.isArray(files) || !files.length) {
-    return res.status(400).json({ error: 'files array required (each with name and contentType)' });
+    return res.status(400).json({ error: 'files array required' });
   }
 
-  // Find highest existing image number
-  const objects = await listObjects(`${slug}/`);
-  const existingNums = objects
-    .map(o => o.Key.split('/').pop())
-    .filter(f => /^img_\d+\.\w+$/.test(f))
-    .map(f => parseInt(f.match(/^img_(\d+)/)[1], 10));
-
-  let nextNum = existingNums.length ? Math.max(...existingNums) + 1 : 1;
-
+  let nextNum = getNextImageNumber(objects);
   const uploads = [];
+
   for (const file of files) {
     const ext = (file.name || 'image.jpg').split('.').pop().toLowerCase();
     const filename = `img_${String(nextNum).padStart(3, '0')}.${ext}`;

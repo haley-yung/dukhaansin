@@ -1,5 +1,5 @@
 const { isAuthenticated } = require('./_utils/auth');
-const { listObjects, getJSON, putJSON, getOrCreateMeta } = require('./_utils/r2');
+const { listObjects, filterImages, getJSON, putJSON, getOrCreateMeta } = require('./_utils/r2');
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') return handleList(req, res);
@@ -8,30 +8,27 @@ module.exports = async (req, res) => {
 };
 
 async function handleList(req, res) {
-  const objects = await listObjects('');
+  const allObjects = await listObjects('');
 
-  // Discover all unique folder slugs (any key with a slash has a folder)
-  const slugs = new Set();
-  for (const o of objects) {
-    const parts = o.Key.split('/');
-    if (parts.length >= 2 && parts[0]) {
-      slugs.add(parts[0]);
-    }
+  // Discover unique album slugs from folder prefixes
+  const slugSet = new Set();
+  for (const o of allObjects) {
+    const slash = o.Key.indexOf('/');
+    if (slash > 0) slugSet.add(o.Key.slice(0, slash));
   }
 
+  const r2Url = process.env.R2_PUBLIC_URL;
   const albums = [];
-  for (const slug of slugs) {
-    const meta = await getOrCreateMeta(slug);
-    if (meta) {
-      const photoCount = objects.filter(o =>
-        o.Key.startsWith(slug + '/') &&
-        !o.Key.endsWith('/meta.json') &&
-        /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(o.Key)
-      ).length;
-      const r2Url = process.env.R2_PUBLIC_URL;
-      const coverUrl = meta.cover ? `${r2Url}/${slug}/${meta.cover}` : null;
-      albums.push({ slug, ...meta, photoCount, coverUrl });
-    }
+
+  for (const slug of slugSet) {
+    const prefix = slug + '/';
+    const slugObjects = allObjects.filter(o => o.Key.startsWith(prefix));
+    const meta = await getOrCreateMeta(slug, slugObjects);
+    if (!meta) continue;
+
+    const photoCount = filterImages(slugObjects).length;
+    const coverUrl = meta.cover ? `${r2Url}/${slug}/${meta.cover}` : null;
+    albums.push({ slug, ...meta, photoCount, coverUrl });
   }
 
   albums.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -45,18 +42,10 @@ async function handleCreate(req, res) {
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
   const existing = await getJSON(`${slug}/meta.json`);
   if (existing) return res.status(409).json({ error: 'Album already exists' });
 
-  const meta = {
-    title,
-    description: description || '',
-    order: [],
-    cover: null,
-    createdAt: new Date().toISOString(),
-  };
-
+  const meta = { title, description: description || '', order: [], cover: null, createdAt: new Date().toISOString() };
   await putJSON(`${slug}/meta.json`, meta);
   return res.status(201).json({ slug, ...meta });
 }

@@ -1,9 +1,8 @@
 const { isAuthenticated } = require('../../_utils/auth');
-const { getJSON, putJSON, listObjects, deleteObjects, getOrCreateMeta } = require('../../_utils/r2');
+const { getJSON, putJSON, listObjects, filterImages, deleteObjects, getOrCreateMeta } = require('../../_utils/r2');
 
 module.exports = async (req, res) => {
   const { slug } = req.query;
-
   if (req.method === 'GET') return handleGet(req, res, slug);
   if (req.method === 'PUT') return handleUpdate(req, res, slug);
   if (req.method === 'DELETE') return handleDelete(req, res, slug);
@@ -11,16 +10,12 @@ module.exports = async (req, res) => {
 };
 
 async function handleGet(req, res, slug) {
-  const meta = await getOrCreateMeta(slug);
+  const objects = await listObjects(`${slug}/`);
+  const meta = await getOrCreateMeta(slug, objects);
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
-  const objects = await listObjects(`${slug}/`);
-  const photos = objects
-    .map(o => o.Key)
-    .filter(k => !k.endsWith('/meta.json') && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(k))
-    .map(k => k.split('/').pop());
-
-  if (meta.order && meta.order.length) {
+  const photos = filterImages(objects).map(o => o.Key.split('/').pop());
+  if (meta.order?.length) {
     photos.sort((a, b) => {
       const ia = meta.order.indexOf(a);
       const ib = meta.order.indexOf(b);

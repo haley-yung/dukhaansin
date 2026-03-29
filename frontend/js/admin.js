@@ -1,7 +1,4 @@
-// Admin JS — dashboard + album management
-
 (async function () {
-  // Gate all admin pages behind auth
   const authRes = await fetch('/api/me');
   if (!authRes.ok) return redirectToLogin();
 
@@ -15,7 +12,7 @@
     return null;
   }
 
-  // ─── Dashboard ──────────────────────────────────────────
+  // ── Dashboard ─────────────────────────────────────────
 
   function initDashboard() {
     loadAlbums();
@@ -31,8 +28,7 @@
       const albums = await res.json();
 
       document.getElementById('stat-albums').textContent = albums.length;
-      document.getElementById('stat-photos').textContent =
-        albums.reduce((sum, a) => sum + a.photoCount, 0);
+      document.getElementById('stat-photos').textContent = albums.reduce((s, a) => s + a.photoCount, 0);
 
       const list = document.getElementById('album-list');
       if (!albums.length) {
@@ -40,28 +36,25 @@
         return;
       }
 
-      list.innerHTML = albums.map(album => `
-        <div class="album-row" data-slug="${album.slug}">
+      list.innerHTML = albums.map(a => `
+        <div class="album-row" data-slug="${a.slug}">
           <div class="album-row-thumb">
-            ${album.coverUrl
-              ? `<img src="${album.coverUrl}" alt="${album.title}">`
-              : '<div class="album-card-placeholder"></div>'}
+            ${a.coverUrl ? `<img src="${a.coverUrl}" alt="${a.title}">` : '<div class="album-card-placeholder"></div>'}
           </div>
           <div class="album-row-info">
-            <strong>${album.title}</strong>
-            <span>${album.photoCount} photo${album.photoCount !== 1 ? 's' : ''}</span>
+            <strong>${a.title}</strong>
+            <span>${a.photoCount} photo${a.photoCount !== 1 ? 's' : ''}</span>
           </div>
           <div class="album-row-actions">
-            <a href="/admin/album/${album.slug}" class="btn btn-outline btn-small">Manage</a>
-            <button class="btn btn-danger btn-small delete-album-btn" data-slug="${album.slug}" data-title="${album.title}">Delete</button>
+            <a href="/admin/album/${a.slug}" class="btn btn-outline btn-small">Manage</a>
+            <button class="btn btn-danger btn-small delete-album-btn" data-slug="${a.slug}" data-title="${a.title}">Delete</button>
           </div>
         </div>
       `).join('');
 
       initDeleteAlbumButtons();
     } catch {
-      document.getElementById('album-list').innerHTML =
-        '<p class="empty-state">Failed to load albums.</p>';
+      document.getElementById('album-list').innerHTML = '<p class="empty-state">Failed to load albums.</p>';
     }
   }
 
@@ -86,7 +79,7 @@
   function initCreateAlbumForm() {
     const form = document.getElementById('create-album-form');
     if (!form) return;
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const title = document.getElementById('album-title').value.trim();
       const description = document.getElementById('album-desc').value.trim();
@@ -105,30 +98,20 @@
           return;
         }
         window.location.reload();
-      } catch {
-        alert('Network error');
-      }
+      } catch { alert('Network error'); }
     });
   }
 
   function initDeleteAlbumButtons() {
     document.querySelectorAll('.delete-album-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const slug = btn.dataset.slug;
-        const title = btn.dataset.title;
-        if (!confirm(`Delete album "${title}"? This cannot be undone.`)) return;
-
+        if (!confirm(`Delete album "${btn.dataset.title}"? This cannot be undone.`)) return;
         try {
-          const res = await fetch(`/api/albums/${slug}`, { method: 'DELETE' });
+          const res = await fetch(`/api/albums/${btn.dataset.slug}`, { method: 'DELETE' });
           if (res.status === 401) return redirectToLogin();
-          if (res.ok) {
-            btn.closest('.album-row').remove();
-          } else {
-            alert('Failed to delete album');
-          }
-        } catch {
-          alert('Network error');
-        }
+          if (res.ok) btn.closest('.album-row').remove();
+          else alert('Failed to delete album');
+        } catch { alert('Network error'); }
       });
     });
   }
@@ -142,7 +125,7 @@
     });
   }
 
-  // ─── Album Management ──────────────────────────────────
+  // ── Album Management ──────────────────────────────────
 
   function initAlbumPage() {
     const slug = window.location.pathname.split('/admin/album/')[1];
@@ -156,23 +139,22 @@
 
   async function loadAlbumData(slug) {
     try {
-      const res = await fetch(`/api/albums/${slug}`);
-      if (res.status === 401) return redirectToLogin();
-      const album = await res.json();
+      const [albumRes, photosRes] = await Promise.all([
+        fetch(`/api/albums/${slug}`),
+        fetch(`/api/albums/${slug}/photos`),
+      ]);
+      if (albumRes.status === 401) return redirectToLogin();
+
+      const album = await albumRes.json();
+      const photos = await photosRes.json();
 
       document.getElementById('page-title').textContent = album.title;
       document.getElementById('edit-title').value = album.title;
       document.getElementById('edit-desc').value = album.description || '';
-
-      // Load photos
-      const photosRes = await fetch(`/api/albums/${slug}/photos`);
-      const photos = await photosRes.json();
-
       document.getElementById('photo-count').textContent = `(${photos.length})`;
       renderPreviewGrid(photos, slug);
     } catch {
-      document.getElementById('preview-grid').innerHTML =
-        '<p class="empty-state">Failed to load album.</p>';
+      document.getElementById('preview-grid').innerHTML = '<p class="empty-state">Failed to load album.</p>';
     }
   }
 
@@ -183,18 +165,16 @@
       return;
     }
 
-    grid.innerHTML = photos.map(photo => `
-      <div class="masonry-item preview-item" draggable="true" data-filename="${photo.filename}">
-        <img src="${photo.src}" alt="${photo.filename}" loading="lazy">
+    grid.innerHTML = photos.map(p => `
+      <div class="masonry-item preview-item" draggable="true" data-filename="${p.filename}">
+        <img src="${p.src}" alt="${p.filename}" loading="lazy">
         <div class="preview-actions">
-          <button class="preview-action-btn set-cover-btn ${photo.isCover ? 'active' : ''}"
-                  data-filename="${photo.filename}" title="Set as cover">
-            ${photo.isCover ? '&#9733;' : '&#9734;'}
+          <button class="preview-action-btn set-cover-btn ${p.isCover ? 'active' : ''}"
+                  data-filename="${p.filename}" title="Set as cover">
+            ${p.isCover ? '&#9733;' : '&#9734;'}
           </button>
           <button class="preview-action-btn delete-photo-btn"
-                  data-filename="${photo.filename}" title="Delete photo">
-            &#10005;
-          </button>
+                  data-filename="${p.filename}" title="Delete photo">&#10005;</button>
         </div>
         <div class="drag-hint">Drag to reorder</div>
       </div>
@@ -205,15 +185,13 @@
   }
 
   function initPreviewActions(slug) {
-    // Set cover
     document.querySelectorAll('.set-cover-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const filename = btn.dataset.filename;
         try {
           const res = await fetch(`/api/albums/${slug}/cover`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cover: filename }),
+            body: JSON.stringify({ cover: btn.dataset.filename }),
           });
           if (res.status === 401) return redirectToLogin();
           if (res.ok) {
@@ -224,21 +202,15 @@
             btn.classList.add('active');
             btn.innerHTML = '&#9733;';
           }
-        } catch {
-          alert('Failed to set cover');
-        }
+        } catch { alert('Failed to set cover'); }
       });
     });
 
-    // Delete photo
     document.querySelectorAll('.delete-photo-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this photo?')) return;
-        const filename = btn.dataset.filename;
         try {
-          const res = await fetch(`/api/albums/${slug}/photos/${filename}`, {
-            method: 'DELETE',
-          });
+          const res = await fetch(`/api/albums/${slug}/photos/${btn.dataset.filename}`, { method: 'DELETE' });
           if (res.status === 401) return redirectToLogin();
           if (res.ok) {
             btn.closest('.preview-item').remove();
@@ -246,9 +218,7 @@
             const current = parseInt(countEl.textContent.replace(/\D/g, ''), 10) || 0;
             countEl.textContent = `(${current - 1})`;
           }
-        } catch {
-          alert('Failed to delete photo');
-        }
+        } catch { alert('Failed to delete photo'); }
       });
     });
   }
@@ -256,11 +226,10 @@
   function initSettingsForm(slug) {
     const form = document.getElementById('settings-form');
     if (!form) return;
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const title = document.getElementById('edit-title').value.trim();
       const description = document.getElementById('edit-desc').value.trim();
-
       try {
         const res = await fetch(`/api/albums/${slug}`, {
           method: 'PUT',
@@ -272,13 +241,11 @@
           document.getElementById('page-title').textContent = title;
           alert('Settings saved');
         }
-      } catch {
-        alert('Failed to save settings');
-      }
+      } catch { alert('Failed to save settings'); }
     });
   }
 
-  // ─── Upload (presigned URLs → direct to R2) ────────────
+  // ── Upload (presigned URLs → direct to R2) ───────────
 
   function initUploadZone(slug) {
     const zone = document.getElementById('upload-zone');
@@ -286,18 +253,13 @@
     if (!zone || !fileInput) return;
 
     zone.addEventListener('click', () => fileInput.click());
-
-    zone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      zone.classList.add('dragover');
-    });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-    zone.addEventListener('drop', (e) => {
+    zone.addEventListener('drop', e => {
       e.preventDefault();
       zone.classList.remove('dragover');
       if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, slug);
     });
-
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length) uploadFiles(fileInput.files, slug);
     });
@@ -313,41 +275,33 @@
     fillEl.style.width = '0%';
 
     try {
-      // 1. Request presigned URLs for all files
       textEl.textContent = 'Preparing upload...';
       const presignRes = await fetch(`/api/albums/${slug}/photos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          files: files.map(f => ({
-            name: f.name || 'image.jpg',
-            contentType: f.type || 'image/jpeg',
-          })),
+          files: files.map(f => ({ name: f.name || 'image.jpg', contentType: f.type || 'image/jpeg' })),
         }),
       });
-
       if (presignRes.status === 401) return redirectToLogin();
       if (!presignRes.ok) throw new Error('Failed to get upload URLs');
 
       const { uploads } = await presignRes.json();
-
-      // 2. Upload each file directly to R2 via presigned URL
       const filenames = [];
+
       for (let i = 0; i < files.length; i++) {
         textEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
-        fillEl.style.width = `${((i) / files.length) * 90}%`;
+        fillEl.style.width = `${(i / files.length) * 90}%`;
 
         const putRes = await fetch(uploads[i].uploadUrl, {
           method: 'PUT',
           body: files[i],
           headers: { 'Content-Type': files[i].type || 'image/jpeg' },
         });
-
         if (!putRes.ok) throw new Error(`Upload failed for file ${i + 1}`);
         filenames.push(uploads[i].filename);
       }
 
-      // 3. Finalize — update metadata
       textEl.textContent = 'Finalizing...';
       fillEl.style.width = '95%';
 
@@ -365,60 +319,50 @@
     }
   }
 
-  // ─── Drag Reorder ──────────────────────────────────────
+  // ── Drag Reorder ──────────────────────────────────────
 
   function initDragReorder(grid, slug) {
     let dragItem = null;
 
-    grid.addEventListener('dragstart', (e) => {
+    grid.addEventListener('dragstart', e => {
       dragItem = e.target.closest('.preview-item');
-      if (!dragItem) return;
-      dragItem.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-
-    grid.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      const target = e.target.closest('.preview-item');
-      if (target && target !== dragItem) {
-        target.classList.add('drag-over');
+      if (dragItem) {
+        dragItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
       }
     });
 
-    grid.addEventListener('dragleave', (e) => {
+    grid.addEventListener('dragover', e => {
+      e.preventDefault();
+      const target = e.target.closest('.preview-item');
+      if (target && target !== dragItem) target.classList.add('drag-over');
+    });
+
+    grid.addEventListener('dragleave', e => {
       const target = e.target.closest('.preview-item');
       if (target) target.classList.remove('drag-over');
     });
 
-    grid.addEventListener('drop', async (e) => {
+    grid.addEventListener('drop', async e => {
       e.preventDefault();
       const target = e.target.closest('.preview-item');
       if (!target || target === dragItem) return;
       target.classList.remove('drag-over');
 
-      // Reorder in DOM
       const items = [...grid.querySelectorAll('.preview-item')];
-      const fromIndex = items.indexOf(dragItem);
-      const toIndex = items.indexOf(target);
-      if (fromIndex < toIndex) {
-        target.after(dragItem);
-      } else {
-        target.before(dragItem);
-      }
+      const fromIdx = items.indexOf(dragItem);
+      const toIdx = items.indexOf(target);
+      if (fromIdx < toIdx) target.after(dragItem);
+      else target.before(dragItem);
 
-      // Save new order
-      const newOrder = [...grid.querySelectorAll('.preview-item')]
-        .map(el => el.dataset.filename);
-
+      const newOrder = [...grid.querySelectorAll('.preview-item')].map(el => el.dataset.filename);
       try {
         await fetch(`/api/albums/${slug}/reorder`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order: newOrder }),
         });
-      } catch {
-        alert('Failed to save order');
-      }
+      } catch { alert('Failed to save order'); }
     });
 
     grid.addEventListener('dragend', () => {
@@ -427,8 +371,6 @@
       dragItem = null;
     });
   }
-
-  // ─── Helpers ───────────────────────────────────────────
 
   function redirectToLogin() {
     window.location.href = '/admin/login';
