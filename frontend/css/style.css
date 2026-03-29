@@ -63,6 +63,9 @@ img { display: block; max-width: 100%; }
 .masonry-item { break-inside: avoid; margin-bottom: 16px; border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; }
 .masonry-item img { width: 100%; display: block; transition: transform .4s ease, opacity .4s ease; }
 .masonry-item:hover img { transform: scale(1.02); opacity: .93; }
+.masonry-item.portrait img { width: 80%; margin: 0 auto; }
+.masonry-item.landscape { overflow: visible; margin: 0 -15% 24px; }
+.masonry-item.landscape img { width: 130%; border-radius: var(--radius); }
 
 /* — Lightbox — */
 .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity .3s ease; }

@@ -25,6 +25,18 @@
       `<div class="masonry-item" data-index="${i}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`
     ).join('');
 
+    // Detect orientation and add classes once images load
+    grid.querySelectorAll('.masonry-item img').forEach(img => {
+      img.addEventListener('load', () => {
+        const item = img.closest('.masonry-item');
+        if (img.naturalWidth > img.naturalHeight) {
+          item.classList.add('landscape');
+        } else {
+          item.classList.add('portrait');
+        }
+      });
+    });
+
     initLightbox(photos);
   }).catch(() => {
     titleEl.textContent = 'Album not found';
