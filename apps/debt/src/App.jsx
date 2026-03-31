@@ -76,9 +76,9 @@ function CalendarHeatmap({ paid, total, color, loanId, justPaid }) {
   for (let y = startYear; y <= endYear; y++) years.push(y);
 
   return (
-    <div>
+    <div style={{ overflowX: "auto" }}>
       {/* Month headers */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 6, minWidth: "fit-content" }}>
         <div style={{ width: 36, flexShrink: 0 }} />
         <div style={{ display: "grid", gridTemplateColumns: `repeat(12, ${SQ}px)`, gap: GAP }}>
           {MONTHS.map((m, i) => (
@@ -206,7 +206,7 @@ export default function FinancialDashboard() {
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#0A0A0F", color: "#E8E6E1", minHeight: "100vh", padding: "0 0 40px" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-      <div style={{ padding: "32px 32px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="page-pad" style={{ paddingTop: 32, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <h1 style={{ fontSize: 28, fontWeight: 300, margin: 0, letterSpacing: -0.5, color: "#F5F5F0" }}>Debt Overview</h1>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 12, color: "#6B6B76" }}>Last updated</div>
@@ -214,29 +214,29 @@ export default function FinancialDashboard() {
         </div>
       </div>
 
-      <div style={{ margin: "20px 32px", padding: "14px 18px", background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="page-pad" style={{ marginTop: 20, marginBottom: 20, padding: "14px 18px", background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B", boxShadow: "0 0 12px rgba(245,158,11,0.6)", flexShrink: 0 }} />
         <div style={{ fontSize: 13, color: "#FCD34D", lineHeight: 1.5 }}>
           <strong style={{ color: "#FDE68A" }}>X Wallet loans are revolving credit</strong> — No fixed term or penalty for lower payments, but 39% &amp; 18% APR means interest compounds fast. Pay aggressively.
         </div>
       </div>
 
-      <div style={{ padding: "0 32px", display: "flex", gap: 4, marginBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="page-pad" style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: "10px 18px", fontSize: 13, fontWeight: activeTab === t.id ? 500 : 400, color: activeTab === t.id ? "#F5F5F0" : "#6B6B76", background: "none", border: "none", borderBottom: activeTab === t.id ? "2px solid #E8E6E1" : "2px solid transparent", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", marginBottom: -1 }}>
+            className="tab-btn" style={{ padding: "10px 18px", fontSize: 13, fontWeight: activeTab === t.id ? 500 : 400, color: activeTab === t.id ? "#F5F5F0" : "#6B6B76", background: "none", border: "none", borderBottom: activeTab === t.id ? "2px solid #E8E6E1" : "2px solid transparent", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", marginBottom: -1 }}>
             {t.label}
           </button>
         ))}
       </div>
 
-      <div style={{ padding: "0 32px" }}>
+      <div className="page-pad">
 
         {/* ── OVERVIEW ── */}
         {activeTab === "overview" && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
             {/* Top row: 3 metrics + circle chart */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 12, marginBottom: 24, alignItems: "stretch" }}>
+            <div className="metrics-grid">
               {[
                 { label: "Monthly income", value: INCOME, prefix: "$", color: "#E8E6E1" },
                 { label: "Remaining debt", value: totalDebt, prefix: "$", color: "#EF4444" },
@@ -244,7 +244,7 @@ export default function FinancialDashboard() {
               ].map((m, i) => (
                 <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ fontSize: 11, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>{m.label}</div>
-                  <div style={{ fontSize: 24, fontWeight: 300, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <div className="metric-value" style={{ fontSize: 24, fontWeight: 300, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>
                     <AnimatedNumber value={m.value} prefix={m.prefix} />
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export default function FinancialDashboard() {
             </div>
 
             {/* DSR + Cash flow */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+            <div className="two-col">
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 24, display: "flex", alignItems: "center", gap: 32 }}>
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   <ProgressRing percent={dsr} color={dsr > 40 ? "#EF4444" : "#10B981"} label="DSR" />
@@ -365,7 +365,7 @@ export default function FinancialDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: loan.revolving ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                  <div className={`loan-stats${loan.revolving ? " has-revolving" : ""}`}>
                     <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "10px 12px" }}>
                       <div style={{ fontSize: 10, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1 }}>Monthly</div>
                       <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: loan.color, marginTop: 2 }}>${loan.monthly.toLocaleString()}</div>
@@ -391,7 +391,7 @@ export default function FinancialDashboard() {
                       </div>
                       <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#4A4A52" }}>{loan.installmentsPaid}/{loan.totalInstallments}</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "flex-end", gap: 40 }}>
+                    <div className="heatmap-row">
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <CalendarHeatmap paid={loan.installmentsPaid} total={loan.totalInstallments} color={isFullyPaid ? "#10B981" : loan.color} loanId={loan.id} justPaid={wasJustPaid} />
                       </div>
@@ -428,7 +428,7 @@ export default function FinancialDashboard() {
                   <div key={i} style={{ width: `${(d.value / INCOME) * 100}%`, background: d.color, transition: "width 0.8s ease" }} />
                 ))}
               </div>
-              <div style={{ display: "flex", gap: 24, marginTop: 14 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", marginTop: 14 }}>
                 {[{ label: "Loans", value: totalMonthly, color: "#3B82F6" }, { label: "Family", value: FAMILY, color: "#F97316" }, { label: "Living", value: Math.max(living, 0), color: "#10B981" }].map((item, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />
@@ -471,7 +471,7 @@ export default function FinancialDashboard() {
               { priority: "Ongoing", color: "#8B5CF6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)", title: "Avalanche the remaining 3 loans", desc: "Attack SC (8%) first, then Mox (5%), then BOCHK (4%).", timeline: "6–36 months" },
               { priority: "Goal", color: "#10B981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", title: "Debt-free by 2029", desc: "$20k+/mo freed up for MPF, index funds, emergency fund, and life goals.", timeline: "~2029" },
             ].map((item, i) => (
-              <div key={i} style={{ background: item.bg, border: `1px solid ${item.border}`, borderRadius: 12, padding: 20, marginBottom: 12, display: "flex", gap: 16 }}>
+              <div key={i} className="action-item" style={{ background: item.bg, border: `1px solid ${item.border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 60 }}>
                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${item.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 600, color: item.color, fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</div>
                   <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, color: item.color }}>{item.priority}</div>
@@ -485,7 +485,7 @@ export default function FinancialDashboard() {
             ))}
             <div style={{ marginTop: 8, background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.05))", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: 24 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: "#6EE7B7", marginBottom: 12 }}>Quick scenario: sell $90k of Pokémon now</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              <div className="scenario-grid">
                 {[{ label: "Interest saved", value: "~$40,114", color: "#10B981" }, { label: "Portfolio impact", value: "−5.3%", color: "#F59E0B" }, { label: "Monthly freed", value: "+$5,366", color: "#10B981" }].map((s, i) => (
                   <div key={i} style={{ background: "rgba(0,0,0,0.2)", borderRadius: 8, padding: "12px 14px" }}>
                     <div style={{ fontSize: 10, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
@@ -498,7 +498,28 @@ export default function FinancialDashboard() {
         )}
       </div>
 
-      <style>{`@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <style>{`
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .page-pad { padding-left: 32px; padding-right: 32px; }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; margin-bottom: 24px; align-items: stretch; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .heatmap-row { display: flex; align-items: flex-end; gap: 40px; }
+        .loan-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .loan-stats.has-revolving { grid-template-columns: 1fr 1fr 1fr; }
+        .action-item { display: flex; gap: 16px; }
+        @media (max-width: 768px) {
+          .page-pad { padding-left: 16px; padding-right: 16px; }
+          .metrics-grid { grid-template-columns: 1fr 1fr; }
+          .metrics-grid .metric-value { font-size: 20px !important; }
+          .two-col { grid-template-columns: 1fr; }
+          .scenario-grid { grid-template-columns: 1fr; }
+          .heatmap-row { flex-direction: column; align-items: stretch; gap: 16px; }
+          .loan-stats, .loan-stats.has-revolving { grid-template-columns: 1fr; }
+          .action-item { flex-direction: column; gap: 10px; }
+          .tab-btn { padding: 10px 12px !important; font-size: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 }
