@@ -12,8 +12,8 @@ const INITIAL_LOANS = [
   { id: 0, name: "BOCHK", monthly: 3728.73, paid: 71407.82, remaining: 128592.18, apr: 4, color: "#3B82F6", installmentsPaid: 23, totalInstallments: 60, borrowed: 200000 },
   { id: 1, name: "Mox", monthly: 4326.67, paid: 99513.41, remaining: 160086, apr: 5, color: "#10B981", installmentsPaid: 23, totalInstallments: 60, borrowed: 230000 },
   { id: 2, name: "Standard Chartered", monthly: 6050, paid: 101514.58, remaining: 198485.42, apr: 8, color: "#8B5CF6", installmentsPaid: 23, totalInstallments: 60, borrowed: 300000 },
-  { id: 3, name: "X Wallet #1", monthly: 5366, paid: 24000, remaining: 88670, apr: 39, color: "#EF4444", installmentsPaid: 12, totalInstallments: 36, danger: true, catchUp: true, oldPayment: 2000, borrowed: 80000 },
-  { id: 4, name: "X Wallet #2", monthly: 1306, paid: 13060, remaining: 20000, apr: 18, color: "#F97316", installmentsPaid: 10, totalInstallments: 36, borrowed: 30000 },
+  { id: 3, name: "X Wallet #1", monthly: 5366, paid: 24000, remaining: 88670, apr: 39, color: "#EF4444", installmentsPaid: 12, totalInstallments: 36, danger: true, revolving: true, borrowed: 80000 },
+  { id: 4, name: "X Wallet #2", monthly: 1306, paid: 13060, remaining: 20000, apr: 18, color: "#F97316", installmentsPaid: 10, totalInstallments: 36, revolving: true, borrowed: 30000 },
 ];
 
 const INCOME = 42000;
@@ -214,10 +214,10 @@ export default function FinancialDashboard() {
         </div>
       </div>
 
-      <div style={{ margin: "20px 32px", padding: "14px 18px", background: "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04))", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444", boxShadow: "0 0 12px rgba(239,68,68,0.6)", flexShrink: 0 }} />
-        <div style={{ fontSize: 13, color: "#F5A5A5", lineHeight: 1.5 }}>
-          <strong style={{ color: "#FCA5A5" }}>X Wallet #1 catch-up active</strong> — Payment increased to $5,366/mo to clear within original 36-month term.
+      <div style={{ margin: "20px 32px", padding: "14px 18px", background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B", boxShadow: "0 0 12px rgba(245,158,11,0.6)", flexShrink: 0 }} />
+        <div style={{ fontSize: 13, color: "#FCD34D", lineHeight: 1.5 }}>
+          <strong style={{ color: "#FDE68A" }}>X Wallet loans are revolving credit</strong> — No fixed term or penalty for lower payments, but 39% &amp; 18% APR means interest compounds fast. Pay aggressively.
         </div>
       </div>
 
@@ -351,7 +351,7 @@ export default function FinancialDashboard() {
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
                           {loan.name}
-                          {loan.catchUp && !isFullyPaid && <span style={{ padding: "2px 8px", background: "rgba(239,68,68,0.2)", color: "#FCA5A5", borderRadius: 4, fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Catch-up</span>}
+                          {loan.revolving && !isFullyPaid && <span style={{ padding: "2px 8px", background: "rgba(245,158,11,0.2)", color: "#FDE68A", borderRadius: 4, fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Revolving</span>}
                           {isFullyPaid && <span style={{ padding: "2px 8px", background: "rgba(16,185,129,0.2)", color: "#6EE7B7", borderRadius: 4, fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Cleared</span>}
                         </div>
                         <div style={{ fontSize: 12, color: "#6B6B76", marginTop: 2 }}>{loan.apr}% APR &middot; {isFullyPaid ? "fully paid" : `${monthsLeft} month${monthsLeft !== 1 ? "s" : ""} remaining`}</div>
@@ -365,7 +365,7 @@ export default function FinancialDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: loan.catchUp ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: loan.revolving ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8, marginBottom: 16 }}>
                     <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "10px 12px" }}>
                       <div style={{ fontSize: 10, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1 }}>Monthly</div>
                       <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: loan.color, marginTop: 2 }}>${loan.monthly.toLocaleString()}</div>
@@ -374,10 +374,11 @@ export default function FinancialDashboard() {
                       <div style={{ fontSize: 10, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1 }}>Total paid</div>
                       <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: "#E8E6E1", marginTop: 2 }}><AnimatedNumber value={loan.paid} prefix="$" /></div>
                     </div>
-                    {loan.catchUp && (
-                      <div style={{ background: "rgba(239,68,68,0.08)", borderRadius: 8, padding: "10px 12px" }}>
-                        <div style={{ fontSize: 10, color: "#FCA5A5", textTransform: "uppercase", letterSpacing: 1 }}>Was paying</div>
-                        <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: "#EF4444", marginTop: 2, textDecoration: "line-through" }}>${loan.oldPayment.toLocaleString()}</div>
+                    {loan.revolving && (
+                      <div style={{ background: "rgba(245,158,11,0.08)", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 10, color: "#FDE68A", textTransform: "uppercase", letterSpacing: 1 }}>Type</div>
+                        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: "#F59E0B", marginTop: 2 }}>Revolving</div>
+                        <div style={{ fontSize: 10, color: "#92400E", marginTop: 2 }}>No fixed term</div>
                       </div>
                     )}
                   </div>
@@ -400,9 +401,9 @@ export default function FinancialDashboard() {
                     </div>
                   </div>
 
-                  {loan.catchUp && !isFullyPaid && (
-                    <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(239,68,68,0.06)", borderRadius: 8, fontSize: 12, color: "#F5A5A5", lineHeight: 1.5, borderLeft: "3px solid #EF4444" }}>
-                      Catch-up plan: $5,366/mo for {monthsLeft} remaining month{monthsLeft !== 1 ? "s" : ""}.
+                  {loan.revolving && !isFullyPaid && (
+                    <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(245,158,11,0.06)", borderRadius: 8, fontSize: 12, color: "#FCD34D", lineHeight: 1.5, borderLeft: "3px solid #F59E0B" }}>
+                      Revolving credit — no penalty for lower payments, but {loan.apr}% APR compounds monthly on the balance. {loan.apr >= 30 ? "Highest priority to clear." : "Clear early to save on interest."}
                     </div>
                   )}
                 </div>
@@ -464,9 +465,9 @@ export default function FinancialDashboard() {
         {activeTab === "action" && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
             {[
-              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Call X Wallet (2531 0333)", desc: "Confirm exact balance on loan #1. Set up catch-up payments of $5,366/mo.", timeline: "This week" },
+              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Maximize X Wallet #1 payments", desc: "Revolving at 39% APR — no penalty for lower payments, but every dollar left compounds fast. Pay as much as possible each month.", timeline: "Ongoing" },
               { priority: "High", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", title: "Consider partial Pokémon liquidation", desc: "Sell ~$90k (5.3% of portfolio) to clear X Wallet #1 immediately. Saves ~$40k in interest.", timeline: "Within 1 month" },
-              { priority: "Medium", color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", title: "Clear X Wallet #2 next", desc: "Redirect freed cash to clear #2 early. At 18% APR it's your second most expensive debt.", timeline: "3–6 months" },
+              { priority: "Medium", color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", title: "Clear X Wallet #2 next", desc: "Also revolving (18% APR). Redirect freed cash after #1 is done. No penalty but interest still adds up.", timeline: "3–6 months" },
               { priority: "Ongoing", color: "#8B5CF6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)", title: "Avalanche the remaining 3 loans", desc: "Attack SC (8%) first, then Mox (5%), then BOCHK (4%).", timeline: "6–36 months" },
               { priority: "Goal", color: "#10B981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", title: "Debt-free by 2029", desc: "$20k+/mo freed up for MPF, index funds, emergency fund, and life goals.", timeline: "~2029" },
             ].map((item, i) => (
