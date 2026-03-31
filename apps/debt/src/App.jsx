@@ -12,7 +12,7 @@ const INITIAL_LOANS = [
   { id: 0, name: "BOCHK", monthly: 3728.73, paid: 71407.82, remaining: 128592.18, apr: 4, color: "#3B82F6", installmentsPaid: 23, totalInstallments: 60, borrowed: 200000 },
   { id: 1, name: "Mox", monthly: 4326.67, paid: 99513.41, remaining: 160086, apr: 5, color: "#10B981", installmentsPaid: 23, totalInstallments: 60, borrowed: 230000 },
   { id: 2, name: "Standard Chartered", monthly: 6050, paid: 101514.58, remaining: 198485.42, apr: 8, color: "#8B5CF6", installmentsPaid: 23, totalInstallments: 60, borrowed: 300000 },
-  { id: 3, name: "X Wallet #1", monthly: 5366, paid: 24000, remaining: 88670, apr: 39, color: "#EF4444", installmentsPaid: 12, totalInstallments: 36, danger: true, revolving: true, borrowed: 80000 },
+  { id: 3, name: "X Wallet #1", monthly: 4552.39, paid: 35316.89, remaining: 75061.35, apr: 39, color: "#EF4444", installmentsPaid: 12, totalInstallments: 36, danger: true, revolving: true, borrowed: 80000, interestPaid: 30378.24, principalPaid: 4938.65, interestRemaining: 34195.98, avgPayment: 2943.07, properInstallment: 3802.27 },
   { id: 4, name: "X Wallet #2", monthly: 1306, paid: 13060, remaining: 20000, apr: 18, color: "#F97316", installmentsPaid: 10, totalInstallments: 36, revolving: true, borrowed: 30000 },
 ];
 
@@ -217,7 +217,7 @@ export default function FinancialDashboard() {
       <div className="page-pad" style={{ marginTop: 20, marginBottom: 20, padding: "14px 18px", background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B", boxShadow: "0 0 12px rgba(245,158,11,0.6)", flexShrink: 0 }} />
         <div style={{ fontSize: 13, color: "#FCD34D", lineHeight: 1.5 }}>
-          <strong style={{ color: "#FDE68A" }}>X Wallet loans are revolving credit</strong> — No fixed term or penalty for lower payments, but 39% &amp; 18% APR means interest compounds fast. Pay aggressively.
+          <strong style={{ color: "#FDE68A" }}>X Wallet #1: 86% of payments went to interest</strong> — Of $35,317 paid over 12 months, only $4,939 reduced the principal. Now paying $4,552/mo to clear in 24 months.
         </div>
       </div>
 
@@ -376,9 +376,15 @@ export default function FinancialDashboard() {
                     </div>
                     {loan.revolving && (
                       <div style={{ background: "rgba(245,158,11,0.08)", borderRadius: 8, padding: "10px 12px" }}>
-                        <div style={{ fontSize: 10, color: "#FDE68A", textTransform: "uppercase", letterSpacing: 1 }}>Type</div>
-                        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: "#F59E0B", marginTop: 2 }}>Revolving</div>
-                        <div style={{ fontSize: 10, color: "#92400E", marginTop: 2 }}>No fixed term</div>
+                        <div style={{ fontSize: 10, color: "#FDE68A", textTransform: "uppercase", letterSpacing: 1 }}>
+                          {loan.interestPaid ? "Interest paid" : "Type"}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: loan.interestPaid ? "#EF4444" : "#F59E0B", marginTop: 2 }}>
+                          {loan.interestPaid ? `$${loan.interestPaid.toLocaleString()}` : "Revolving"}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#92400E", marginTop: 2 }}>
+                          {loan.interestPaid ? `${Math.round(loan.interestPaid / loan.paid * 100)}% of payments` : "No fixed term"}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -402,8 +408,12 @@ export default function FinancialDashboard() {
                   </div>
 
                   {loan.revolving && !isFullyPaid && (
-                    <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(245,158,11,0.06)", borderRadius: 8, fontSize: 12, color: "#FCD34D", lineHeight: 1.5, borderLeft: "3px solid #F59E0B" }}>
-                      Revolving credit — no penalty for lower payments, but {loan.apr}% APR compounds monthly on the balance. {loan.apr >= 30 ? "Highest priority to clear." : "Clear early to save on interest."}
+                    <div style={{ marginTop: 14, padding: "10px 14px", background: loan.interestPaid ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)", borderRadius: 8, fontSize: 12, color: loan.interestPaid ? "#FCA5A5" : "#FCD34D", lineHeight: 1.5, borderLeft: `3px solid ${loan.interestPaid ? "#EF4444" : "#F59E0B"}` }}>
+                      {loan.interestPaid ? (
+                        <>Revolving at {loan.apr}% APR — avg payment was ${loan.avgPayment.toLocaleString()}/mo but only ${loan.principalPaid.toLocaleString()} went to principal. Now paying ${loan.monthly.toLocaleString()}/mo (catch-up) to clear in {monthsLeft} months. Interest remaining: ${loan.interestRemaining.toLocaleString()}.</>
+                      ) : (
+                        <>Revolving credit — no penalty for lower payments, but {loan.apr}% APR compounds monthly. {loan.apr >= 30 ? "Highest priority to clear." : "Clear early to save on interest."}</>
+                      )}
                     </div>
                   )}
                 </div>
@@ -465,8 +475,8 @@ export default function FinancialDashboard() {
         {activeTab === "action" && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
             {[
-              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Maximize X Wallet #1 payments", desc: "Revolving at 39% APR — no penalty for lower payments, but every dollar left compounds fast. Pay as much as possible each month.", timeline: "Ongoing" },
-              { priority: "High", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", title: "Consider partial Pokémon liquidation", desc: "Sell ~$90k (5.3% of portfolio) to clear X Wallet #1 immediately. Saves ~$40k in interest.", timeline: "Within 1 month" },
+              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Keep up $4,552/mo on X Wallet #1", desc: "86% of past payments ($30,378 of $35,317) went to interest at 39% APR. Catch-up plan: $4,552/mo for 24 months clears it. Still $34,196 in interest remaining.", timeline: "24 months" },
+              { priority: "High", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", title: "Consider partial Pokémon liquidation", desc: "Sell ~$75k (4.5% of portfolio) to clear X Wallet #1 immediately. Saves ~$34k in remaining interest.", timeline: "Within 1 month" },
               { priority: "Medium", color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", title: "Clear X Wallet #2 next", desc: "Also revolving (18% APR). Redirect freed cash after #1 is done. No penalty but interest still adds up.", timeline: "3–6 months" },
               { priority: "Ongoing", color: "#8B5CF6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)", title: "Avalanche the remaining 3 loans", desc: "Attack SC (8%) first, then Mox (5%), then BOCHK (4%).", timeline: "6–36 months" },
               { priority: "Goal", color: "#10B981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", title: "Debt-free by 2029", desc: "$20k+/mo freed up for MPF, index funds, emergency fund, and life goals.", timeline: "~2029" },
@@ -484,9 +494,9 @@ export default function FinancialDashboard() {
               </div>
             ))}
             <div style={{ marginTop: 8, background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.05))", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: 24 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: "#6EE7B7", marginBottom: 12 }}>Quick scenario: sell $90k of Pokémon now</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: "#6EE7B7", marginBottom: 12 }}>Quick scenario: sell $75k of Pokémon now</div>
               <div className="scenario-grid">
-                {[{ label: "Interest saved", value: "~$40,114", color: "#10B981" }, { label: "Portfolio impact", value: "−5.3%", color: "#F59E0B" }, { label: "Monthly freed", value: "+$5,366", color: "#10B981" }].map((s, i) => (
+                {[{ label: "Interest saved", value: "~$34,196", color: "#10B981" }, { label: "Portfolio impact", value: "−4.5%", color: "#F59E0B" }, { label: "Monthly freed", value: "+$4,552", color: "#10B981" }].map((s, i) => (
                   <div key={i} style={{ background: "rgba(0,0,0,0.2)", borderRadius: 8, padding: "12px 14px" }}>
                     <div style={{ fontSize: 10, color: "#6B6B76", textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", color: s.color, marginTop: 4 }}>{s.value}</div>
