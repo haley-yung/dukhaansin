@@ -6,8 +6,9 @@
   <title>dukhaansin — Gallery of Memories</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://pub-0d7f09b62d954845b51f23b7e0ed4bda.r2.dev">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8">
+  <link rel="stylesheet" href="/css/style.css?v=9">
 </head>
 <body>
   <nav class="nav">
@@ -51,7 +52,7 @@
           <a href="/album/${album.slug}" class="album-card">
             <div class="album-card-img">
               ${album.coverUrl
-                ? `<img src="${album.coverUrl}" alt="${album.title}" loading="lazy">`
+                ? `<img src="${album.coverUrl}" alt="${album.title}" loading="lazy" decoding="async">`
                 : '<div class="album-card-placeholder"></div>'}
             </div>
             <div class="album-card-info">
@@ -59,7 +60,7 @@
               <span class="album-card-count">${album.photoCount} photo${album.photoCount !== 1 ? 's' : ''}</span>
             </div>
           </a>`).join('');
-      } catch (err) {
+      } catch {
         grid.innerHTML = '<p class="empty-state">Failed to load albums.</p>';
       }
     })();

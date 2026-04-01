@@ -1,8 +1,9 @@
 const { isAuthenticated } = require('../../_utils/auth');
-const { listObjects, filterImages, getPresignedUploadUrl, getOrCreateMeta, getNextImageNumber } = require('../../_utils/r2');
+const { listObjects, filterImages, getPresignedUploadUrl, getOrCreateMeta, getNextImageNumber, sortByOrder, isValidSlug } = require('../../_utils/r2');
 
 module.exports = async (req, res) => {
   const { slug } = req.query;
+  if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid slug' });
   if (req.method === 'GET') return handleGet(req, res, slug);
   if (req.method === 'POST') return handleUploadUrls(req, res, slug);
   return res.status(405).json({ error: 'Method not allowed' });
@@ -18,16 +19,7 @@ async function handleGet(req, res, slug) {
     return { filename, key: o.Key };
   });
 
-  if (meta.order?.length) {
-    photos.sort((a, b) => {
-      const ia = meta.order.indexOf(a.filename);
-      const ib = meta.order.indexOf(b.filename);
-      if (ia === -1 && ib === -1) return 0;
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-  }
+  sortByOrder(photos, meta.order, p => p.filename);
 
   const r2Url = process.env.R2_PUBLIC_URL;
   return res.json(photos.map(p => ({

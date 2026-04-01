@@ -35,7 +35,8 @@
       const span = gridSpans[p.filename] || 1;
       const subcols = spanToSubcols(span);
       const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
-      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`;
+      const eager = i < 6;
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" ${eager ? 'loading="eager" fetchpriority="high"' : 'loading="lazy" decoding="async"'}></div>`;
     }).join('');
 
     grid.querySelectorAll('.grid-item').forEach(item => {

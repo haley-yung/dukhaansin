@@ -1,8 +1,9 @@
 const { isAuthenticated } = require('../../_utils/auth');
-const { getJSON, putJSON, listObjects, filterImages, deleteObjects, getOrCreateMeta } = require('../../_utils/r2');
+const { getJSON, putJSON, listObjects, filterImages, deleteObjects, getOrCreateMeta, sortByOrder, isValidSlug } = require('../../_utils/r2');
 
 module.exports = async (req, res) => {
   const { slug } = req.query;
+  if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid slug' });
   if (req.method === 'GET') return handleGet(req, res, slug);
   if (req.method === 'PUT') return handleUpdate(req, res, slug);
   if (req.method === 'DELETE') return handleDelete(req, res, slug);
@@ -15,16 +16,7 @@ async function handleGet(req, res, slug) {
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
   const photos = filterImages(objects).map(o => o.Key.split('/').pop());
-  if (meta.order?.length) {
-    photos.sort((a, b) => {
-      const ia = meta.order.indexOf(a);
-      const ib = meta.order.indexOf(b);
-      if (ia === -1 && ib === -1) return 0;
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-  }
+  sortByOrder(photos, meta.order);
 
   return res.json({ slug, ...meta, photos });
 }

@@ -18,7 +18,6 @@ const INITIAL_LOANS = [
 
 const INCOME = 42000;
 const FAMILY = 11000;
-const POKEMON = 1680000;
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function AnimatedNumber({ value, prefix = "", duration = 800 }) {
@@ -178,7 +177,7 @@ export default function FinancialDashboard() {
   const dsr = (totalMonthly / INCOME) * 100;
 
   const payInstallment = (id) => {
-    setHistory(prev => [...prev, JSON.parse(JSON.stringify(loans))]);
+    setHistory(prev => [...prev, loans.map(l => ({ ...l }))]);
     setLoans(prev => prev.map(l => {
       if (l.id !== id || l.installmentsPaid >= l.totalInstallments) return l;
       const interest = l.remaining * (l.apr / 100 / 12);
@@ -186,8 +185,13 @@ export default function FinancialDashboard() {
       return { ...l, installmentsPaid: l.installmentsPaid + 1, paid: Math.round((l.paid + l.monthly) * 100) / 100, remaining: Math.max(Math.round((l.remaining - principal) * 100) / 100, 0) };
     }));
     setJustPaidId(id);
-    setTimeout(() => setJustPaidId(null), 1800);
   };
+
+  useEffect(() => {
+    if (justPaidId === null) return;
+    const timer = setTimeout(() => setJustPaidId(null), 1800);
+    return () => clearTimeout(timer);
+  }, [justPaidId]);
 
   const undoLast = () => {
     if (!history.length) return;
@@ -204,7 +208,6 @@ export default function FinancialDashboard() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#0A0A0F", color: "#E8E6E1", minHeight: "100vh", padding: "0 0 40px" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
       <div className="page-pad" style={{ paddingTop: 32, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <h1 style={{ fontSize: 28, fontWeight: 300, margin: 0, letterSpacing: -0.5, color: "#F5F5F0" }}>Debt Overview</h1>

@@ -94,8 +94,26 @@ async function getOrCreateMeta(slug, objects) {
   return newMeta;
 }
 
+function sortByOrder(items, order, keyFn = x => x) {
+  if (!order?.length) return items;
+  items.sort((a, b) => {
+    const ia = order.indexOf(keyFn(a));
+    const ib = order.indexOf(keyFn(b));
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  return items;
+}
+
+const SAFE_SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+function isValidSlug(slug) {
+  return slug && SAFE_SLUG_RE.test(slug) && !slug.includes('..');
+}
+
 module.exports = {
   getJSON, putJSON, deleteObject, deleteObjects,
   listObjects, filterImages, getPresignedUploadUrl,
-  getNextImageNumber, getOrCreateMeta, IMAGE_RE,
+  getNextImageNumber, getOrCreateMeta, sortByOrder, isValidSlug, IMAGE_RE,
 };

@@ -1,11 +1,12 @@
 const { isAuthenticated } = require('../../_utils/auth');
-const { getJSON, putJSON } = require('../../_utils/r2');
+const { getJSON, putJSON, isValidSlug } = require('../../_utils/r2');
 
 module.exports = async (req, res) => {
   if (req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const { slug } = req.query;
+  if (!isValidSlug(slug)) return res.status(400).json({ error: 'Invalid slug' });
   const { order, gridSpans } = req.body || {};
 
   if (!order || !Array.isArray(order)) {
@@ -16,7 +17,7 @@ module.exports = async (req, res) => {
   if (!meta) return res.status(404).json({ error: 'Album not found' });
 
   meta.order = order;
-  if (gridSpans && typeof gridSpans === 'object') {
+  if (gridSpans && typeof gridSpans === 'object' && !Array.isArray(gridSpans)) {
     meta.gridSpans = gridSpans;
   }
   // Clean up legacy field

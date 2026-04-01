@@ -6,6 +6,13 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vercel", "dev", "--yes", "--listen", "3456"],
       "port": 3456
+    },
+    {
+      "name": "debt-tracker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "cwd": "apps/debt"
     }
   ]
 }
