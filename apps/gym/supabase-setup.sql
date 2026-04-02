@@ -71,37 +71,33 @@ CREATE POLICY "public_all" ON body_metrics FOR ALL USING (true) WITH CHECK (true
 
 -- Seed default exercises
 INSERT INTO exercises (name, training_type, sort_order) VALUES
-  -- Legs
-  ('Squats', 'legs', 1),
-  ('Leg Press', 'legs', 2),
-  ('Lunges', 'legs', 3),
-  ('Leg Curl', 'legs', 4),
-  ('Leg Extension', 'legs', 5),
-  ('Calf Raise', 'legs', 6),
-  ('Hip Abduction', 'legs', 7),
-  ('Hip Adduction', 'legs', 8),
-  ('Romanian Deadlift', 'legs', 9),
-  -- Pull
-  ('Pull-ups', 'pull', 1),
-  ('Lat Pulldown', 'pull', 2),
-  ('Barbell Row', 'pull', 3),
-  ('Seated Cable Row', 'pull', 4),
-  ('Face Pull', 'pull', 5),
-  ('Bicep Curl', 'pull', 6),
-  ('Hammer Curl', 'pull', 7),
-  ('Rear Delt Fly', 'pull', 8),
-  -- Push
-  ('Bench Press', 'push', 1),
-  ('Overhead Press', 'push', 2),
-  ('Incline Dumbbell Press', 'push', 3),
-  ('Tricep Pushdown', 'push', 4),
-  ('Lateral Raise', 'push', 5),
-  ('Chest Fly', 'push', 6),
-  ('Dips', 'push', 7),
-  ('Skull Crushers', 'push', 8),
-  -- Running
-  ('Treadmill', 'running', 1),
-  ('Outdoor Run', 'running', 2),
-  ('Interval Sprints', 'running', 3),
-  ('Hill Run', 'running', 4),
-  ('Recovery Jog', 'running', 5);
+  -- Push + Run
+  ('Arm Circles + Band Pull-Aparts (Warm-up)', 'push_run', 0),
+  ('Chest Press', 'push_run', 1),
+  ('Pec Deck Fly', 'push_run', 2),
+  ('Shoulder Press', 'push_run', 3),
+  ('Lateral Raise', 'push_run', 4),
+  ('Tricep Pushdown', 'push_run', 5),
+  ('Treadmill Run', 'push_run', 6),
+  -- Lower A: Quad Focus
+  ('Bodyweight Squats + Leg Swings (Warm-up)', 'lower_a', 0),
+  ('Leg Press', 'lower_a', 1),
+  ('Leg Extension', 'lower_a', 2),
+  ('Walking Lunges', 'lower_a', 3),
+  ('Calf Raise', 'lower_a', 4),
+  ('Plank', 'lower_a', 5),
+  -- Pull + Run
+  ('Shoulder Rolls + Light Cable Pulldown (Warm-up)', 'pull_run', 0),
+  ('Lat Pulldown', 'pull_run', 1),
+  ('Seated Cable Row', 'pull_run', 2),
+  ('Rear Delt Fly', 'pull_run', 3),
+  ('Bicep Curl', 'pull_run', 4),
+  ('Face Pull', 'pull_run', 5),
+  ('Treadmill Run', 'pull_run', 6),
+  -- Lower B: Posterior Chain
+  ('Glute Bridge + Hip Circles (Warm-up)', 'lower_b', 0),
+  ('Romanian Deadlift', 'lower_b', 1),
+  ('Leg Curl', 'lower_b', 2),
+  ('Hip Thrust', 'lower_b', 3),
+  ('Hip Abductor', 'lower_b', 4),
+  ('Dead Bug', 'lower_b', 5);

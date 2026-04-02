@@ -29,12 +29,22 @@ const T = {
 };
 
 const TYPE_COLORS = {
-  legs: '#8B5CF6',
-  pull: '#3B82F6',
-  push: '#EF4444',
-  running: '#10B981',
+  push_run: '#EF4444',
+  lower_a: '#8B5CF6',
+  pull_run: '#3B82F6',
+  lower_b: '#10B981',
   rest: '#4A4A52',
 };
+
+const TYPE_LABELS = {
+  push_run: 'Push + Run',
+  lower_a: 'Lower A: Quad Focus',
+  pull_run: 'Pull + Run',
+  lower_b: 'Lower B: Posterior Chain',
+  rest: 'Rest Day',
+};
+
+const TRAINING_TYPES = ['push_run', 'lower_a', 'pull_run', 'lower_b'];
 
 const ENERGY_EMOJIS = ['', '\u{1F634}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F525}'];
 
@@ -146,8 +156,11 @@ const typeBadge = (type) => ({
   fontFamily: T.font,
   color: '#fff',
   background: TYPE_COLORS[type] || T.darkMuted,
-  textTransform: 'capitalize',
 });
+
+function typeLabel(type) {
+  return TYPE_LABELS[type] || type;
+}
 
 // ── Heatmap Component ───────────────────────────────────────────────────────
 function Heatmap({ workouts }) {
@@ -231,7 +244,7 @@ function Heatmap({ workouts }) {
         {Object.entries(TYPE_COLORS).map(([type, color]) => (
           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: color }} />
-            <span style={{ fontSize: 11, color: T.muted, textTransform: 'capitalize', fontFamily: T.font }}>{type}</span>
+            <span style={{ fontSize: 11, color: T.muted, fontFamily: T.font }}>{typeLabel(type)}</span>
           </div>
         ))}
       </div>
@@ -372,31 +385,159 @@ function PRList({ records, limit, glow }) {
 }
 
 // ── Dashboard Tab ───────────────────────────────────────────────────────────
-function DashboardTab({ workouts, records, timerState, setTimerState, onLogRest, newPRs }) {
-  const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
+function WorkoutChecklist({ exercises, onLogRest }) {
+  const [selectedType, setSelectedType] = useState(null);
+  const [checked, setChecked] = useState({});
 
+  const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const allChecked = typeExercises.length > 0 && typeExercises.every(e => checked[e.id]);
+  const checkedCount = typeExercises.filter(e => checked[e.id]).length;
+
+  const toggleCheck = (id) => {
+    setChecked(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const reset = () => {
+    setSelectedType(null);
+    setChecked({});
+  };
+
+  if (!selectedType) {
+    return (
+      <div style={cardStyle}>
+        <div style={labelStyle}>Today's Workout</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 8 }}>
+          {TRAINING_TYPES.map(t => (
+            <button
+              key={t}
+              style={{
+                ...btnStyle,
+                padding: '14px 12px',
+                fontSize: 13,
+                background: TYPE_COLORS[t],
+                border: `1px solid ${TYPE_COLORS[t]}`,
+                color: '#fff',
+                fontWeight: 500,
+                textAlign: 'center',
+                lineHeight: 1.3,
+              }}
+              onClick={() => setSelectedType(t)}
+            >
+              {typeLabel(t)}
+            </button>
+          ))}
+        </div>
+        <button
+          style={{ ...btnStyle, width: '100%', fontSize: 13, padding: '10px 14px', color: T.secondary }}
+          onClick={onLogRest}
+        >
+          Log Rest Day
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div>
+          <div style={labelStyle}>Today's Workout</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={typeBadge(selectedType)}>{typeLabel(selectedType)}</span>
+            <span style={{ color: T.muted, fontSize: 12, fontFamily: T.mono }}>{checkedCount}/{typeExercises.length}</span>
+          </div>
+        </div>
+        <button style={{ ...btnStyle, padding: '6px 12px', fontSize: 12 }} onClick={reset}>Change</button>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 14 }}>
+        <div style={{
+          height: '100%',
+          width: typeExercises.length > 0 ? `${(checkedCount / typeExercises.length) * 100}%` : '0%',
+          background: TYPE_COLORS[selectedType],
+          borderRadius: 2,
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+
+      {typeExercises.map((ex, i) => {
+        const isChecked = !!checked[ex.id];
+        const isWarmup = ex.sortOrder === 0;
+        return (
+          <div
+            key={ex.id}
+            onClick={() => toggleCheck(ex.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 8px',
+              borderBottom: i < typeExercises.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              cursor: 'pointer',
+              opacity: isChecked ? 0.5 : 1,
+              transition: 'opacity 0.2s',
+            }}
+          >
+            {/* Checkbox */}
+            <div style={{
+              width: 22,
+              height: 22,
+              borderRadius: 6,
+              border: isChecked ? `2px solid ${TYPE_COLORS[selectedType]}` : '2px solid rgba(255,255,255,0.15)',
+              background: isChecked ? TYPE_COLORS[selectedType] : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: 'all 0.2s',
+            }}>
+              {isChecked && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+
+            {/* Exercise info */}
+            <div style={{ flex: 1 }}>
+              <div style={{
+                color: isChecked ? T.muted : T.text,
+                fontSize: 14,
+                fontFamily: T.font,
+                fontWeight: isWarmup ? 400 : 500,
+                fontStyle: isWarmup ? 'italic' : 'normal',
+                textDecoration: isChecked ? 'line-through' : 'none',
+              }}>
+                {isWarmup ? `W. ${ex.name}` : `${i === 0 ? 1 : i}. ${ex.name}`}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {allChecked && typeExercises.length > 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '16px 0 4px',
+          color: TYPE_COLORS[selectedType],
+          fontFamily: T.font,
+          fontSize: 15,
+          fontWeight: 500,
+        }}>
+          Workout complete!
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, newPRs }) {
   return (
     <div>
       <Heatmap workouts={workouts} />
 
-      <div style={cardStyle}>
-        <div style={labelStyle}>Today</div>
-        {todayWorkout ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={typeBadge(todayWorkout.type)}>{todayWorkout.type}</span>
-            <span style={{ color: T.text, fontFamily: T.font, fontSize: 14 }}>
-              {todayWorkout.exercises ? `${todayWorkout.exercises.length} exercise${todayWorkout.exercises.length !== 1 ? 's' : ''}` : 'Logged'}
-            </span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: T.secondary, fontSize: 14, fontFamily: T.font }}>No workout logged today</span>
-            <button style={{ ...btnStyle, fontSize: 13, padding: '8px 14px' }} onClick={onLogRest}>
-              Log Rest Day
-            </button>
-          </div>
-        )}
-      </div>
+      <WorkoutChecklist exercises={exercises} onLogRest={onLogRest} />
 
       <RestTimer timerState={timerState} setTimerState={setTimerState} />
 
@@ -544,7 +685,7 @@ function WorkoutLogger({ exercises: exerciseLib, templates, onClose, onSave }) {
                   style={{ ...btnStyle, fontSize: 13, padding: '8px 12px' }}
                   onClick={() => loadTemplate(tpl)}
                 >
-                  <span style={typeBadge(tpl.type)}>{tpl.type}</span>{' '}
+                  <span style={typeBadge(tpl.type)}>{typeLabel(tpl.type)}</span>{' '}
                   {tpl.name}
                 </button>
               ))}
@@ -557,23 +698,24 @@ function WorkoutLogger({ exercises: exerciseLib, templates, onClose, onSave }) {
           <div>
             <div style={labelStyle}>Training Type</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-              {['push', 'pull', 'legs', 'running'].map(t => (
+              {TRAINING_TYPES.map(t => (
                 <button
                   key={t}
                   style={{
                     ...btnStyle,
-                    padding: '20px 16px',
-                    fontSize: 16,
-                    textTransform: 'capitalize',
+                    padding: '16px 12px',
+                    fontSize: 14,
                     background: TYPE_COLORS[t],
                     border: `1px solid ${TYPE_COLORS[t]}`,
                     color: '#fff',
                     fontWeight: 500,
                     minHeight: 60,
+                    lineHeight: 1.3,
+                    textAlign: 'center',
                   }}
                   onClick={() => { setType(t); setStep(2); }}
                 >
-                  {t}
+                  {typeLabel(t)}
                 </button>
               ))}
             </div>
@@ -777,7 +919,7 @@ function HistoryTab({ workouts, onRefresh }) {
                   style={{ display: 'flex', alignItems: 'center', gap: 10 }}
                   onClick={() => setExpanded(isExpanded ? null : w.id)}
                 >
-                  <span style={typeBadge(w.type)}>{w.type}</span>
+                  <span style={typeBadge(w.type)}>{typeLabel(w.type)}</span>
                   <span style={{ color: T.text, fontSize: 14, fontFamily: T.font, flex: 1 }}>
                     {w.exercises ? `${w.exercises.length} exercise${w.exercises.length !== 1 ? 's' : ''}` : ''}
                   </span>
@@ -933,7 +1075,7 @@ function AnalyticsTab({ workouts, records }) {
         <div style={labelStyle}>Training Split</div>
         {Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <span style={{ color: T.text, fontSize: 13, fontFamily: T.font, textTransform: 'capitalize', minWidth: 60 }}>{type}</span>
+            <span style={{ color: T.text, fontSize: 13, fontFamily: T.font, minWidth: 80 }}>{typeLabel(type)}</span>
             <div style={{ flex: 1, height: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 4, overflow: 'hidden' }}>
               <div style={{
                 width: `${(count / maxCount) * 100}%`,
@@ -1236,10 +1378,10 @@ function SettingsTab({ exercises, templates, onRefresh, workouts, records, metri
       {/* Exercise Management */}
       <div style={{ marginBottom: 20 }}>
         <div style={labelStyle}>Exercise Library</div>
-        {['push', 'pull', 'legs', 'running'].map(type => (
+        {TRAINING_TYPES.map(type => (
           <div key={type} style={{ ...cardStyle }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={typeBadge(type)}>{type}</span>
+              <span style={typeBadge(type)}>{typeLabel(type)}</span>
             </div>
             {(grouped[type] || []).map(ex => (
               <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
@@ -1282,7 +1424,7 @@ function SettingsTab({ exercises, templates, onRefresh, workouts, records, metri
           templates.map(tpl => (
             <div key={tpl.id} style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={typeBadge(tpl.type)}>{tpl.type}</span>
+                <span style={typeBadge(tpl.type)}>{typeLabel(tpl.type)}</span>
                 <span style={{ color: T.text, fontSize: 14, fontFamily: T.font, marginLeft: 8 }}>{tpl.name}</span>
                 <span style={{ color: T.muted, fontSize: 12, fontFamily: T.font, marginLeft: 8 }}>
                   {(tpl.exercises || []).length} exercise{(tpl.exercises || []).length !== 1 ? 's' : ''}
@@ -1547,6 +1689,7 @@ export default function GymTracker() {
             <DashboardTab
               workouts={workouts}
               records={records}
+              exercises={exercises}
               timerState={timerState}
               setTimerState={setTimerState}
               onLogRest={handleLogRest}
