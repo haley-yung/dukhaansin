@@ -21,6 +21,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/app/gym", "destination": "/app/gym/index.html" },
     { "source": "/album/:slug", "destination": "/album.html" },
     { "source": "/admin/login", "destination": "/admin/login.html" },
     { "source": "/admin/album/:slug", "destination": "/admin/album.html" },
