@@ -250,7 +250,7 @@ export default function FinancialDashboard() {
       <div className="page-pad" style={{ marginTop: 20, marginBottom: 20, padding: "14px 18px", background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B", boxShadow: "0 0 12px rgba(245,158,11,0.6)", flexShrink: 0 }} />
         <div style={{ fontSize: 13, color: "#FCD34D", lineHeight: 1.5 }}>
-          <strong style={{ color: "#FDE68A" }}>X Wallet #1: 86% of payments went to interest</strong> — Of $35,317 paid over 12 months, only $4,939 reduced the principal. Now paying $4,552/mo to clear in 24 months.
+          <strong style={{ color: "#FDE68A" }}>X Wallet 80K: 86% of payments went to interest</strong> — Of $35,317 paid over 12 months, only $4,939 reduced the principal. Now paying $4,552/mo to clear in 24 months.
         </div>
       </div>
 
@@ -508,9 +508,9 @@ export default function FinancialDashboard() {
         {activeTab === "action" && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
             {[
-              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Keep up $4,552/mo on X Wallet #1", desc: "86% of past payments ($30,378 of $35,317) went to interest at 39% APR. Catch-up plan: $4,552/mo for 24 months clears it. Still $34,196 in interest remaining.", timeline: "24 months" },
-              { priority: "High", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", title: "Consider partial Pokémon liquidation", desc: "Sell ~$75k (4.5% of portfolio) to clear X Wallet #1 immediately. Saves ~$34k in remaining interest.", timeline: "Within 1 month" },
-              { priority: "Medium", color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", title: "Clear X Wallet #2 next", desc: "Also revolving (18% APR). Redirect freed cash after #1 is done. No penalty but interest still adds up.", timeline: "3–6 months" },
+              { priority: "Urgent", color: "#EF4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", title: "Keep up $4,552/mo on X Wallet 80K", desc: "86% of past payments ($30,378 of $35,317) went to interest at 39% APR. Catch-up plan: $4,552/mo for 24 months clears it. Still $34,196 in interest remaining.", timeline: "24 months" },
+              { priority: "High", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", title: "Consider partial Pokémon liquidation", desc: "Sell ~$75k (4.5% of portfolio) to clear X Wallet 80K immediately. Saves ~$34k in remaining interest.", timeline: "Within 1 month" },
+              { priority: "Medium", color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", title: "Clear X Wallet 30K next", desc: "Also revolving (18% APR). Redirect freed cash after #1 is done. No penalty but interest still adds up.", timeline: "3–6 months" },
               { priority: "Ongoing", color: "#8B5CF6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)", title: "Avalanche the remaining 3 loans", desc: "Attack SC (8%) first, then Mox (5%), then BOCHK (4%).", timeline: "6–36 months" },
               { priority: "Goal", color: "#10B981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", title: "Debt-free by 2029", desc: "$20k+/mo freed up for MPF, index funds, emergency fund, and life goals.", timeline: "~2029" },
             ].map((item, i) => (
