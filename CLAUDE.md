@@ -2,19 +2,22 @@
 
 ## What This Is
 
-A serverless photography portfolio with an admin CMS, plus a personal web app suite. Vanilla HTML/CSS/JS frontend served as static files on Vercel, with Vercel Serverless Functions as the API layer and Cloudflare R2 for image storage. No database — all metadata lives in R2 JSON files. The personal app (`/app`) uses Vite + React SPAs that build into the same static `frontend/` directory.
+A serverless photography portfolio with an admin CMS, plus a personal web app suite. Vanilla HTML/CSS/JS frontend served as static files on Vercel, with Vercel Serverless Functions as the API layer and Cloudflare R2 for image storage. Album metadata lives in R2 JSON files. The personal app (`/app`) uses Vite + React SPAs that build into the same static `frontend/` directory, with Supabase (PostgreSQL) as the database for persistent state.
 
 ## Architecture
 
 ```
 Browser → Vercel (static frontend + serverless API) → Cloudflare R2 (images + metadata)
+                                                    → Supabase (PostgreSQL for app data)
 ```
 
 - **Frontend**: Static HTML/CSS/JS in `frontend/` — no framework, no build step
 - **Backend**: Node.js serverless functions in `api/` — each file = one endpoint
 - **Storage**: Cloudflare R2 (S3-compatible) — images + `meta.json` per album
+- **Database**: Supabase (PostgreSQL) — persistent state for web apps (debt tracker loans)
 - **Auth**: JWT tokens in HttpOnly cookies, bcrypt password hashing
 - **Deploy**: `vercel.json` serves `frontend/` as static, routes `/api/*` to functions
+- **Constraint**: Vercel Hobby plan limits to 12 serverless functions — consolidate endpoints where possible
 
 ## Directory Layout
 
@@ -22,6 +25,7 @@ Browser → Vercel (static frontend + serverless API) → Cloudflare R2 (images 
 api/                        # Vercel Serverless Functions
   _utils/auth.js            # JWT + bcrypt auth helpers
   _utils/r2.js              # R2 client (list, get/put JSON, presigned URLs, delete)
+  _utils/supabase.js        # Supabase client (shared by app endpoints)
   albums.js                 # GET: list albums (public) | POST: create album (admin)
   login.js                  # POST: authenticate, set JWT cookie
   logout.js                 # POST: clear cookie
@@ -34,6 +38,8 @@ api/                        # Vercel Serverless Functions
     cover.js                # PUT: set cover image
     reorder.js              # PUT: save photo order + grid spans
     finalize.js             # POST: register newly uploaded files in metadata
+  app/
+    debt.js                 # GET: list loans | PUT: pay installment / undo (single consolidated endpoint)
 
 frontend/                   # Static files (Vercel outputDirectory)
   index.html                # Public gallery home
@@ -132,6 +138,9 @@ Photos can be resized and reordered in the admin album editor:
 - `getNextImageNumber(objects)` — next sequential `img_NNN` number
 - `getOrCreateMeta(slug, objects)` — lazy-init album metadata
 
+### `api/_utils/supabase.js`
+- `supabase` — shared Supabase client instance (reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` env vars)
+
 ### `api/_utils/auth.js`
 - `createToken()` — 24-hour JWT
 - `isAuthenticated(req)` — verify JWT from cookie, returns `{ role }` or `false`
@@ -161,6 +170,8 @@ Photos can be resized and reordered in the admin album editor:
 | `R2_ACCOUNT_ID` | Cloudflare account ID |
 | `R2_BUCKET_NAME` | R2 bucket name (`dukhaansin-images`) |
 | `R2_PUBLIC_URL` | Public R2 URL for serving images |
+| `SUPABASE_URL` | Supabase project URL (`https://drlimemicsthqpwofytm.supabase.co`) |
+| `SUPABASE_ANON_KEY` | Supabase anon/publishable key (public, safe for client-side) |
 
 ## Vercel Routing (`vercel.json`)
 
@@ -173,8 +184,9 @@ Photos can be resized and reordered in the admin album editor:
 
 ## Dependencies
 
-Only 4 npm packages (all for the API layer):
+5 npm packages (all for the API layer):
 - `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` — R2 access
+- `@supabase/supabase-js` — Supabase client for database access
 - `bcryptjs` — password hashing
 - `jsonwebtoken` — JWT tokens
 
@@ -184,15 +196,26 @@ A personal app suite at `dukhaansin.com/app/`, built as separate Vite + React SP
 
 ### Debt Tracker (`/app/debt`)
 
-A financial dashboard for tracking loan repayment progress. Single-component React app with animated numbers, progress rings, calendar heatmaps, and installment payment simulation.
+A financial dashboard for tracking loan repayment progress. Single-component React app with animated numbers, progress rings, calendar heatmaps, and persistent installment payments via Supabase.
 
 **Features:**
 - Overview tab: income, remaining debt, DSR gauge, monthly cash flow breakdown
 - Loans tab: per-loan detail cards with payment heatmaps and "Pay installment" buttons
 - Cash flow tab: income allocation breakdown
 - Action plan tab: prioritized debt payoff strategy
+- Persistent state: payments survive page reloads (stored in Supabase `loans` table)
+- Optimistic UI: instant feedback on pay/undo, with API sync in background
 
-**Loans tracked:** BOCHK, Mox, Standard Chartered, X Wallet #1 (catch-up plan), X Wallet #2
+**Loans tracked:** BOCHK, Mox, Standard Chartered, X Wallet 80K (catch-up plan), X Wallet 30K
+
+**API:** Single consolidated endpoint at `/api/app/debt` handles:
+- `GET` — fetch all loans from Supabase (snake_case → camelCase mapping)
+- `PUT { action: "pay", loanId }` — record installment payment
+- `PUT { action: "undo", loanId, previous }` — revert last payment
+
+**Supabase `loans` table columns:** `id`, `name`, `borrowed`, `apr`, `monthly`, `paid`, `remaining`, `installments_paid`, `total_installments`, `interest_paid`, `principal_paid`, `interest_remaining`, `avg_payment`, `proper_installment`, `revolving`, `danger`, `color`, `start_year`, `start_month`, `updated_at`
+
+**RLS policies:** Public read + public update (no auth required — personal dashboard)
 
 ### Web App Directory Layout
 
@@ -201,9 +224,10 @@ apps/
   debt/                     # Vite + React source
     index.html              # Entry HTML
     vite.config.js          # Builds to ../../frontend/app/debt/
+    supabase-setup.sql      # Table creation + seed data (run once in Supabase SQL Editor)
     src/
       main.jsx              # React root
-      App.jsx               # FinancialDashboard component (all-in-one)
+      App.jsx               # FinancialDashboard component (fetches from /api/app/debt)
 
 frontend/app/               # Build output (served as static files)
   debt/
