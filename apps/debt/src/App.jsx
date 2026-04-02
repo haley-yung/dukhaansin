@@ -151,7 +151,7 @@ export default function FinancialDashboard() {
 
   // Fetch loans from API on mount
   useEffect(() => {
-    fetch("/api/app/debt/loans")
+    fetch("/api/app/debt")
       .then(r => r.json())
       .then(data => { setLoans(data.loans); setLoading(false); })
       .catch(() => setLoading(false));
@@ -182,7 +182,11 @@ export default function FinancialDashboard() {
     setJustPaidId(id);
 
     // Persist to API
-    const res = await fetch(`/api/app/debt/loans/${id}/pay`, { method: "PUT" });
+    const res = await fetch("/api/app/debt", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "pay", loanId: id }),
+    });
     const data = await res.json();
     if (data.ok) {
       setHistory(prev => [...prev, { loanId: id, previous: data.previous }]);
@@ -208,10 +212,10 @@ export default function FinancialDashboard() {
     setHistory(h => h.slice(0, -1));
 
     // Persist undo to API
-    await fetch(`/api/app/debt/loans/${loanId}/undo`, {
+    await fetch("/api/app/debt", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(previous),
+      body: JSON.stringify({ action: "undo", loanId, previous }),
     });
   };
 
