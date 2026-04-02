@@ -1,21 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-const LOAN_START_DATES = {
-  0: { year: 2024, month: 4 },  // BOCHK - May 2024
-  1: { year: 2024, month: 4 },  // Mox
-  2: { year: 2024, month: 4 },  // SC
-  3: { year: 2025, month: 3 },  // X Wallet #1 - Apr 2025
-  4: { year: 2025, month: 4 },  // X Wallet #2 - May 2025
-};
-
-const INITIAL_LOANS = [
-  { id: 0, name: "BOCHK", monthly: 3728.73, paid: 71407.82, remaining: 128592.18, apr: 4, color: "#3B82F6", installmentsPaid: 23, totalInstallments: 60, borrowed: 200000 },
-  { id: 1, name: "Mox", monthly: 4326.67, paid: 99513.41, remaining: 160086, apr: 5, color: "#10B981", installmentsPaid: 23, totalInstallments: 60, borrowed: 230000 },
-  { id: 2, name: "Standard Chartered", monthly: 6050, paid: 101514.58, remaining: 198485.42, apr: 8, color: "#8B5CF6", installmentsPaid: 23, totalInstallments: 60, borrowed: 300000 },
-  { id: 3, name: "X Wallet #1", monthly: 4552.39, paid: 35316.89, remaining: 75061.35, apr: 39, color: "#EF4444", installmentsPaid: 12, totalInstallments: 36, danger: true, revolving: true, borrowed: 80000, interestPaid: 30378.24, principalPaid: 4938.65, interestRemaining: 34195.98, avgPayment: 2943.07, properInstallment: 3802.27 },
-  { id: 4, name: "X Wallet #2", monthly: 1306, paid: 13060, remaining: 20000, apr: 18, color: "#F97316", installmentsPaid: 10, totalInstallments: 36, revolving: true, borrowed: 30000 },
-];
-
 const INCOME = 42000;
 const FAMILY = 11000;
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -63,12 +47,9 @@ function ProgressRing({ percent, size = 120, stroke = 10, color = "#EF4444", lab
   );
 }
 
-function CalendarHeatmap({ paid, total, color, loanId, justPaid }) {
+function CalendarHeatmap({ paid, total, color, startYear, startMonth, justPaid }) {
   const SQ = 16;
   const GAP = 4;
-  const start = LOAN_START_DATES[loanId];
-  const startYear = start.year;
-  const startMonth = start.month;
   const endMonth = startMonth + total - 1;
   const endYear = startYear + Math.floor(endMonth / 12);
   const years = [];
@@ -163,28 +144,52 @@ function UndoButton({ onClick }) {
 
 export default function FinancialDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [loans, setLoans] = useState(INITIAL_LOANS);
+  const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [justPaidId, setJustPaidId] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState([]); // stores { loanId, previous } for undo
+
+  // Fetch loans from API on mount
+  useEffect(() => {
+    fetch("/api/app/debt/loans")
+      .then(r => r.json())
+      .then(data => { setLoans(data.loans); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   const totalDebt = loans.reduce((s, l) => s + l.remaining, 0);
   const totalMonthly = loans.reduce((s, l) => s + l.monthly, 0);
   const totalBorrowed = loans.reduce((s, l) => s + l.borrowed, 0);
   const totalInstallments = loans.reduce((s, l) => s + l.totalInstallments, 0);
   const totalInstallmentsPaid = loans.reduce((s, l) => s + l.installmentsPaid, 0);
-  const pctPaid = (totalInstallmentsPaid / totalInstallments) * 100;
+  const pctPaid = totalInstallments ? (totalInstallmentsPaid / totalInstallments) * 100 : 0;
   const living = INCOME - totalMonthly - FAMILY;
-  const dsr = (totalMonthly / INCOME) * 100;
+  const dsr = INCOME ? (totalMonthly / INCOME) * 100 : 0;
 
-  const payInstallment = (id) => {
-    setHistory(prev => [...prev, loans.map(l => ({ ...l }))]);
+  const payInstallment = async (id) => {
+    // Optimistically update UI
+    const loan = loans.find(l => l.id === id);
+    if (!loan || loan.installmentsPaid >= loan.totalInstallments) return;
+
+    const interest = loan.remaining * (loan.apr / 100 / 12);
+    const principal = Math.max(loan.monthly - interest, 0);
+    const previous = { installmentsPaid: loan.installmentsPaid, paid: loan.paid, remaining: loan.remaining };
+
     setLoans(prev => prev.map(l => {
-      if (l.id !== id || l.installmentsPaid >= l.totalInstallments) return l;
-      const interest = l.remaining * (l.apr / 100 / 12);
-      const principal = Math.max(l.monthly - interest, 0);
+      if (l.id !== id) return l;
       return { ...l, installmentsPaid: l.installmentsPaid + 1, paid: Math.round((l.paid + l.monthly) * 100) / 100, remaining: Math.max(Math.round((l.remaining - principal) * 100) / 100, 0) };
     }));
     setJustPaidId(id);
+
+    // Persist to API
+    const res = await fetch(`/api/app/debt/loans/${id}/pay`, { method: "PUT" });
+    const data = await res.json();
+    if (data.ok) {
+      setHistory(prev => [...prev, { loanId: id, previous: data.previous }]);
+    } else {
+      // Revert on failure
+      setLoans(prev => prev.map(l => l.id === id ? { ...l, ...previous } : l));
+    }
   };
 
   useEffect(() => {
@@ -193,10 +198,21 @@ export default function FinancialDashboard() {
     return () => clearTimeout(timer);
   }, [justPaidId]);
 
-  const undoLast = () => {
+  const undoLast = async () => {
     if (!history.length) return;
-    setLoans(history[history.length - 1]);
+    const last = history[history.length - 1];
+    const { loanId, previous } = last;
+
+    // Optimistically revert UI
+    setLoans(prev => prev.map(l => l.id === loanId ? { ...l, ...previous } : l));
     setHistory(h => h.slice(0, -1));
+
+    // Persist undo to API
+    await fetch(`/api/app/debt/loans/${loanId}/undo`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(previous),
+    });
   };
 
   const tabs = [
@@ -205,6 +221,16 @@ export default function FinancialDashboard() {
     { id: "cashflow", label: "Cash flow" },
     { id: "action", label: "Action plan" },
   ];
+
+  if (loading) {
+    return (
+      <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#0A0A0F", color: "#6B6B76", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 14, letterSpacing: 2, textTransform: "uppercase" }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#0A0A0F", color: "#E8E6E1", minHeight: "100vh", padding: "0 0 40px" }}>
@@ -402,7 +428,7 @@ export default function FinancialDashboard() {
                     </div>
                     <div className="heatmap-row">
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <CalendarHeatmap paid={loan.installmentsPaid} total={loan.totalInstallments} color={isFullyPaid ? "#10B981" : loan.color} loanId={loan.id} justPaid={wasJustPaid} />
+                        <CalendarHeatmap paid={loan.installmentsPaid} total={loan.totalInstallments} color={isFullyPaid ? "#10B981" : loan.color} startYear={loan.startYear} startMonth={loan.startMonth} justPaid={wasJustPaid} />
                       </div>
                       <div style={{ flexShrink: 0, paddingBottom: 8 }}>
                         <PayButton onClick={() => payInstallment(loan.id)} disabled={isFullyPaid} justPaid={wasJustPaid} />
