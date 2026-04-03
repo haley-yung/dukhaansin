@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // ── Clear stale localStorage from old versions ─────────────────────────────
+const GYM_VERSION = 3;
 try {
-  for (let i = localStorage.length - 1; i >= 0; i--) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith('gym_checklist_')) {
-      const raw = JSON.parse(localStorage.getItem(k));
-      if (raw && ('logged' in raw || 'workoutId' in raw || 'finalized' in raw)) {
-        localStorage.removeItem(k);
-      }
+  if (Number(localStorage.getItem('gym_v')) !== GYM_VERSION) {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('gym_checklist_')) localStorage.removeItem(k);
     }
+    localStorage.setItem('gym_v', String(GYM_VERSION));
   }
 } catch {}
 
