@@ -428,16 +428,40 @@ function SmallCheck({ checked, color }) {
 }
 
 function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, todayLogged }) {
-  const [selectedType, setSelectedType] = useState(null);
-  // setChecked tracks per-set: { [exId]: [bool, bool, bool] }
-  const [setChecked, setSetChecked] = useState({});
-  // weights tracks per-exercise weight: { [exId]: number|'' }
-  const [weights, setWeights] = useState({});
-  const [logged, setLogged] = useState(false);
+  const storageKey = `gym_checklist_${today()}`;
+
+  // Restore state from localStorage on mount (survives iOS Safari tab suspension)
+  const saved = useRef(null);
+  if (saved.current === null) {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      saved.current = raw ? JSON.parse(raw) : {};
+    } catch { saved.current = {}; }
+  }
+
+  const [selectedType, setSelectedType] = useState(saved.current.type || null);
+  const [setChecked, setSetChecked] = useState(saved.current.checks || {});
+  const [weights, setWeights] = useState(saved.current.weights || {});
+  const [logged, setLogged] = useState(saved.current.logged || false);
+
+  // Persist to localStorage whenever state changes
+  useEffect(() => {
+    const data = { type: selectedType, checks: setChecked, weights, logged };
+    try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
+  }, [selectedType, setChecked, weights, logged, storageKey]);
+
+  // Clean up old days' entries
+  useEffect(() => {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('gym_checklist_') && k !== storageKey) localStorage.removeItem(k);
+      }
+    } catch {}
+  }, [storageKey]);
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-  // Count exercises where all sets are done
   const exerciseDoneCount = typeExercises.filter(ex => {
     const numSets = ex.sets || 1;
     const checks = setChecked[ex.id];
@@ -465,12 +489,10 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
       arr[setIdx] = !wasChecked;
       const next = { ...prev, [exId]: arr };
 
-      // If checking a set (not unchecking), trigger rest timer
       if (!wasChecked && ex.restSeconds) {
         onStartTimer(ex.restSeconds);
       }
 
-      // Auto-log: when first set is checked anywhere, log the workout
       if (!wasChecked && !logged && !todayLogged) {
         setLogged(true);
         onAutoLog(selectedType, exercises, weights);
