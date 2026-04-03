@@ -442,15 +442,18 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
   const [selectedType, setSelectedType] = useState(saved.current.type || null);
   const [setChecked, setSetChecked] = useState(saved.current.checks || {});
   const [weights, setWeights] = useState(saved.current.weights || {});
-  const [logged, setLogged] = useState(saved.current.logged || false);
   const [workoutId, setWorkoutId] = useState(saved.current.workoutId || null);
   const [finalized, setFinalized] = useState(saved.current.finalized || false);
 
+  // The workout ID is either from our auto-log or from an existing today's workout
+  const effectiveId = workoutId || (todayLogged && todayLogged.id) || null;
+  const hasWorkout = !!effectiveId;
+
   // Persist to localStorage whenever state changes
   useEffect(() => {
-    const data = { type: selectedType, checks: setChecked, weights, logged, workoutId, finalized };
+    const data = { type: selectedType, checks: setChecked, weights, workoutId, finalized };
     try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
-  }, [selectedType, setChecked, weights, logged, workoutId, finalized, storageKey]);
+  }, [selectedType, setChecked, weights, workoutId, finalized, storageKey]);
 
   // Clean up old days' entries
   useEffect(() => {
@@ -481,7 +484,8 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
     });
     setSetChecked(init);
     setWeights(initWeights);
-    setLogged(false);
+    setWorkoutId(null);
+    setFinalized(false);
   };
 
   const toggleSet = (exId, setIdx, ex) => {
@@ -495,9 +499,8 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
         onStartTimer(ex.restSeconds);
       }
 
-      // Auto-log on first tick: create the workout record
-      if (!wasChecked && !logged && !todayLogged) {
-        setLogged(true);
+      // Auto-log on first tick: create the workout record if none exists
+      if (!wasChecked && !hasWorkout) {
         onAutoLog(selectedType, exercises).then(id => {
           if (id) setWorkoutId(id);
         });
@@ -507,29 +510,28 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
     });
   };
 
-  // Finalize: push complete data when all sets are done
-  const typeExsForFinalize = typeExercises;
+  // Finalize: push complete data with weights when all sets are done
   useEffect(() => {
-    if (!finalized && logged && typeExsForFinalize.length > 0) {
-      const allComplete = typeExsForFinalize.every(ex => {
+    if (!finalized && typeExercises.length > 0) {
+      const allComplete = typeExercises.every(ex => {
         const numSets = ex.sets || 1;
         const checks = setChecked[ex.id];
         return checks && checks.length >= numSets && checks.every(Boolean);
       });
       if (allComplete) {
-        setFinalized(true);
-        // Use workoutId from auto-log, or find today's workout from props
         const id = workoutId || (todayLogged && todayLogged.id);
-        if (id) onFinalize(id, exercises, selectedType, weights);
+        if (id) {
+          setFinalized(true);
+          onFinalize(id, exercises, selectedType, weights);
+        }
       }
     }
-  }, [setChecked, finalized, logged, typeExsForFinalize, workoutId, todayLogged, exercises, selectedType, weights, onFinalize]);
+  }, [setChecked, finalized, typeExercises, workoutId, todayLogged, exercises, selectedType, weights, onFinalize]);
 
   const reset = () => {
     setSelectedType(null);
     setSetChecked({});
     setWeights({});
-    setLogged(false);
     setWorkoutId(null);
     setFinalized(false);
   };
