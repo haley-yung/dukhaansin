@@ -167,10 +167,11 @@ function typeLabel(type) {
 
 // ── Heatmap Component ───────────────────────────────────────────────────────
 function Heatmap({ workouts }) {
+  const scrollRef = useRef(null);
   const cellSize = 13;
   const gap = 2;
   const step = cellSize + gap;
-  const weeks = 52;
+  const weeks = 53;
   const days = 7;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
@@ -230,10 +231,14 @@ function Heatmap({ workouts }) {
   const svgWidth = weeks * step + 35;
   const svgHeight = days * step + 30;
 
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+  }, [workouts]);
+
   return (
     <div style={{ ...cardStyle, padding: 12 }}>
       <div style={labelStyle}>Training Heatmap</div>
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {monthLabels.map((m, i) => (
             <text key={i} x={m.x} y={14} fill={T.muted} fontSize={10} fontFamily={T.font}>{m.label}</text>
