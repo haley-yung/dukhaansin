@@ -170,7 +170,6 @@ function Heatmap({ workouts }) {
   const cellSize = 13;
   const gap = 2;
   const step = cellSize + gap;
-  const weeks = 53;
   const days = 7;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
@@ -180,7 +179,11 @@ function Heatmap({ workouts }) {
   const todayDay = todayDate.getDay();
   const endOffset = todayDay === 0 ? 6 : todayDay - 1;
 
-  const scrollRef = useRef(null);
+  // Start from March 29, 2026 — heatmap grows each week
+  const startFrom = new Date(2026, 2, 29);
+  startFrom.setHours(0, 0, 0, 0);
+  const totalDays = Math.floor((todayDate - startFrom) / (1000 * 60 * 60 * 24));
+  const weeks = Math.max(Math.ceil((totalDays + endOffset + 1) / 7), 1);
 
   const workoutMap = {};
   (workouts || []).forEach(w => {
@@ -193,17 +196,20 @@ function Heatmap({ workouts }) {
   let lastMonth = -1;
 
   for (let col = 0; col < weeks; col++) {
+    let colLabelPlaced = false;
     for (let row = 0; row < days; row++) {
       const daysAgo = (weeks - 1 - col) * 7 + (endOffset - row);
       if (daysAgo < 0) continue;
       const date = new Date(todayDate);
       date.setDate(date.getDate() - daysAgo);
+      if (date < startFrom) continue;
       const key = toDateStr(date);
       const type = workoutMap[key];
       const fill = type ? TYPE_COLORS[type] : 'rgba(255,255,255,0.03)';
       const isToday = daysAgo === 0;
 
-      if (row === 0) {
+      if (!colLabelPlaced) {
+        colLabelPlaced = true;
         const m = date.getMonth();
         if (m !== lastMonth) {
           lastMonth = m;
@@ -232,14 +238,10 @@ function Heatmap({ workouts }) {
   const svgWidth = weeks * step + 35;
   const svgHeight = days * step + 30;
 
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-  }, [workouts]);
-
   return (
     <div style={{ ...cardStyle, padding: 12 }}>
       <div style={labelStyle}>Training Heatmap</div>
-      <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {monthLabels.map((m, i) => (
             <text key={i} x={m.x} y={14} fill={T.muted} fontSize={10} fontFamily={T.font}>{m.label}</text>
