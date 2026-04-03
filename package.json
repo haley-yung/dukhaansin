@@ -4,7 +4,7 @@
   "private": true,
   "description": "Photography portfolio — Vercel + Cloudflare R2",
   "scripts": {
-    "build": "cd apps/gym && npm install && npm run build"
+    "build": "cd apps/debt && npm install && npm run build && cd ../gym && npm install && npm run build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.500.0",

@@ -65,7 +65,10 @@ function fmtShort(d) {
 
 function toDateStr(d) {
   const dt = new Date(d);
-  return dt.toISOString().split('T')[0];
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function today() {
@@ -190,6 +193,7 @@ function Heatmap({ workouts }) {
   for (let col = 0; col < weeks; col++) {
     for (let row = 0; row < days; row++) {
       const daysAgo = (weeks - 1 - col) * 7 + (endOffset - row);
+      if (daysAgo < 0) continue; // skip future dates
       const date = new Date(todayDate);
       date.setDate(date.getDate() - daysAgo);
       const key = toDateStr(date);
@@ -407,6 +411,8 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
   const [selectedType, setSelectedType] = useState(null);
   // setChecked tracks per-set: { [exId]: [bool, bool, bool] }
   const [setChecked, setSetChecked] = useState({});
+  // weights tracks per-exercise weight: { [exId]: number|'' }
+  const [weights, setWeights] = useState({});
   const [logged, setLogged] = useState(false);
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -421,12 +427,14 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
 
   const selectType = (t) => {
     setSelectedType(t);
-    // Initialize set checkboxes for all exercises
     const init = {};
+    const initWeights = {};
     (exercises || []).filter(e => e.type === t).forEach(ex => {
       init[ex.id] = new Array(ex.sets || 1).fill(false);
+      initWeights[ex.id] = '';
     });
     setSetChecked(init);
+    setWeights(initWeights);
     setLogged(false);
   };
 
@@ -445,7 +453,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
       // Auto-log: when first set is checked anywhere, log the workout
       if (!wasChecked && !logged && !todayLogged) {
         setLogged(true);
-        onAutoLog(selectedType, exercises);
+        onAutoLog(selectedType, exercises, weights);
       }
 
       return next;
@@ -455,6 +463,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
   const reset = () => {
     setSelectedType(null);
     setSetChecked({});
+    setWeights({});
     setLogged(false);
   };
 
@@ -566,6 +575,25 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
                   {fmtRest ? ` · ${fmtRest} rest` : ''}
                 </div>
               </div>
+
+              {/* Weight input */}
+              {!isWarmup && (
+                <div style={{ flexShrink: 0, width: 64 }}>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="kg"
+                    value={weights[ex.id] || ''}
+                    onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
+                    style={{
+                      width: '100%', padding: '5px 6px', fontSize: 12,
+                      fontFamily: T.mono, color: T.text,
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 6, outline: 'none', textAlign: 'center',
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Per-set checkboxes */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -1633,16 +1661,19 @@ export default function GymTracker() {
     fetchAll();
   };
 
-  const handleAutoLog = async (type, allExercises) => {
+  const handleAutoLog = async (type, allExercises, weightsMap) => {
     const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    const exerciseData = typeExes.map(ex => ({
-      exerciseId: ex.id,
-      name: ex.name,
-      sets: Array.from({ length: ex.sets || 1 }, () => ({
-        reps: ex.reps || null,
-        weight: null,
-      })),
-    }));
+    const exerciseData = typeExes.map(ex => {
+      const w = weightsMap && weightsMap[ex.id] ? parseFloat(weightsMap[ex.id]) || null : null;
+      return {
+        exerciseId: ex.id,
+        name: ex.name,
+        sets: Array.from({ length: ex.sets || 1 }, () => ({
+          reps: ex.reps || null,
+          weight: w,
+        })),
+      };
+    });
     await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
     fetchAll();
   };

@@ -21,6 +21,8 @@
     }
   ],
   "rewrites": [
+    { "source": "/app", "destination": "/app/index.html" },
+    { "source": "/app/debt", "destination": "/app/debt/index.html" },
     { "source": "/app/gym", "destination": "/app/gym/index.html" },
     { "source": "/album/:slug", "destination": "/album.html" },
     { "source": "/admin/login", "destination": "/admin/login.html" },
