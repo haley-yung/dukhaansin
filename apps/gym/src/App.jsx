@@ -170,20 +170,31 @@ function Heatmap({ workouts }) {
   const cellSize = 13;
   const gap = 2;
   const step = cellSize + gap;
-  const days = 7;
+  const labelW = 30;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const todayDate = new Date();
   todayDate.setHours(0, 0, 0, 0);
-  const todayDay = todayDate.getDay();
-  const endOffset = todayDay === 0 ? 6 : todayDay - 1;
 
-  // Start from March 29, 2026 — heatmap grows each week
-  const startFrom = new Date(2026, 2, 29);
-  startFrom.setHours(0, 0, 0, 0);
-  const totalDays = Math.floor((todayDate - startFrom) / (1000 * 60 * 60 * 24));
-  const weeks = Math.max(Math.ceil((totalDays + endOffset + 1) / 7), 1);
+  // Fixed range: March 29 to December 31, 2026
+  const rangeStart = new Date(2026, 2, 29); // March 29 (Sun)
+  rangeStart.setHours(0, 0, 0, 0);
+  const rangeEnd = new Date(2026, 11, 31); // December 31
+  rangeEnd.setHours(0, 0, 0, 0);
+
+  // Grid starts on the Monday of the week containing rangeStart
+  const startDay = rangeStart.getDay(); // 0=Sun
+  const mondayOffset = startDay === 0 ? 6 : startDay - 1;
+  const gridStart = new Date(rangeStart);
+  gridStart.setDate(gridStart.getDate() - mondayOffset);
+
+  // Grid ends on the Sunday of the week containing rangeEnd
+  const endDay = rangeEnd.getDay();
+  const gridEnd = new Date(rangeEnd);
+  if (endDay !== 0) gridEnd.setDate(gridEnd.getDate() + (7 - endDay));
+
+  const weeks = Math.round((gridEnd - gridStart) / (1000 * 60 * 60 * 24) / 7);
 
   const workoutMap = {};
   (workouts || []).forEach(w => {
@@ -197,30 +208,29 @@ function Heatmap({ workouts }) {
 
   for (let col = 0; col < weeks; col++) {
     let colLabelPlaced = false;
-    for (let row = 0; row < days; row++) {
-      const daysAgo = (weeks - 1 - col) * 7 + (endOffset - row);
-      if (daysAgo < 0) continue;
-      const date = new Date(todayDate);
-      date.setDate(date.getDate() - daysAgo);
-      if (date < startFrom) continue;
+    for (let row = 0; row < 7; row++) {
+      const date = new Date(gridStart);
+      date.setDate(date.getDate() + col * 7 + row);
+      if (date < rangeStart || date > rangeEnd) continue;
       const key = toDateStr(date);
       const type = workoutMap[key];
-      const fill = type ? TYPE_COLORS[type] : 'rgba(255,255,255,0.03)';
-      const isToday = daysAgo === 0;
+      const isFuture = date > todayDate;
+      const fill = type ? TYPE_COLORS[type] : isFuture ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)';
+      const isToday = toDateStr(date) === toDateStr(todayDate);
 
       if (!colLabelPlaced) {
         colLabelPlaced = true;
         const m = date.getMonth();
         if (m !== lastMonth) {
           lastMonth = m;
-          monthLabels.push({ label: months[m], x: col * step + 30 });
+          monthLabels.push({ label: months[m], x: col * step + labelW });
         }
       }
 
       cells.push(
         <rect
           key={key}
-          x={col * step + 30}
+          x={col * step + labelW}
           y={row * step + 20}
           width={cellSize}
           height={cellSize}
@@ -229,14 +239,14 @@ function Heatmap({ workouts }) {
           stroke={isToday ? '#fff' : 'none'}
           strokeWidth={isToday ? 1.5 : 0}
         >
-          <title>{`${key}${type ? ` - ${type}` : ''}`}</title>
+          <title>{`${key}${type ? ` — ${typeLabel(type)}` : ''}`}</title>
         </rect>
       );
     }
   }
 
-  const svgWidth = weeks * step + 35;
-  const svgHeight = days * step + 30;
+  const svgWidth = weeks * step + labelW + 5;
+  const svgHeight = 7 * step + 30;
 
   return (
     <div style={{ ...cardStyle, padding: 12 }}>
@@ -247,7 +257,7 @@ function Heatmap({ workouts }) {
             <text key={i} x={m.x} y={14} fill={T.muted} fontSize={10} fontFamily={T.font}>{m.label}</text>
           ))}
           {dayLabels.map((label, i) => (
-            label && <text key={i} x={0} y={i * step + 20 + cellSize - 2} fill={T.muted} fontSize={10} fontFamily={T.font}>{label}</text>
+            <text key={i} x={0} y={i * step + 20 + cellSize - 2} fill={T.muted} fontSize={10} fontFamily={T.font}>{label}</text>
           ))}
           {cells}
         </svg>
