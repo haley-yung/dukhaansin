@@ -663,11 +663,22 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
       })}
 
       {allDone && (
-        <div style={{
-          textAlign: 'center', padding: '16px 0 4px',
-          color: TYPE_COLORS[selectedType], fontFamily: T.font, fontSize: 15, fontWeight: 500,
-        }}>
-          Workout complete!
+        <div style={{ textAlign: 'center', padding: '16px 0 4px' }}>
+          <div style={{
+            color: TYPE_COLORS[selectedType], fontFamily: T.font, fontSize: 15, fontWeight: 500,
+            marginBottom: 12,
+          }}>
+            Workout complete!
+          </div>
+          <button
+            style={{
+              ...btnStyle, padding: '10px 24px', fontSize: 13,
+              color: T.secondary, border: `1px solid ${T.darkMuted}`,
+            }}
+            onClick={reset}
+          >
+            Done
+          </button>
         </div>
       )}
     </div>
