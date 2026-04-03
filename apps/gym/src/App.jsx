@@ -385,43 +385,100 @@ function PRList({ records, limit, glow }) {
 }
 
 // ── Dashboard Tab ───────────────────────────────────────────────────────────
-function WorkoutChecklist({ exercises, onLogRest }) {
+function SmallCheck({ checked, color }) {
+  return (
+    <div style={{
+      width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+      border: checked ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.12)',
+      background: checked ? color : 'transparent',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'all 0.15s', cursor: 'pointer',
+    }}>
+      {checked && (
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, todayLogged }) {
   const [selectedType, setSelectedType] = useState(null);
-  const [checked, setChecked] = useState({});
+  // setChecked tracks per-set: { [exId]: [bool, bool, bool] }
+  const [setChecked, setSetChecked] = useState({});
+  const [logged, setLogged] = useState(false);
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  const allChecked = typeExercises.length > 0 && typeExercises.every(e => checked[e.id]);
-  const checkedCount = typeExercises.filter(e => checked[e.id]).length;
 
-  const toggleCheck = (id) => {
-    setChecked(prev => ({ ...prev, [id]: !prev[id] }));
+  // Count exercises where all sets are done
+  const exerciseDoneCount = typeExercises.filter(ex => {
+    const numSets = ex.sets || 1;
+    const checks = setChecked[ex.id];
+    return checks && checks.length >= numSets && checks.every(Boolean);
+  }).length;
+  const allDone = typeExercises.length > 0 && exerciseDoneCount === typeExercises.length;
+
+  const selectType = (t) => {
+    setSelectedType(t);
+    // Initialize set checkboxes for all exercises
+    const init = {};
+    (exercises || []).filter(e => e.type === t).forEach(ex => {
+      init[ex.id] = new Array(ex.sets || 1).fill(false);
+    });
+    setSetChecked(init);
+    setLogged(false);
+  };
+
+  const toggleSet = (exId, setIdx, ex) => {
+    setSetChecked(prev => {
+      const arr = [...(prev[exId] || [])];
+      const wasChecked = arr[setIdx];
+      arr[setIdx] = !wasChecked;
+      const next = { ...prev, [exId]: arr };
+
+      // If checking a set (not unchecking), trigger rest timer
+      if (!wasChecked && ex.restSeconds) {
+        onStartTimer(ex.restSeconds);
+      }
+
+      // Auto-log: when first set is checked anywhere, log the workout
+      if (!wasChecked && !logged && !todayLogged) {
+        setLogged(true);
+        onAutoLog(selectedType, exercises);
+      }
+
+      return next;
+    });
   };
 
   const reset = () => {
     setSelectedType(null);
-    setChecked({});
+    setSetChecked({});
+    setLogged(false);
   };
 
   if (!selectedType) {
     return (
       <div style={cardStyle}>
         <div style={labelStyle}>Today's Workout</div>
+        {todayLogged ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={typeBadge(todayLogged.type)}>{typeLabel(todayLogged.type)}</span>
+            <span style={{ color: T.secondary, fontSize: 13, fontFamily: T.font }}>Logged today</span>
+          </div>
+        ) : null}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 8 }}>
           {TRAINING_TYPES.map(t => (
             <button
               key={t}
               style={{
                 ...btnStyle,
-                padding: '14px 12px',
-                fontSize: 13,
-                background: TYPE_COLORS[t],
-                border: `1px solid ${TYPE_COLORS[t]}`,
-                color: '#fff',
-                fontWeight: 500,
-                textAlign: 'center',
-                lineHeight: 1.3,
+                padding: '14px 12px', fontSize: 13,
+                background: TYPE_COLORS[t], border: `1px solid ${TYPE_COLORS[t]}`,
+                color: '#fff', fontWeight: 500, textAlign: 'center', lineHeight: 1.3,
               }}
-              onClick={() => setSelectedType(t)}
+              onClick={() => selectType(t)}
             >
               {typeLabel(t)}
             </button>
@@ -437,6 +494,9 @@ function WorkoutChecklist({ exercises, onLogRest }) {
     );
   }
 
+  // Exercise numbering: warmup = W, rest numbered starting from 1
+  let exerciseNum = 0;
+
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -444,7 +504,7 @@ function WorkoutChecklist({ exercises, onLogRest }) {
           <div style={labelStyle}>Today's Workout</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={typeBadge(selectedType)}>{typeLabel(selectedType)}</span>
-            <span style={{ color: T.muted, fontSize: 12, fontFamily: T.mono }}>{checkedCount}/{typeExercises.length}</span>
+            <span style={{ color: T.muted, fontSize: 12, fontFamily: T.mono }}>{exerciseDoneCount}/{typeExercises.length}</span>
           </div>
         </div>
         <button style={{ ...btnStyle, padding: '6px 12px', fontSize: 12 }} onClick={reset}>Change</button>
@@ -454,76 +514,76 @@ function WorkoutChecklist({ exercises, onLogRest }) {
       <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 14 }}>
         <div style={{
           height: '100%',
-          width: typeExercises.length > 0 ? `${(checkedCount / typeExercises.length) * 100}%` : '0%',
-          background: TYPE_COLORS[selectedType],
-          borderRadius: 2,
-          transition: 'width 0.3s ease',
+          width: typeExercises.length > 0 ? `${(exerciseDoneCount / typeExercises.length) * 100}%` : '0%',
+          background: TYPE_COLORS[selectedType], borderRadius: 2, transition: 'width 0.3s ease',
         }} />
       </div>
 
       {typeExercises.map((ex, i) => {
-        const isChecked = !!checked[ex.id];
         const isWarmup = ex.sortOrder === 0;
+        if (!isWarmup) exerciseNum++;
+        const numSets = ex.sets || 1;
+        const checks = setChecked[ex.id] || new Array(numSets).fill(false);
+        const allSetsChecked = checks.length >= numSets && checks.every(Boolean);
+        const fmtRest = ex.restSeconds ? (ex.restSeconds >= 120 ? `${ex.restSeconds / 60}min` : `${ex.restSeconds}s`) : null;
+
         return (
           <div
             key={ex.id}
-            onClick={() => toggleCheck(ex.id)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 8px',
+              padding: '10px 0',
               borderBottom: i < typeExercises.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-              cursor: 'pointer',
-              opacity: isChecked ? 0.5 : 1,
+              opacity: allSetsChecked ? 0.45 : 1,
               transition: 'opacity 0.2s',
             }}
           >
-            {/* Checkbox */}
-            <div style={{
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              border: isChecked ? `2px solid ${TYPE_COLORS[selectedType]}` : '2px solid rgba(255,255,255,0.15)',
-              background: isChecked ? TYPE_COLORS[selectedType] : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'all 0.2s',
-            }}>
-              {isChecked && (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </div>
-
-            {/* Exercise info */}
-            <div style={{ flex: 1 }}>
-              <div style={{
-                color: isChecked ? T.muted : T.text,
-                fontSize: 14,
-                fontFamily: T.font,
-                fontWeight: isWarmup ? 400 : 500,
-                fontStyle: isWarmup ? 'italic' : 'normal',
-                textDecoration: isChecked ? 'line-through' : 'none',
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* Primary checkbox */}
+              <div onClick={() => {
+                // Toggle all sets at once
+                setSetChecked(prev => {
+                  const arr = prev[ex.id] || new Array(numSets).fill(false);
+                  const allDone = arr.every(Boolean);
+                  return { ...prev, [ex.id]: new Array(numSets).fill(!allDone) };
+                });
               }}>
-                {isWarmup ? `W. ${ex.name}` : `${i === 0 ? 1 : i}. ${ex.name}`}
+                <SmallCheck checked={allSetsChecked} color={TYPE_COLORS[selectedType]} />
+              </div>
+
+              {/* Exercise info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  color: allSetsChecked ? T.muted : T.text,
+                  fontSize: 14, fontFamily: T.font,
+                  fontWeight: isWarmup ? 400 : 500,
+                  fontStyle: isWarmup ? 'italic' : 'normal',
+                  textDecoration: allSetsChecked ? 'line-through' : 'none',
+                }}>
+                  {isWarmup ? `W. ${ex.name}` : `${exerciseNum}. ${ex.name}`}
+                </div>
+                <div style={{ fontSize: 12, color: T.muted, fontFamily: T.mono, marginTop: 2 }}>
+                  {ex.sets ? `${ex.sets}×${ex.reps}` : ex.reps}
+                  {fmtRest ? ` · ${fmtRest} rest` : ''}
+                </div>
+              </div>
+
+              {/* Per-set checkboxes */}
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {Array.from({ length: numSets }).map((_, si) => (
+                  <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
+                    <SmallCheck checked={!!checks[si]} color={TYPE_COLORS[selectedType]} />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         );
       })}
 
-      {allChecked && typeExercises.length > 0 && (
+      {allDone && (
         <div style={{
-          textAlign: 'center',
-          padding: '16px 0 4px',
-          color: TYPE_COLORS[selectedType],
-          fontFamily: T.font,
-          fontSize: 15,
-          fontWeight: 500,
+          textAlign: 'center', padding: '16px 0 4px',
+          color: TYPE_COLORS[selectedType], fontFamily: T.font, fontSize: 15, fontWeight: 500,
         }}>
           Workout complete!
         </div>
@@ -532,12 +592,24 @@ function WorkoutChecklist({ exercises, onLogRest }) {
   );
 }
 
-function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, newPRs }) {
+function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onAutoLog, newPRs }) {
+  const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
+
+  const handleStartTimer = (seconds) => {
+    setTimerState({ seconds, total: seconds, running: true, collapsed: false });
+  };
+
   return (
     <div>
       <Heatmap workouts={workouts} />
 
-      <WorkoutChecklist exercises={exercises} onLogRest={onLogRest} />
+      <WorkoutChecklist
+        exercises={exercises}
+        onLogRest={onLogRest}
+        onStartTimer={handleStartTimer}
+        onAutoLog={onAutoLog}
+        todayLogged={todayWorkout}
+      />
 
       <RestTimer timerState={timerState} setTimerState={setTimerState} />
 
@@ -1561,6 +1633,20 @@ export default function GymTracker() {
     fetchAll();
   };
 
+  const handleAutoLog = async (type, allExercises) => {
+    const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    const exerciseData = typeExes.map(ex => ({
+      exerciseId: ex.id,
+      name: ex.name,
+      sets: Array.from({ length: ex.sets || 1 }, () => ({
+        reps: ex.reps || null,
+        weight: null,
+      })),
+    }));
+    await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
+    fetchAll();
+  };
+
   const handleWorkoutSaved = (result) => {
     setShowLogger(false);
     if (result && result.newPRs && result.newPRs.length > 0) {
@@ -1693,6 +1779,7 @@ export default function GymTracker() {
               timerState={timerState}
               setTimerState={setTimerState}
               onLogRest={handleLogRest}
+              onAutoLog={handleAutoLog}
               newPRs={newPRs}
             />
           )}
