@@ -427,7 +427,7 @@ function SmallCheck({ checked, color }) {
   );
 }
 
-function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, todayLogged }) {
+function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFinalize, todayLogged }) {
   const storageKey = `gym_checklist_${today()}`;
 
   // Restore state from localStorage on mount (survives iOS Safari tab suspension)
@@ -443,12 +443,14 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
   const [setChecked, setSetChecked] = useState(saved.current.checks || {});
   const [weights, setWeights] = useState(saved.current.weights || {});
   const [logged, setLogged] = useState(saved.current.logged || false);
+  const [workoutId, setWorkoutId] = useState(saved.current.workoutId || null);
+  const [finalized, setFinalized] = useState(saved.current.finalized || false);
 
   // Persist to localStorage whenever state changes
   useEffect(() => {
-    const data = { type: selectedType, checks: setChecked, weights, logged };
+    const data = { type: selectedType, checks: setChecked, weights, logged, workoutId, finalized };
     try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
-  }, [selectedType, setChecked, weights, logged, storageKey]);
+  }, [selectedType, setChecked, weights, logged, workoutId, finalized, storageKey]);
 
   // Clean up old days' entries
   useEffect(() => {
@@ -493,20 +495,43 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
         onStartTimer(ex.restSeconds);
       }
 
+      // Auto-log on first tick: create the workout record
       if (!wasChecked && !logged && !todayLogged) {
         setLogged(true);
-        onAutoLog(selectedType, exercises, weights);
+        onAutoLog(selectedType, exercises).then(id => {
+          if (id) setWorkoutId(id);
+        });
       }
 
       return next;
     });
   };
 
+  // Finalize: push complete data when all sets are done
+  const typeExsForFinalize = typeExercises;
+  useEffect(() => {
+    if (!finalized && logged && typeExsForFinalize.length > 0) {
+      const allComplete = typeExsForFinalize.every(ex => {
+        const numSets = ex.sets || 1;
+        const checks = setChecked[ex.id];
+        return checks && checks.length >= numSets && checks.every(Boolean);
+      });
+      if (allComplete) {
+        setFinalized(true);
+        // Use workoutId from auto-log, or find today's workout from props
+        const id = workoutId || (todayLogged && todayLogged.id);
+        if (id) onFinalize(id, exercises, selectedType, weights);
+      }
+    }
+  }, [setChecked, finalized, logged, typeExsForFinalize, workoutId, todayLogged, exercises, selectedType, weights, onFinalize]);
+
   const reset = () => {
     setSelectedType(null);
     setSetChecked({});
     setWeights({});
     setLogged(false);
+    setWorkoutId(null);
+    setFinalized(false);
   };
 
   if (!selectedType) {
@@ -659,7 +684,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
   );
 }
 
-function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onAutoLog, newPRs }) {
+function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onAutoLog, onFinalize, newPRs }) {
   const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
 
   const handleStartTimer = (seconds) => {
@@ -675,6 +700,7 @@ function DashboardTab({ workouts, records, exercises, timerState, setTimerState,
         onLogRest={onLogRest}
         onStartTimer={handleStartTimer}
         onAutoLog={onAutoLog}
+        onFinalize={onFinalize}
         todayLogged={todayWorkout}
       />
 
@@ -1700,20 +1726,37 @@ export default function GymTracker() {
     fetchAll();
   };
 
-  const handleAutoLog = async (type, allExercises, weightsMap) => {
+  const handleAutoLog = async (type, allExercises) => {
+    // Create workout with empty exercises — just to mark the date/type on the heatmap
+    const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    const exerciseData = typeExes.map(ex => ({
+      exerciseId: ex.id,
+      name: ex.name,
+      sets: Array.from({ length: ex.sets || 1 }, () => ({ reps: ex.reps || null, weight: null })),
+    }));
+    const result = await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
+    fetchAll();
+    // Return the workout ID so the checklist can store it for the final update
+    return result?.workout?.id || null;
+  };
+
+  const handleWorkoutFinalize = async (workoutId, allExercises, type, weightsMap) => {
+    if (!workoutId) return;
     const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     const exerciseData = typeExes.map(ex => {
       const w = weightsMap && weightsMap[ex.id] ? parseFloat(weightsMap[ex.id]) || null : null;
       return {
         exerciseId: ex.id,
         name: ex.name,
-        sets: Array.from({ length: ex.sets || 1 }, () => ({
-          reps: ex.reps || null,
-          weight: w,
-        })),
+        sets: Array.from({ length: ex.sets || 1 }, () => ({ reps: ex.reps || null, weight: w })),
       };
     });
-    await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
+    const result = await api('workouts', 'PUT', { exercises: exerciseData }, workoutId);
+    if (result?.newPRs?.length > 0) {
+      setCelebratePRs(result.newPRs);
+      setNewPRs(result.newPRs.map(pr => pr.id));
+      setTimeout(() => setNewPRs([]), 5000);
+    }
     fetchAll();
   };
 
@@ -1850,6 +1893,7 @@ export default function GymTracker() {
               setTimerState={setTimerState}
               onLogRest={handleLogRest}
               onAutoLog={handleAutoLog}
+              onFinalize={handleWorkoutFinalize}
               newPRs={newPRs}
             />
           )}

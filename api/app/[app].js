@@ -234,6 +234,62 @@ async function handleWorkouts(req, res) {
     return res.status(201).json({ ok: true, workout: rowToCamel(workout), newPRs });
   }
 
+  if (req.method === 'PUT') {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const { exercises, notes } = req.body || {};
+
+    const updates = {};
+    if (exercises !== undefined) updates.exercises = exercises;
+    if (notes !== undefined) updates.notes = notes;
+
+    const { data: workout, error } = await supabase.from('workouts')
+      .update(updates).eq('id', id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Auto-detect PRs from updated exercises
+    const newPRs = [];
+    if (Array.isArray(exercises)) {
+      for (const exercise of exercises) {
+        const exName = exercise.name;
+        if (!exName) continue;
+
+        let bestWeight = 0;
+        let bestReps = 0;
+        for (const set of (exercise.sets || [])) {
+          const w = parseFloat(set.weight) || 0;
+          if (w > bestWeight) {
+            bestWeight = w;
+            bestReps = parseInt(set.reps) || 0;
+          }
+        }
+        if (bestWeight <= 0) continue;
+
+        const { data: currentPR } = await supabase
+          .from('personal_records')
+          .select('weight')
+          .eq('exercise_name', exName)
+          .order('weight', { ascending: false })
+          .limit(1)
+          .single();
+
+        const currentMax = currentPR ? parseFloat(currentPR.weight) : 0;
+        if (bestWeight > currentMax) {
+          const { data: pr, error: prError } = await supabase.from('personal_records').insert({
+            exercise_name: exName,
+            weight: bestWeight,
+            reps: bestReps,
+            date: workout.date,
+            workout_id: workout.id,
+          }).select().single();
+          if (!prError && pr) newPRs.push(rowToCamel(pr));
+        }
+      }
+    }
+
+    return res.json({ ok: true, workout: rowToCamel(workout), newPRs });
+  }
+
   if (req.method === 'DELETE') {
     const id = req.query.id;
     if (!id) return res.status(400).json({ error: 'Missing id' });
