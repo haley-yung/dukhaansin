@@ -167,7 +167,6 @@ function typeLabel(type) {
 
 // ── Heatmap Component ───────────────────────────────────────────────────────
 function Heatmap({ workouts }) {
-  const scrollRef = useRef(null);
   const cellSize = 13;
   const gap = 2;
   const step = cellSize + gap;
@@ -180,6 +179,8 @@ function Heatmap({ workouts }) {
   todayDate.setHours(0, 0, 0, 0);
   const todayDay = todayDate.getDay();
   const endOffset = todayDay === 0 ? 6 : todayDay - 1;
+
+  const scrollRef = useRef(null);
 
   const workoutMap = {};
   (workouts || []).forEach(w => {
@@ -194,7 +195,7 @@ function Heatmap({ workouts }) {
   for (let col = 0; col < weeks; col++) {
     for (let row = 0; row < days; row++) {
       const daysAgo = (weeks - 1 - col) * 7 + (endOffset - row);
-      if (daysAgo < 0) continue; // skip future dates
+      if (daysAgo < 0) continue;
       const date = new Date(todayDate);
       date.setDate(date.getDate() - daysAgo);
       const key = toDateStr(date);
