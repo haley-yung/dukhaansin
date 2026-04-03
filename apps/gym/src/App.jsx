@@ -427,7 +427,7 @@ function SmallCheck({ checked, color }) {
   );
 }
 
-function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFinalize, todayLogged }) {
+function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, todayLogged }) {
   const storageKey = `gym_checklist_${today()}`;
 
   // Restore state from localStorage on mount (survives iOS Safari tab suspension)
@@ -442,18 +442,13 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
   const [selectedType, setSelectedType] = useState(saved.current.type || null);
   const [setChecked, setSetChecked] = useState(saved.current.checks || {});
   const [weights, setWeights] = useState(saved.current.weights || {});
-  const [workoutId, setWorkoutId] = useState(saved.current.workoutId || null);
-  const [finalized, setFinalized] = useState(saved.current.finalized || false);
-
-  // The workout ID is either from our auto-log or from an existing today's workout
-  const effectiveId = workoutId || (todayLogged && todayLogged.id) || null;
-  const hasWorkout = !!effectiveId;
+  const [submitted, setSubmitted] = useState(saved.current.submitted || false);
 
   // Persist to localStorage whenever state changes
   useEffect(() => {
-    const data = { type: selectedType, checks: setChecked, weights, workoutId, finalized };
+    const data = { type: selectedType, checks: setChecked, weights, submitted };
     try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
-  }, [selectedType, setChecked, weights, workoutId, finalized, storageKey]);
+  }, [selectedType, setChecked, weights, submitted, storageKey]);
 
   // Clean up old days' entries
   useEffect(() => {
@@ -484,8 +479,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
     });
     setSetChecked(init);
     setWeights(initWeights);
-    setWorkoutId(null);
-    setFinalized(false);
+    setSubmitted(false);
   };
 
   const toggleSet = (exId, setIdx, ex) => {
@@ -499,41 +493,23 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
         onStartTimer(ex.restSeconds);
       }
 
-      // Auto-log on first tick: create the workout record if none exists
-      if (!wasChecked && !hasWorkout) {
-        onAutoLog(selectedType, exercises).then(id => {
-          if (id) setWorkoutId(id);
-        });
-      }
-
       return next;
     });
   };
 
-  // Finalize: push complete data with weights when all sets are done
+  // Auto-submit when all sets are checked — single POST with all weights
   useEffect(() => {
-    if (!finalized && typeExercises.length > 0) {
-      const allComplete = typeExercises.every(ex => {
-        const numSets = ex.sets || 1;
-        const checks = setChecked[ex.id];
-        return checks && checks.length >= numSets && checks.every(Boolean);
-      });
-      if (allComplete) {
-        const id = workoutId || (todayLogged && todayLogged.id);
-        if (id) {
-          setFinalized(true);
-          onFinalize(id, exercises, selectedType, weights);
-        }
-      }
+    if (!submitted && !todayLogged && allDone && typeExercises.length > 0) {
+      setSubmitted(true);
+      onLogWorkout(selectedType, exercises, weights);
     }
-  }, [setChecked, finalized, typeExercises, workoutId, todayLogged, exercises, selectedType, weights, onFinalize]);
+  }, [submitted, todayLogged, allDone, typeExercises.length, selectedType, exercises, weights, onLogWorkout]);
 
   const reset = () => {
     setSelectedType(null);
     setSetChecked({});
     setWeights({});
-    setWorkoutId(null);
-    setFinalized(false);
+    setSubmitted(false);
   };
 
   if (!selectedType) {
@@ -686,7 +662,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, onFin
   );
 }
 
-function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onAutoLog, onFinalize, newPRs }) {
+function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onLogWorkout, newPRs }) {
   const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
 
   const handleStartTimer = (seconds) => {
@@ -701,8 +677,7 @@ function DashboardTab({ workouts, records, exercises, timerState, setTimerState,
         exercises={exercises}
         onLogRest={onLogRest}
         onStartTimer={handleStartTimer}
-        onAutoLog={onAutoLog}
-        onFinalize={onFinalize}
+        onLogWorkout={onLogWorkout}
         todayLogged={todayWorkout}
       />
 
@@ -1728,22 +1703,7 @@ export default function GymTracker() {
     fetchAll();
   };
 
-  const handleAutoLog = async (type, allExercises) => {
-    // Create workout with empty exercises — just to mark the date/type on the heatmap
-    const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    const exerciseData = typeExes.map(ex => ({
-      exerciseId: ex.id,
-      name: ex.name,
-      sets: Array.from({ length: ex.sets || 1 }, () => ({ reps: ex.reps || null, weight: null })),
-    }));
-    const result = await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
-    fetchAll();
-    // Return the workout ID so the checklist can store it for the final update
-    return result?.workout?.id || null;
-  };
-
-  const handleWorkoutFinalize = async (workoutId, allExercises, type, weightsMap) => {
-    if (!workoutId) return;
+  const handleLogWorkout = async (type, allExercises, weightsMap) => {
     const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     const exerciseData = typeExes.map(ex => {
       const w = weightsMap && weightsMap[ex.id] ? parseFloat(weightsMap[ex.id]) || null : null;
@@ -1753,7 +1713,7 @@ export default function GymTracker() {
         sets: Array.from({ length: ex.sets || 1 }, () => ({ reps: ex.reps || null, weight: w })),
       };
     });
-    const result = await api('workouts', 'PUT', { exercises: exerciseData }, workoutId);
+    const result = await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
     if (result?.newPRs?.length > 0) {
       setCelebratePRs(result.newPRs);
       setNewPRs(result.newPRs.map(pr => pr.id));
@@ -1894,8 +1854,7 @@ export default function GymTracker() {
               timerState={timerState}
               setTimerState={setTimerState}
               onLogRest={handleLogRest}
-              onAutoLog={handleAutoLog}
-              onFinalize={handleWorkoutFinalize}
+              onLogWorkout={handleLogWorkout}
               newPRs={newPRs}
             />
           )}
