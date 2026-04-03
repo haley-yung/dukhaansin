@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+// ── Clear stale localStorage from old versions ─────────────────────────────
+try {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('gym_checklist_')) {
+      const raw = JSON.parse(localStorage.getItem(k));
+      if (raw && ('logged' in raw || 'workoutId' in raw || 'finalized' in raw)) {
+        localStorage.removeItem(k);
+      }
+    }
+  }
+} catch {}
+
 // ── API Helper ──────────────────────────────────────────────────────────────
 const API = '/api/app/gym';
 async function api(resource, method = 'GET', body = null, id = null) {
