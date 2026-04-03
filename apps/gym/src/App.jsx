@@ -172,7 +172,7 @@ function Heatmap({ workouts }) {
   const step = cellSize + gap;
   const labelW = 30;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const todayDate = new Date();
   todayDate.setHours(0, 0, 0, 0);
@@ -183,16 +183,15 @@ function Heatmap({ workouts }) {
   const rangeEnd = new Date(2026, 11, 31); // December 31
   rangeEnd.setHours(0, 0, 0, 0);
 
-  // Grid starts on the Monday of the week containing rangeStart
-  const startDay = rangeStart.getDay(); // 0=Sun
-  const mondayOffset = startDay === 0 ? 6 : startDay - 1;
+  // Grid starts on the Sunday of the week containing rangeStart
   const gridStart = new Date(rangeStart);
-  gridStart.setDate(gridStart.getDate() - mondayOffset);
+  const sunOffset = rangeStart.getDay(); // 0=Sun, already Sunday
+  gridStart.setDate(gridStart.getDate() - sunOffset);
 
-  // Grid ends on the Sunday of the week containing rangeEnd
-  const endDay = rangeEnd.getDay();
+  // Grid ends on the Saturday of the week containing rangeEnd
+  const endDay = rangeEnd.getDay(); // 0=Sun
   const gridEnd = new Date(rangeEnd);
-  if (endDay !== 0) gridEnd.setDate(gridEnd.getDate() + (7 - endDay));
+  if (endDay !== 6) gridEnd.setDate(gridEnd.getDate() + (6 - endDay));
 
   const weeks = Math.round((gridEnd - gridStart) / (1000 * 60 * 60 * 24) / 7);
 
@@ -205,6 +204,7 @@ function Heatmap({ workouts }) {
   const cells = [];
   const monthLabels = [];
   let lastMonth = -1;
+  let lastLabelCol = -4;
 
   for (let col = 0; col < weeks; col++) {
     let colLabelPlaced = false;
@@ -221,8 +221,9 @@ function Heatmap({ workouts }) {
       if (!colLabelPlaced) {
         colLabelPlaced = true;
         const m = date.getMonth();
-        if (m !== lastMonth) {
+        if (m !== lastMonth && col - lastLabelCol >= 3) {
           lastMonth = m;
+          lastLabelCol = col;
           monthLabels.push({ label: months[m], x: col * step + labelW });
         }
       }
@@ -410,14 +411,15 @@ function PRList({ records, limit, glow }) {
 function SmallCheck({ checked, color }) {
   return (
     <div style={{
-      width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-      border: checked ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.12)',
+      width: 24, height: 24, borderRadius: 5, flexShrink: 0,
+      border: checked ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.15)',
       background: checked ? color : 'transparent',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       transition: 'all 0.15s', cursor: 'pointer',
+      minWidth: 44, minHeight: 44, padding: 10,
     }}>
       {checked && (
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )}
@@ -564,10 +566,9 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
               transition: 'opacity 0.2s',
             }}
           >
+            {/* Top row: checkbox + name */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Primary checkbox */}
               <div onClick={() => {
-                // Toggle all sets at once
                 setSetChecked(prev => {
                   const arr = prev[ex.id] || new Array(numSets).fill(false);
                   const allDone = arr.every(Boolean);
@@ -577,7 +578,6 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
                 <SmallCheck checked={allSetsChecked} color={TYPE_COLORS[selectedType]} />
               </div>
 
-              {/* Exercise info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   color: allSetsChecked ? T.muted : T.text,
@@ -593,28 +593,27 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onAutoLog, today
                   {fmtRest ? ` · ${fmtRest} rest` : ''}
                 </div>
               </div>
+            </div>
 
-              {/* Weight input */}
+            {/* Bottom row: weight input + per-set checkboxes */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingLeft: 34 }}>
               {!isWarmup && (
-                <div style={{ flexShrink: 0, width: 64 }}>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="kg"
-                    value={weights[ex.id] || ''}
-                    onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
-                    style={{
-                      width: '100%', padding: '5px 6px', fontSize: 12,
-                      fontFamily: T.mono, color: T.text,
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 6, outline: 'none', textAlign: 'center',
-                    }}
-                  />
-                </div>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="kg"
+                  value={weights[ex.id] || ''}
+                  onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
+                  style={{
+                    width: 60, padding: '6px 8px', fontSize: 13,
+                    fontFamily: T.mono, color: T.text,
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 6, outline: 'none', textAlign: 'center',
+                    minHeight: 36,
+                  }}
+                />
               )}
-
-              {/* Per-set checkboxes */}
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 4 }}>
                 {Array.from({ length: numSets }).map((_, si) => (
                   <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
                     <SmallCheck checked={!!checks[si]} color={TYPE_COLORS[selectedType]} />
