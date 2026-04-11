@@ -148,6 +148,7 @@ export default function FinancialDashboard() {
   const [loading, setLoading] = useState(true);
   const [justPaidId, setJustPaidId] = useState(null);
   const [history, setHistory] = useState([]); // stores { loanId, previous } for undo
+  const [customAmounts, setCustomAmounts] = useState({}); // { [loanId]: string }
 
   // Fetch loans from API on mount
   useEffect(() => {
@@ -166,18 +167,22 @@ export default function FinancialDashboard() {
   const living = INCOME - totalMonthly - FAMILY;
   const dsr = INCOME ? (totalMonthly / INCOME) * 100 : 0;
 
-  const payInstallment = async (id) => {
+  const payInstallment = async (id, customAmount = null) => {
     // Optimistically update UI
     const loan = loans.find(l => l.id === id);
     if (!loan || loan.installmentsPaid >= loan.totalInstallments) return;
 
+    const payAmount = (customAmount != null && !isNaN(parseFloat(customAmount)) && parseFloat(customAmount) > 0)
+      ? parseFloat(customAmount)
+      : loan.monthly;
+
     const interest = loan.remaining * (loan.apr / 100 / 12);
-    const principal = Math.max(loan.monthly - interest, 0);
+    const principal = Math.max(payAmount - interest, 0);
     const previous = { installmentsPaid: loan.installmentsPaid, paid: loan.paid, remaining: loan.remaining };
 
     setLoans(prev => prev.map(l => {
       if (l.id !== id) return l;
-      return { ...l, installmentsPaid: l.installmentsPaid + 1, paid: Math.round((l.paid + l.monthly) * 100) / 100, remaining: Math.max(Math.round((l.remaining - principal) * 100) / 100, 0) };
+      return { ...l, installmentsPaid: l.installmentsPaid + 1, paid: Math.round((l.paid + payAmount) * 100) / 100, remaining: Math.max(Math.round((l.remaining - principal) * 100) / 100, 0) };
     }));
     setJustPaidId(id);
 
@@ -185,7 +190,7 @@ export default function FinancialDashboard() {
     const res = await fetch("/api/app/debt", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "pay", loanId: id }),
+      body: JSON.stringify({ action: "pay", loanId: id, amount: payAmount }),
     });
     const data = await res.json();
     if (data.ok) {
@@ -434,8 +439,34 @@ export default function FinancialDashboard() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <CalendarHeatmap paid={loan.installmentsPaid} total={loan.totalInstallments} color={isFullyPaid ? "#10B981" : loan.color} startYear={loan.startYear} startMonth={loan.startMonth} justPaid={wasJustPaid} />
                       </div>
-                      <div style={{ flexShrink: 0, paddingBottom: 8 }}>
-                        <PayButton onClick={() => payInstallment(loan.id)} disabled={isFullyPaid} justPaid={wasJustPaid} />
+                      <div style={{ flexShrink: 0, paddingBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                        {loan.name === "X Wallet 80K" && !isFullyPaid && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 10px" }}>
+                            <span style={{ fontSize: 12, color: "#6B6B76", fontFamily: "'JetBrains Mono', monospace" }}>$</span>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder={loan.monthly.toLocaleString()}
+                              value={customAmounts[loan.id] ?? ""}
+                              onChange={(e) => setCustomAmounts(prev => ({ ...prev, [loan.id]: e.target.value }))}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: 80, background: "transparent", border: "none", outline: "none",
+                                color: "#E8E6E1", fontSize: 13, fontFamily: "'JetBrains Mono', monospace",
+                                padding: 0,
+                              }}
+                            />
+                          </div>
+                        )}
+                        <PayButton
+                          onClick={() => {
+                            const amt = customAmounts[loan.id];
+                            payInstallment(loan.id, amt && amt.trim() !== "" ? amt : null);
+                            setCustomAmounts(prev => ({ ...prev, [loan.id]: "" }));
+                          }}
+                          disabled={isFullyPaid}
+                          justPaid={wasJustPaid}
+                        />
                       </div>
                     </div>
                   </div>

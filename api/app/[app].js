@@ -89,7 +89,7 @@ async function handleDebt(req, res) {
 
   // PUT /api/app/debt — pay or undo
   if (req.method === 'PUT') {
-    const { action, loanId, previous } = req.body || {};
+    const { action, loanId, previous, amount } = req.body || {};
     const id = parseInt(loanId, 10);
     if (isNaN(id)) return res.status(400).json({ error: 'Invalid loanId' });
 
@@ -105,12 +105,18 @@ async function handleDebt(req, res) {
       const remaining = Number(loan.remaining);
       const monthly = Number(loan.monthly);
       const apr = Number(loan.apr);
+
+      // Custom amount override — falls back to the loan's monthly installment.
+      const payAmount = (amount != null && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0)
+        ? parseFloat(amount)
+        : monthly;
+
       const interest = remaining * (apr / 100 / 12);
-      const principal = Math.max(monthly - interest, 0);
+      const principal = Math.max(payAmount - interest, 0);
 
       const updates = {
         installments_paid: loan.installments_paid + 1,
-        paid: Math.round((Number(loan.paid) + monthly) * 100) / 100,
+        paid: Math.round((Number(loan.paid) + payAmount) * 100) / 100,
         remaining: Math.max(Math.round((remaining - principal) * 100) / 100, 0),
       };
 
