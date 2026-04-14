@@ -25,27 +25,50 @@ async function api(resource, method = 'GET', body = null, id = null) {
 }
 
 // ── Design Tokens ───────────────────────────────────────────────────────────
+// A single source of truth. One accent (white). Data colors only in data viz.
 const T = {
-  bg: '#0A0A0F',
-  text: '#E8E6E1',
-  heading: '#F5F5F0',
-  secondary: '#8B8B96',
-  muted: '#6B6B76',
-  darkMuted: '#4A4A52',
-  cardBg: 'rgba(255,255,255,0.03)',
+  // Surface — near-black, slightly warm to read premium
+  bg:        '#0A0A0B',
+  surface:   'rgba(255,255,255,0.025)',
+  surfaceHi: 'rgba(255,255,255,0.045)',
+
+  // Lines — used sparingly
+  line:      'rgba(255,255,255,0.06)',
+  lineHi:    'rgba(255,255,255,0.12)',
+
+  // Text ramp
+  text:      '#F2F2F0',       // primary
+  heading:   '#FAFAF7',       // display / numbers
+  secondary: '#A6A6AB',       // body secondary
+  muted:     '#6F6F76',       // captions
+  darkMuted: '#3B3B40',       // separators, inactive
+
+  // Semantic accent — used for the single primary CTA, active states
+  accent:    '#FAFAF7',       // near-white
+  accentInk: '#0A0A0B',       // ink on accent
+
+  // Radii
+  r1: 6, r2: 10, r3: 14, rPill: 999,
+
+  // Legacy aliases (kept for incremental refactor)
+  cardBg:     'rgba(255,255,255,0.025)',
   cardBorder: '1px solid rgba(255,255,255,0.06)',
-  cardRadius: 12,
-  btnRadius: 8,
-  font: "'DM Sans', sans-serif",
-  mono: "'JetBrains Mono', monospace",
+  cardRadius: 14,
+  btnRadius:  10,
+
+  // Type
+  font:    "'Inter', 'DM Sans', -apple-system, sans-serif",
+  mono:    "'JetBrains Mono', ui-monospace, monospace",
+  display: "'Inter', -apple-system, sans-serif",
 };
 
+// Training types — desaturated, premium dataviz palette (only in charts/badges)
 const TYPE_COLORS = {
-  push_run: '#EF4444',
-  lower_a: '#8B5CF6',
-  pull_run: '#3B82F6',
-  lower_b: '#10B981',
-  rest: '#4A4A52',
+  push_run: '#C97B5E', // warm amber
+  lower_a:  '#9681C4', // muted violet
+  pull_run: '#7593C2', // slate blue
+  lower_b:  '#6FA886', // sage
+  rest:     '#3B3B40',
 };
 
 const TYPE_LABELS = {
@@ -104,73 +127,85 @@ function groupByMonth(workouts) {
 }
 
 // ── Shared Styles ───────────────────────────────────────────────────────────
+// Quiet surfaces, confident type. One accent. Motion-safe defaults.
 const cardStyle = {
-  background: T.cardBg,
-  border: T.cardBorder,
-  borderRadius: T.cardRadius,
-  padding: 16,
-  marginBottom: 12,
+  background: T.surface,
+  border: `1px solid ${T.line}`,
+  borderRadius: T.r3,
+  padding: 20,
+  marginBottom: 16,
+  transition: 'background 240ms ease, border-color 240ms ease',
 };
 
 const labelStyle = {
-  fontSize: 11,
+  fontSize: 10.5,
   textTransform: 'uppercase',
-  letterSpacing: '1px',
+  letterSpacing: '0.14em',
+  fontWeight: 500,
   color: T.muted,
   fontFamily: T.font,
-  marginBottom: 6,
+  marginBottom: 10,
 };
 
 const headingStyle = {
-  fontSize: 28,
+  fontSize: 36,
   fontWeight: 300,
-  letterSpacing: '-0.5px',
+  letterSpacing: '-0.02em',
+  lineHeight: 1.1,
   color: T.heading,
-  fontFamily: T.font,
+  fontFamily: T.display,
   margin: '0 0 16px 0',
 };
 
 const inputStyle = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: T.btnRadius,
+  background: 'transparent',
+  border: `1px solid ${T.line}`,
+  borderRadius: T.r2,
   color: T.text,
-  padding: '10px 12px',
+  padding: '12px 14px',
   fontFamily: T.mono,
   fontSize: 14,
   outline: 'none',
   width: '100%',
   boxSizing: 'border-box',
+  transition: 'border-color 200ms ease, background 200ms ease',
 };
 
 const btnStyle = {
-  background: 'rgba(255,255,255,0.08)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: T.btnRadius,
+  background: 'rgba(255,255,255,0.04)',
+  border: `1px solid ${T.line}`,
+  borderRadius: T.r2,
   color: T.text,
-  padding: '10px 16px',
+  padding: '11px 16px',
   fontFamily: T.font,
-  fontSize: 14,
+  fontSize: 13.5,
+  fontWeight: 500,
+  letterSpacing: '-0.005em',
   cursor: 'pointer',
-  transition: 'background 0.2s',
+  transition: 'background 200ms ease, border-color 200ms ease, transform 120ms ease',
 };
 
 const btnPrimary = {
   ...btnStyle,
-  background: '#8B5CF6',
-  border: '1px solid #8B5CF6',
+  background: T.accent,
+  border: `1px solid ${T.accent}`,
+  color: T.accentInk,
   fontWeight: 500,
 };
 
 const typeBadge = (type) => ({
-  display: 'inline-block',
-  padding: '3px 10px',
-  borderRadius: 20,
-  fontSize: 12,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '4px 10px',
+  borderRadius: T.rPill,
+  fontSize: 11,
   fontWeight: 500,
+  letterSpacing: '0.01em',
   fontFamily: T.font,
-  color: '#fff',
-  background: TYPE_COLORS[type] || T.darkMuted,
+  color: T.heading,
+  background: 'transparent',
+  border: `1px solid ${TYPE_COLORS[type] || T.darkMuted}`,
 });
 
 function typeLabel(type) {
@@ -262,24 +297,38 @@ function Heatmap({ workouts }) {
   const svgHeight = 7 * step + 30;
 
   return (
-    <div style={{ ...cardStyle, padding: 12 }}>
-      <div style={labelStyle}>Training Heatmap</div>
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div style={{ ...cardStyle, padding: 20 }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginLeft: -4 }}>
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {monthLabels.map((m, i) => (
-            <text key={i} x={m.x} y={14} fill={T.muted} fontSize={10} fontFamily={T.font}>{m.label}</text>
+            <text key={i} x={m.x} y={14}
+              fill={T.muted}
+              fontSize={10}
+              fontFamily={T.font}
+              style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}
+            >{m.label.toUpperCase()}</text>
           ))}
           {dayLabels.map((label, i) => (
-            <text key={i} x={0} y={i * step + 20 + cellSize - 2} fill={T.muted} fontSize={10} fontFamily={T.font}>{label}</text>
+            <text key={i} x={0} y={i * step + 20 + cellSize - 3}
+              fill={T.muted}
+              fontSize={9.5}
+              fontFamily={T.font}
+              style={{ letterSpacing: '0.08em' }}
+            >{label.slice(0,1)}</text>
           ))}
           {cells}
         </svg>
       </div>
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+      <div style={{
+        display: 'flex', gap: 18, marginTop: 16, flexWrap: 'wrap',
+        paddingTop: 16, borderTop: `1px solid ${T.line}`,
+      }}>
         {Object.entries(TYPE_COLORS).map(([type, color]) => (
-          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: color }} />
-            <span style={{ fontSize: 11, color: T.muted, fontFamily: T.font }}>{typeLabel(type)}</span>
+          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+            <span style={{ fontSize: 11.5, color: T.secondary, fontFamily: T.font, letterSpacing: '-0.005em' }}>
+              {typeLabel(type)}
+            </span>
           </div>
         ))}
       </div>
@@ -392,29 +441,58 @@ function RestTimer({ timerState, setTimerState }) {
 // ── PR List Component ───────────────────────────────────────────────────────
 function PRList({ records, limit, glow }) {
   const display = limit ? records.slice(0, limit) : records;
-  if (!display.length) return <div style={{ color: T.muted, fontSize: 14, fontFamily: T.font }}>No personal records yet</div>;
+  if (!display.length) {
+    return (
+      <div style={{
+        padding: '32px 0 12px', textAlign: 'center',
+        color: T.muted, fontSize: 13.5, letterSpacing: '-0.005em',
+      }}>
+        Your records will appear here.
+      </div>
+    );
+  }
 
   return (
     <div>
-      {display.map((pr, i) => (
-        <div
-          key={pr.id || i}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
-            borderBottom: i < display.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-            animation: glow && glow.includes(pr.id) ? 'prGlow 1.5s ease-out' : 'none',
-          }}
-        >
-          <span style={{ fontSize: 18 }}>{'\u{1F3C6}'}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: T.text, fontSize: 14, fontFamily: T.font }}>{pr.exercise}</div>
-            <div style={{ fontFamily: T.mono, fontSize: 13, color: T.secondary }}>
-              {pr.type === 'running' ? `${pr.distance}km in ${pr.duration}min` : `${pr.weight}kg x ${pr.reps}`}
+      {display.map((pr, i) => {
+        const name = pr.exercise || pr.exerciseName || pr.exercise_name || '—';
+        const metric = pr.type === 'running'
+          ? `${pr.distance} km · ${pr.duration} min`
+          : `${pr.weight} kg × ${pr.reps}`;
+        return (
+          <div
+            key={pr.id || i}
+            style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              gap: 16, padding: '14px 0',
+              borderBottom: i < display.length - 1 ? `1px solid ${T.line}` : 'none',
+              animation: glow && glow.includes(pr.id) ? 'prGlow 1.8s ease-out' : 'none',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, minWidth: 0 }}>
+              <span className="tnum" style={{
+                fontFamily: T.display, fontSize: 22, fontWeight: 300,
+                color: T.heading, letterSpacing: '-0.02em', lineHeight: 1,
+                whiteSpace: 'nowrap',
+              }}>
+                {metric}
+              </span>
+              <span style={{
+                color: T.secondary, fontSize: 13.5, letterSpacing: '-0.005em',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {name}
+              </span>
+            </div>
+            <div className="tnum" style={{
+              color: T.muted, fontSize: 12, fontFamily: T.mono,
+              whiteSpace: 'nowrap', letterSpacing: '-0.01em',
+            }}>
+              {fmtShort(pr.date)}
             </div>
           </div>
-          <div style={{ color: T.muted, fontSize: 12, fontFamily: T.font }}>{fmtShort(pr.date)}</div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -527,34 +605,88 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
   if (!selectedType) {
     return (
       <div style={cardStyle}>
-        <div style={labelStyle}>Today's Workout</div>
         {todayLogged ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={typeBadge(todayLogged.type)}>{typeLabel(todayLogged.type)}</span>
-            <span style={{ color: T.secondary, fontSize: 13, fontFamily: T.font }}>Logged today</span>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.03)',
+            border: `1px solid ${T.line}`,
+            borderRadius: T.r2,
+            marginBottom: 20,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 7.5L6 10.5L11 4.5" stroke={T.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontSize: 13.5, color: T.text, letterSpacing: '-0.005em' }}>
+              Today's session is logged.
+            </span>
+            <span style={{
+              marginLeft: 'auto', fontSize: 12, color: T.secondary,
+              letterSpacing: '-0.005em',
+            }}>
+              {typeLabel(todayLogged.type)}
+            </span>
           </div>
-        ) : null}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 8 }}>
+        ) : (
+          <p style={{
+            fontSize: 15.5, lineHeight: 1.55, color: T.secondary,
+            margin: '0 0 20px 0', maxWidth: 480, letterSpacing: '-0.005em',
+          }}>
+            Choose today's session. Log each set as you go — the rest is automatic.
+          </p>
+        )}
+
+        {/* Training type cards — typographic, minimal chrome */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 8,
+          marginBottom: 8,
+        }}>
           {TRAINING_TYPES.map(t => (
             <button
               key={t}
-              style={{
-                ...btnStyle,
-                padding: '14px 12px', fontSize: 13,
-                background: TYPE_COLORS[t], border: `1px solid ${TYPE_COLORS[t]}`,
-                color: '#fff', fontWeight: 500, textAlign: 'center', lineHeight: 1.3,
-              }}
               onClick={() => selectType(t)}
+              style={{
+                textAlign: 'left',
+                padding: '16px 16px',
+                background: 'transparent',
+                border: `1px solid ${T.line}`,
+                borderRadius: T.r2,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                minHeight: 56,
+                fontFamily: T.font,
+              }}
             >
-              {typeLabel(t)}
+              <span style={{
+                width: 8, height: 8, borderRadius: 2,
+                background: TYPE_COLORS[t], flexShrink: 0,
+              }} />
+              <span style={{
+                fontSize: 14, fontWeight: 500, color: T.heading,
+                letterSpacing: '-0.005em', lineHeight: 1.3,
+              }}>
+                {typeLabel(t)}
+              </span>
             </button>
           ))}
         </div>
+
         <button
-          style={{ ...btnStyle, width: '100%', fontSize: 13, padding: '10px 14px', color: T.secondary }}
           onClick={onLogRest}
+          style={{
+            ...btnStyle, width: '100%', marginTop: 8,
+            padding: '14px 16px',
+            background: 'transparent',
+            border: `1px dashed ${T.line}`,
+            color: T.muted, fontSize: 13,
+            fontWeight: 400,
+          }}
         >
-          Log Rest Day
+          Rest day
         </button>
       </div>
     );
@@ -565,23 +697,50 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
 
   return (
     <div style={cardStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div>
-          <div style={labelStyle}>Today's Workout</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={typeBadge(selectedType)}>{typeLabel(selectedType)}</span>
-            <span style={{ color: T.muted, fontSize: 12, fontFamily: T.mono }}>{exerciseDoneCount}/{typeExercises.length}</span>
-          </div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: 2,
+            background: TYPE_COLORS[selectedType],
+          }} />
+          <span style={{
+            fontSize: 15, fontWeight: 500, color: T.heading,
+            letterSpacing: '-0.01em',
+          }}>
+            {typeLabel(selectedType)}
+          </span>
+          <span className="tnum" style={{
+            color: T.muted, fontSize: 12.5, fontFamily: T.mono,
+            letterSpacing: '-0.02em',
+          }}>
+            {exerciseDoneCount}/{typeExercises.length}
+          </span>
         </div>
-        <button style={{ ...btnStyle, padding: '6px 12px', fontSize: 12 }} onClick={reset}>Change</button>
+        <button
+          style={{
+            background: 'transparent', border: 'none', padding: '6px 4px',
+            color: T.muted, fontSize: 13, cursor: 'pointer',
+            fontFamily: T.font, letterSpacing: '-0.005em',
+          }}
+          onClick={reset}
+        >
+          Change
+        </button>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 14 }}>
+      {/* Progress bar — hairline */}
+      <div style={{
+        height: 2, background: T.line, borderRadius: 2,
+        marginBottom: 20, overflow: 'hidden',
+      }}>
         <div style={{
           height: '100%',
           width: typeExercises.length > 0 ? `${(exerciseDoneCount / typeExercises.length) * 100}%` : '0%',
-          background: TYPE_COLORS[selectedType], borderRadius: 2, transition: 'width 0.3s ease',
+          background: T.accent, borderRadius: 2,
+          transition: 'width 420ms cubic-bezier(0.2, 0.8, 0.2, 1)',
         }} />
       </div>
 
@@ -663,19 +822,47 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
       })}
 
       {allDone && (
-        <div style={{ textAlign: 'center', padding: '16px 0 4px' }}>
+        <div style={{
+          marginTop: 20, padding: '24px 20px',
+          textAlign: 'center',
+          background: 'rgba(255,255,255,0.03)',
+          border: `1px solid ${T.line}`,
+          borderRadius: T.r2,
+          animation: 'scaleIn 380ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+        }}>
           <div style={{
-            color: TYPE_COLORS[selectedType], fontFamily: T.font, fontSize: 15, fontWeight: 500,
-            marginBottom: 12,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: '50%',
+            background: T.accent, marginBottom: 14,
           }}>
-            Workout complete!
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 7.5L6 10.5L11 4.5" stroke={T.accentInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                strokeDasharray="16" style={{ animation: 'drawCheck 420ms ease-out 120ms forwards' }}
+              />
+            </svg>
+          </div>
+          <div style={{
+            color: T.heading, fontFamily: T.display,
+            fontSize: 20, fontWeight: 400, letterSpacing: '-0.015em',
+            marginBottom: 6,
+          }}>
+            Session complete.
+          </div>
+          <div style={{
+            color: T.secondary, fontSize: 13, marginBottom: 18,
+            letterSpacing: '-0.005em',
+          }}>
+            Your work is saved. See you tomorrow.
           </div>
           <button
-            style={{
-              ...btnStyle, padding: '10px 24px', fontSize: 13,
-              color: T.secondary, border: `1px solid ${T.darkMuted}`,
-            }}
             onClick={reset}
+            style={{
+              ...btnStyle,
+              padding: '10px 20px', fontSize: 13,
+              background: 'transparent',
+              border: `1px solid ${T.lineHi}`,
+              color: T.text,
+            }}
           >
             Done
           </button>
@@ -688,28 +875,139 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
 function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onLogWorkout, newPRs }) {
   const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
 
+  // Weekly snapshot — this week's count + streak
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(now.getDate() - now.getDay()); // Sun
+  const thisWeek = (workouts || []).filter(w => {
+    const d = new Date(w.date);
+    return d >= weekStart && d <= now && w.type !== 'rest';
+  }).length;
+
+  // Streak: consecutive days with a logged session (any type, incl. rest)
+  let streak = 0;
+  const logged = new Set((workouts || []).map(w => toDateStr(w.date)));
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  while (logged.has(toDateStr(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
   const handleStartTimer = (seconds) => {
     setTimerState({ seconds, total: seconds, running: true, collapsed: false });
   };
 
+  // Stat tile
+  const Stat = ({ value, label, sub }) => (
+    <div style={{
+      padding: '20px 4px',
+      borderTop: `1px solid ${T.line}`,
+    }}>
+      <div className="tnum" style={{
+        fontSize: 44, fontWeight: 300, letterSpacing: '-0.03em',
+        color: T.heading, fontFamily: T.display, lineHeight: 1,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
+        color: T.muted, fontWeight: 500, marginTop: 10,
+      }}>
+        {label}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 12.5, color: T.secondary, marginTop: 6, lineHeight: 1.45 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div>
-      <Heatmap workouts={workouts} />
+      {/* Snapshot row — three quiet numbers, no boxes. Typography does the work. */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        gap: 32,
+        marginBottom: 48,
+      }}>
+        <Stat
+          value={thisWeek}
+          label="This week"
+          sub={thisWeek === 0 ? 'Begin the week.' : thisWeek >= 4 ? 'Strong cadence.' : 'Building rhythm.'}
+        />
+        <Stat
+          value={streak}
+          label="Streak"
+          sub={streak === 0 ? 'Start today.' : streak === 1 ? 'Day one.' : `${streak} days in a row.`}
+        />
+        <Stat
+          value={(records || []).length}
+          label="Records"
+          sub={(records || []).length === 0 ? 'None yet.' : 'Keep pushing.'}
+        />
+      </section>
 
-      <WorkoutChecklist
-        exercises={exercises}
-        onLogRest={onLogRest}
-        onStartTimer={handleStartTimer}
-        onLogWorkout={onLogWorkout}
-        todayLogged={todayWorkout}
-      />
+      {/* Today — primary action region */}
+      <section style={{ marginBottom: 40 }}>
+        <div style={{
+          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+          marginBottom: 16,
+        }}>
+          <h2 style={{
+            fontSize: 22, fontWeight: 400, letterSpacing: '-0.015em',
+            color: T.heading, margin: 0, fontFamily: T.display,
+          }}>
+            Today
+          </h2>
+          {todayWorkout && (
+            <span style={{
+              fontSize: 12, color: T.secondary, fontFamily: T.font,
+              letterSpacing: '-0.005em',
+            }}>
+              Logged · {typeLabel(todayWorkout.type)}
+            </span>
+          )}
+        </div>
+        <WorkoutChecklist
+          exercises={exercises}
+          onLogRest={onLogRest}
+          onStartTimer={handleStartTimer}
+          onLogWorkout={onLogWorkout}
+          todayLogged={todayWorkout}
+        />
+      </section>
 
-      <RestTimer timerState={timerState} setTimerState={setTimerState} />
+      <section style={{ marginBottom: 40 }}>
+        <RestTimer timerState={timerState} setTimerState={setTimerState} />
+      </section>
 
-      <div style={cardStyle}>
-        <div style={labelStyle}>Recent PRs</div>
-        <PRList records={(records || []).slice(0, 5)} limit={5} glow={newPRs} />
-      </div>
+      {/* Year at a glance */}
+      <section style={{ marginBottom: 40 }}>
+        <h2 style={{
+          fontSize: 22, fontWeight: 400, letterSpacing: '-0.015em',
+          color: T.heading, margin: '0 0 16px 0', fontFamily: T.display,
+        }}>
+          The year so far
+        </h2>
+        <Heatmap workouts={workouts} />
+      </section>
+
+      {/* Records */}
+      <section style={{ marginBottom: 16 }}>
+        <h2 style={{
+          fontSize: 22, fontWeight: 400, letterSpacing: '-0.015em',
+          color: T.heading, margin: '0 0 16px 0', fontFamily: T.display,
+        }}>
+          Records
+        </h2>
+        <div style={cardStyle}>
+          <PRList records={(records || []).slice(0, 5)} limit={5} glow={newPRs} />
+        </div>
+      </section>
     </div>
   );
 }
@@ -1761,9 +2059,9 @@ export default function GymTracker() {
   };
 
   const containerStyle = {
-    maxWidth: 800,
+    maxWidth: 920,
     margin: '0 auto',
-    padding: '0 16px 100px 16px',
+    padding: '0 24px 120px 24px',
     fontFamily: T.font,
     color: T.text,
     minHeight: '100vh',
@@ -1773,82 +2071,153 @@ export default function GymTracker() {
 
   const tabBarStyle = {
     display: 'flex',
-    gap: 0,
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-    marginBottom: 20,
+    gap: 4,
+    marginBottom: 40,
     overflowX: 'auto',
     WebkitOverflowScrolling: 'touch',
     position: 'sticky',
     top: 0,
     background: T.bg,
     zIndex: 100,
-    paddingTop: 16,
+    padding: '12px 0',
+    borderBottom: `1px solid ${T.line}`,
   };
 
-  const fabStyle = {
-    position: 'fixed',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: '50%',
-    background: '#8B5CF6',
-    color: '#fff',
-    fontSize: 28,
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 4px 20px rgba(139,92,246,0.4)',
-    zIndex: 50,
-    transition: 'transform 0.2s',
-    fontWeight: 300,
-  };
+  // Intentional header: short, sharp, dated. No tagline clutter.
+  const now = new Date();
+  const dayWords = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthWords = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const todayLabel = `${dayWords[now.getDay()]}, ${monthWords[now.getMonth()]} ${now.getDate()}`;
 
   return (
     <div style={containerStyle}>
       <style>{`
+        /* Entrance — page & stagger */
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.96); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes drawCheck {
+          from { stroke-dashoffset: 16; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes breathe {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
         @keyframes prGlow {
-          0% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+          0%   { box-shadow: 0 0 24px rgba(250,250,247,0.25); }
           100% { box-shadow: none; }
         }
+
+        /* Global */
         * { box-sizing: border-box; }
+        html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
         body { margin: 0; background: ${T.bg}; }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: none; margin: 0;
+
+        /* Staggered entry utility */
+        .stagger > * {
+          opacity: 0;
+          animation: fadeUp 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
+        .stagger > *:nth-child(1) { animation-delay:  40ms; }
+        .stagger > *:nth-child(2) { animation-delay: 120ms; }
+        .stagger > *:nth-child(3) { animation-delay: 200ms; }
+        .stagger > *:nth-child(4) { animation-delay: 280ms; }
+        .stagger > *:nth-child(5) { animation-delay: 360ms; }
+        .stagger > *:nth-child(6) { animation-delay: 440ms; }
+
+        /* Hover/press motion */
+        button { transition: background 220ms ease, border-color 220ms ease, transform 120ms ease, color 220ms ease; }
+        button:not(:disabled):hover { background: rgba(255,255,255,0.07); }
+        button:not(:disabled):active { transform: scale(0.98); }
+        button:focus-visible { outline: 1px solid ${T.lineHi}; outline-offset: 2px; }
+
+        input, textarea, select { transition: border-color 200ms ease, background 200ms ease; }
+        input:focus, textarea:focus, select:focus { border-color: ${T.lineHi} !important; }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+
+        /* Numeric tabular rendering */
+        .tnum { font-variant-numeric: tabular-nums; }
+
+        /* Inputs */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: ${T.line}; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${T.lineHi}; }
+
+        /* Tab indicator */
+        .tab-btn { position: relative; }
+        .tab-btn::after {
+          content: '';
+          position: absolute;
+          left: 10px; right: 10px;
+          bottom: -1px;
+          height: 1px;
+          background: ${T.accent};
+          transform: scaleX(0);
+          transform-origin: center;
+          transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .tab-btn[data-active="true"]::after { transform: scaleX(1); }
+
+        /* Eyebrow pulse on active day indicator */
+        .pulse-dot { animation: breathe 2.4s ease-in-out infinite; }
       `}</style>
 
-      {/* Header */}
-      <div style={{ paddingTop: 8 }}>
-        <h1 style={headingStyle}>Gym Tracker</h1>
-      </div>
+      {/* Header — confident, typographic, no decoration */}
+      <header style={{ paddingTop: 44, paddingBottom: 24, animation: 'fadeIn 520ms ease-out' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: T.muted, fontWeight: 500, marginBottom: 14,
+        }}>
+          <span className="pulse-dot" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: T.accent }} />
+          {todayLabel}
+        </div>
+        <h1 style={{
+          fontSize: 44, fontWeight: 300, letterSpacing: '-0.03em',
+          lineHeight: 1.05, color: T.heading, fontFamily: T.display,
+          margin: 0, maxWidth: 560,
+        }}>
+          Train with intention.
+        </h1>
+      </header>
 
-      {/* Tab Bar */}
-      <div style={tabBarStyle}>
+      {/* Tab Bar — minimal pill nav with animated indicator */}
+      <nav style={tabBarStyle} aria-label="Sections">
         {TABS.map(tab => (
           <button
             key={tab}
+            className="tab-btn"
+            data-active={activeTab === tab}
             style={{
-              background: 'none',
+              background: 'transparent',
               border: 'none',
-              borderBottom: activeTab === tab ? '2px solid #fff' : '2px solid transparent',
               color: activeTab === tab ? T.heading : T.muted,
-              padding: '10px 16px',
-              fontSize: 14,
+              padding: '12px 10px',
+              fontSize: 13.5,
+              fontWeight: activeTab === tab ? 500 : 400,
               fontFamily: T.font,
+              letterSpacing: '-0.005em',
               cursor: 'pointer',
-              transition: 'color 0.2s, border-color 0.2s',
               whiteSpace: 'nowrap',
               minHeight: 44,
             }}
@@ -1857,18 +2226,22 @@ export default function GymTracker() {
             {tab}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Loading State */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: T.muted, fontFamily: T.font }}>
-          Loading...
+        <div style={{
+          textAlign: 'center', padding: '80px 20px', color: T.muted,
+          fontFamily: T.font, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
+          animation: 'breathe 2s ease-in-out infinite',
+        }}>
+          Loading
         </div>
       )}
 
       {/* Tab Content */}
       {!loading && (
-        <div key={tabKey} style={{ animation: 'fadeUp 0.3s ease-out' }}>
+        <div key={tabKey} className="stagger" style={{ animation: 'fadeIn 240ms ease-out' }}>
           {activeTab === 'Dashboard' && (
             <DashboardTab
               workouts={workouts}
@@ -1903,8 +2276,30 @@ export default function GymTracker() {
         </div>
       )}
 
-      {/* FAB */}
-      <button style={fabStyle} onClick={() => setShowLogger(true)}>+</button>
+      {/* Floating Log button — minimal pill, high contrast */}
+      <button
+        onClick={() => setShowLogger(true)}
+        aria-label="Log workout"
+        style={{
+          position: 'fixed',
+          bottom: 28, right: 28,
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '13px 20px',
+          borderRadius: T.rPill,
+          background: T.accent, color: T.accentInk,
+          border: `1px solid ${T.accent}`,
+          fontSize: 13.5, fontWeight: 500, letterSpacing: '-0.005em',
+          fontFamily: T.font, cursor: 'pointer',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3)',
+          zIndex: 50,
+          animation: 'scaleIn 420ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
+        Log workout
+      </button>
 
       {/* Workout Logger Modal */}
       {showLogger && (
