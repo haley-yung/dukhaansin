@@ -30,7 +30,25 @@
       "Bash(find /Users/yungha/Desktop -maxdepth 2 -name *.png -o -name *.jpeg -o -name *.jpg)",
       "Bash(find /Users/yungha -maxdepth 3 \\\\\\(-name Screenshot* -o -name screen* \\\\\\) -newer /Users/yungha/Desktop/dukhaansin/vercel.json)",
       "Bash(ls -la \"/Users/yungha/Desktop/dukhaansin/1212O.jpg\" \"/Users/yungha/Desktop/dukhaansin/1212O \\(1\\).jpg\" \"/Users/yungha/Desktop/dukhaansin/dJAn0.jpg\")",
-      "Bash(ls /Users/yungha/Desktop/*.jpg /Users/yungha/Desktop/*.JPG /Users/yungha/Desktop/*.png)"
+      "Bash(ls /Users/yungha/Desktop/*.jpg /Users/yungha/Desktop/*.JPG /Users/yungha/Desktop/*.png)",
+      "Bash(find /Users/yungha/Desktop/dukhaansin -name .env* -o -name tsconfig*)",
+      "Bash(find /Users/yungha/Desktop/dukhaansin/.claude/worktrees/stupefied-galileo/api -type f -name *.js)",
+      "Bash(export PATH=\"/opt/homebrew/bin:$PATH\")",
+      "Bash(npm run:*)",
+      "Bash(vercel inspect:*)",
+      "mcp__6645cf5e-4fa1-4d09-a1d1-dc67935dbeb8__web_fetch_vercel_url",
+      "Bash(vercel logs:*)",
+      "mcp__6645cf5e-4fa1-4d09-a1d1-dc67935dbeb8__get_runtime_logs",
+      "Bash(vercel env:*)",
+      "mcp__0e84ea0b-cbf0-4f1d-b965-937ab44fbf92__get_publishable_keys",
+      "Bash(printf \"https://drlimemicsthqpwofytm.supabase.co\")",
+      "Bash(vercel --version)",
+      "Bash(export PATH=/opt/homebrew/bin:$PATH)",
+      "Read(//Users/yungha/.local/share/com.vercel.cli/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''token'''',''''''''\\)[:8]+''''...''''\\)\")",
+      "Bash(printf '%s' 'https://drlimemicsthqpwofytm.supabase.co')",
+      "Bash(vercel --prod)",
+      "mcp__0e84ea0b-cbf0-4f1d-b965-937ab44fbf92__execute_sql"
     ]
   }
 }
