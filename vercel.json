@@ -14,6 +14,12 @@
       ]
     },
     {
+      "source": "/app/(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
@@ -21,6 +27,9 @@
     }
   ],
   "rewrites": [
+    { "source": "/app", "destination": "/app/index.html" },
+    { "source": "/app/debt", "destination": "/app/debt/index.html" },
+    { "source": "/app/gym", "destination": "/app/gym/index.html" },
     { "source": "/album/:slug", "destination": "/album.html" },
     { "source": "/admin/login", "destination": "/admin/login.html" },
     { "source": "/admin/album/:slug", "destination": "/admin/album.html" },

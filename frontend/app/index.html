@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apps — dukhaansin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0A0A0F;
+      color: #E8E6E1;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #F5F5F0;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      color: #8B8B96;
+      font-size: 14px;
+      margin-bottom: 40px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 420px;
+      width: 100%;
+    }
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .card:active { transform: translateY(0); }
+    .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #F5F5F0;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: #6B6B76;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .back {
+      margin-top: 40px;
+      color: #6B6B76;
+      text-decoration: none;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      transition: color 0.15s;
+    }
+    .back:hover { color: #8B8B96; }
+    @media (max-width: 400px) {
+      .grid { grid-template-columns: 1fr; max-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Apps</h1>
+  <p class="subtitle">dukhaansin.com</p>
+  <div class="grid">
+    <a href="/app/debt" class="card">
+      <div class="icon" style="background: rgba(59,130,246,0.12);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="card-title">Debt Tracker</div>
+      <div class="card-desc">Loan repayment progress</div>
+    </a>
+    <a href="/app/gym" class="card">
+      <div class="icon" style="background: rgba(16,185,129,0.12);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.5 12h11"/><path d="M3 10v4M21 10v4M5 8v8M19 8v8M8 6v12M16 6v12"/>
+        </svg>
+      </div>
+      <div class="card-title">Gym Tracker</div>
+      <div class="card-desc">Just go Workout</div>
+    </a>
+  </div>
+  <a href="/" class="back">&larr; dukhaansin.com</a>
+</body>
+</html>
