@@ -7,6 +7,9 @@ CREATE TABLE exercises (
   name TEXT NOT NULL,
   training_type TEXT NOT NULL,
   sort_order INT DEFAULT 0,
+  sets INT,
+  reps TEXT,
+  rest_seconds INT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -69,35 +72,22 @@ CREATE POLICY "public_all" ON templates FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "public_all" ON personal_records FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "public_all" ON body_metrics FOR ALL USING (true) WITH CHECK (true);
 
--- Seed default exercises
-INSERT INTO exercises (name, training_type, sort_order) VALUES
+-- Seed default exercises (sets/reps/rest are optional — configurable in Settings)
+INSERT INTO exercises (name, training_type, sort_order, sets, reps, rest_seconds) VALUES
   -- Push + Run
-  ('Arm Circles + Band Pull-Aparts (Warm-up)', 'push_run', 0),
-  ('Chest Press', 'push_run', 1),
-  ('Pec Deck Fly', 'push_run', 2),
-  ('Shoulder Press', 'push_run', 3),
-  ('Lateral Raise', 'push_run', 4),
-  ('Tricep Pushdown', 'push_run', 5),
-  ('Treadmill Run', 'push_run', 6),
+  ('Chest Press',        'push_run', 1, 3, '10-12', 90),
+  ('Pec Deck Fly',       'push_run', 2, 3, '12',    60),
+  ('Shoulder Press',     'push_run', 3, 3, '10-12', 90),
+  ('Lateral Raise',      'push_run', 4, 3, '12-15', 60),
+  ('Tricep Pushdown',    'push_run', 5, 3, '12-15', 60),
+  ('Treadmill Run',      'push_run', 6, NULL, '15 min easy', NULL),
   -- Lower A: Quad Focus
-  ('Bodyweight Squats + Leg Swings (Warm-up)', 'lower_a', 0),
-  ('Leg Press', 'lower_a', 1),
-  ('Leg Extension', 'lower_a', 2),
-  ('Walking Lunges', 'lower_a', 3),
-  ('Calf Raise', 'lower_a', 4),
-  ('Plank', 'lower_a', 5),
+  ('Leg Press',          'lower_a', 1, 4, '10-12', 120),
+  ('Leg Extension',      'lower_a', 2, 3, '12-15', 60),
   -- Pull + Run
-  ('Shoulder Rolls + Light Cable Pulldown (Warm-up)', 'pull_run', 0),
-  ('Lat Pulldown', 'pull_run', 1),
-  ('Seated Cable Row', 'pull_run', 2),
-  ('Rear Delt Fly', 'pull_run', 3),
-  ('Bicep Curl', 'pull_run', 4),
-  ('Face Pull', 'pull_run', 5),
-  ('Treadmill Run', 'pull_run', 6),
-  -- Lower B: Posterior Chain
-  ('Glute Bridge + Hip Circles (Warm-up)', 'lower_b', 0),
-  ('Romanian Deadlift', 'lower_b', 1),
-  ('Leg Curl', 'lower_b', 2),
-  ('Hip Thrust', 'lower_b', 3),
-  ('Hip Abductor', 'lower_b', 4),
-  ('Dead Bug', 'lower_b', 5);
+  ('Lat Pulldown',       'pull_run', 1, 3, '10-12', 90),
+  ('Seated Cable Row',   'pull_run', 2, 3, '10-12', 90),
+  ('Rear Delt Fly',      'pull_run', 3, 3, '12-15', 60),
+  ('Bicep Curl',         'pull_run', 4, 3, '12',    60),
+  ('Face Pull',          'pull_run', 5, 3, '15',    60),
+  ('Treadmill Run',      'pull_run', 6, NULL, '15 min easy', NULL);

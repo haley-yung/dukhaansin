@@ -67,7 +67,6 @@ const TYPE_COLORS = {
   push_run: '#C97B5E', // warm amber
   lower_a:  '#9681C4', // muted violet
   pull_run: '#7593C2', // slate blue
-  lower_b:  '#6FA886', // sage
   rest:     '#3B3B40',
 };
 
@@ -75,11 +74,10 @@ const TYPE_LABELS = {
   push_run: 'Push + Run',
   lower_a: 'Lower A: Quad Focus',
   pull_run: 'Pull + Run',
-  lower_b: 'Lower B: Posterior Chain',
   rest: 'Rest Day',
 };
 
-const TRAINING_TYPES = ['push_run', 'lower_a', 'pull_run', 'lower_b'];
+const TRAINING_TYPES = ['push_run', 'lower_a', 'pull_run'];
 
 const ENERGY_EMOJIS = ['', '\u{1F634}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F525}'];
 
@@ -112,6 +110,12 @@ function today() {
 
 function sameDay(a, b) {
   return toDateStr(a) === toDateStr(b);
+}
+
+// Exercises without a load (cardio) skip the weight input.
+function isCardio(ex) {
+  const n = (ex?.name || '').toLowerCase();
+  return n.includes('treadmill') || n.includes('run') || n.includes('bike') || n.includes('row erg') || n.includes('walk');
 }
 
 function groupByMonth(workouts) {
@@ -552,12 +556,26 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-  const exerciseDoneCount = typeExercises.filter(ex => {
+  // An exercise is "active" (intended for today) when the user has
+  // engaged with it — typed a weight or ticked any set. Cardio is active
+  // as soon as any set is checked. Blank kg + no checks = skip.
+  const isActive = (ex) => {
+    const checks = setChecked[ex.id] || [];
+    const anyChecked = checks.some(Boolean);
+    if (isCardio(ex)) return anyChecked;
+    const w = (weights[ex.id] || '').toString().trim();
+    return w !== '' || anyChecked;
+  };
+
+  const isExerciseDone = (ex) => {
     const numSets = ex.sets || 1;
     const checks = setChecked[ex.id];
     return checks && checks.length >= numSets && checks.every(Boolean);
-  }).length;
-  const allDone = typeExercises.length > 0 && exerciseDoneCount === typeExercises.length;
+  };
+
+  const activeExercises = typeExercises.filter(isActive);
+  const exerciseDoneCount = activeExercises.filter(isExerciseDone).length;
+  const allDone = activeExercises.length > 0 && exerciseDoneCount === activeExercises.length;
 
   const selectType = (t) => {
     setSelectedType(t);
@@ -587,13 +605,17 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
     });
   };
 
-  // Auto-submit when all sets are checked — single POST with all weights
+  // Auto-submit when all active sets are checked — single POST with only
+  // the exercises the user actually engaged with.
+  const activeIds = activeExercises.map(e => e.id).join(',');
   useEffect(() => {
-    if (!submitted && !todayLogged && allDone && typeExercises.length > 0) {
+    if (!submitted && !todayLogged && allDone) {
       setSubmitted(true);
-      onLogWorkout(selectedType, exercises, weights);
+      onLogWorkout(selectedType, activeExercises, weights);
     }
-  }, [submitted, todayLogged, allDone, typeExercises.length, selectedType, exercises, weights, onLogWorkout]);
+    // activeIds is a stable-string summary so deep-equality isn't required
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted, todayLogged, allDone, selectedType, activeIds, weights, onLogWorkout]);
 
   const reset = () => {
     setSelectedType(null);
@@ -716,7 +738,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
             color: T.muted, fontSize: 12.5, fontFamily: T.mono,
             letterSpacing: '-0.02em',
           }}>
-            {exerciseDoneCount}/{typeExercises.length}
+            {exerciseDoneCount}/{activeExercises.length || 0}
           </span>
         </div>
         <button
@@ -734,15 +756,25 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
       {/* Progress bar — hairline */}
       <div style={{
         height: 2, background: T.line, borderRadius: 2,
-        marginBottom: 20, overflow: 'hidden',
+        marginBottom: 12, overflow: 'hidden',
       }}>
         <div style={{
           height: '100%',
-          width: typeExercises.length > 0 ? `${(exerciseDoneCount / typeExercises.length) * 100}%` : '0%',
+          width: activeExercises.length > 0 ? `${(exerciseDoneCount / activeExercises.length) * 100}%` : '0%',
           background: T.accent, borderRadius: 2,
           transition: 'width 420ms cubic-bezier(0.2, 0.8, 0.2, 1)',
         }} />
       </div>
+
+      {activeExercises.length === 0 && !todayLogged && (
+        <div style={{
+          fontSize: 12.5, color: T.muted, marginBottom: 16,
+          letterSpacing: '-0.005em', lineHeight: 1.5,
+        }}>
+          Enter a weight or tick a set for each exercise you're doing.
+          Skip the rest.
+        </div>
+      )}
 
       {typeExercises.map((ex, i) => {
         const isWarmup = ex.sortOrder === 0;
@@ -751,6 +783,10 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
         const checks = setChecked[ex.id] || new Array(numSets).fill(false);
         const allSetsChecked = checks.length >= numSets && checks.every(Boolean);
         const fmtRest = ex.restSeconds ? (ex.restSeconds >= 120 ? `${ex.restSeconds / 60}min` : `${ex.restSeconds}s`) : null;
+        const cardio = isCardio(ex);
+        const active = isActive(ex);
+        // Skipped = user hasn't engaged and hasn't completed → visually muted, lets them know it won't be logged.
+        const skipped = !active && !allSetsChecked;
 
         return (
           <div
@@ -758,7 +794,7 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
             style={{
               padding: '10px 0',
               borderBottom: i < typeExercises.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-              opacity: allSetsChecked ? 0.45 : 1,
+              opacity: allSetsChecked ? 0.45 : skipped ? 0.55 : 1,
               transition: 'opacity 0.2s',
             }}
           >
@@ -785,15 +821,15 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
                   {isWarmup ? `W. ${ex.name}` : `${exerciseNum}. ${ex.name}`}
                 </div>
                 <div style={{ fontSize: 12, color: T.muted, fontFamily: T.mono, marginTop: 2 }}>
-                  {ex.sets ? `${ex.sets}×${ex.reps}` : ex.reps}
-                  {fmtRest ? ` · ${fmtRest} rest` : ''}
+                  {ex.sets ? `${ex.sets}\u00D7${ex.reps || ''}` : (ex.reps || '')}
+                  {fmtRest ? ` \u00B7 ${fmtRest} rest` : ''}
                 </div>
               </div>
             </div>
 
             {/* Bottom row: weight input + per-set checkboxes */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingLeft: 34 }}>
-              {!isWarmup && (
+              {!isWarmup && !cardio && (
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1774,8 +1810,11 @@ function BodyTab({ metrics, onRefresh }) {
 
 // ── Settings Tab ────────────────────────────────────────────────────────────
 function SettingsTab({ exercises, templates, onRefresh, workouts, records, metrics }) {
+  // `newExercise[type]` = { name, sets, reps, restSeconds }
   const [newExercise, setNewExercise] = useState({});
   const [addingType, setAddingType] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editDraft, setEditDraft] = useState({});
   const [confirmClear, setConfirmClear] = useState(false);
   const [clearing, setClearing] = useState(false);
 
@@ -1786,11 +1825,40 @@ function SettingsTab({ exercises, templates, onRefresh, workouts, records, metri
   });
 
   const addExercise = async (type) => {
-    const name = (newExercise[type] || '').trim();
+    const draft = newExercise[type] || {};
+    const name = (draft.name || '').trim();
     if (!name) return;
-    await api('exercises', 'POST', { name, trainingType: type });
-    setNewExercise(prev => ({ ...prev, [type]: '' }));
+    await api('exercises', 'POST', {
+      name,
+      trainingType: type,
+      sets: draft.sets,
+      reps: draft.reps,
+      restSeconds: draft.restSeconds,
+    });
+    setNewExercise(prev => ({ ...prev, [type]: {} }));
     setAddingType(null);
+    onRefresh();
+  };
+
+  const startEdit = (ex) => {
+    setEditingId(ex.id);
+    setEditDraft({
+      name: ex.name || '',
+      sets: ex.sets ?? '',
+      reps: ex.reps ?? '',
+      restSeconds: ex.restSeconds ?? '',
+    });
+  };
+
+  const saveEdit = async (id) => {
+    await api('exercises', 'PUT', {
+      name: editDraft.name,
+      sets: editDraft.sets,
+      reps: editDraft.reps,
+      restSeconds: editDraft.restSeconds,
+    }, id);
+    setEditingId(null);
+    setEditDraft({});
     onRefresh();
   };
 
@@ -1841,32 +1909,88 @@ function SettingsTab({ exercises, templates, onRefresh, workouts, records, metri
       {/* Exercise Management */}
       <div style={{ marginBottom: 20 }}>
         <div style={labelStyle}>Exercise Library</div>
-        {TRAINING_TYPES.map(type => (
+        {TRAINING_TYPES.map(type => {
+          const draft = newExercise[type] || {};
+          const setDraft = (patch) => setNewExercise(prev => ({ ...prev, [type]: { ...(prev[type] || {}), ...patch } }));
+          const smallInput = {
+            ...inputStyle,
+            width: 60, padding: '8px 10px', fontSize: 13, textAlign: 'center',
+            fontFamily: T.mono,
+          };
+          return (
           <div key={type} style={{ ...cardStyle }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={typeBadge(type)}>{typeLabel(type)}</span>
             </div>
-            {(grouped[type] || []).map(ex => (
-              <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                <span style={{ color: T.text, fontSize: 14, fontFamily: T.font }}>{ex.name}</span>
-                <button
-                  style={{ ...btnStyle, padding: '4px 10px', fontSize: 12, color: '#EF4444' }}
-                  onClick={() => deleteExercise(ex.id)}
-                >&times;</button>
-              </div>
-            ))}
+            {(grouped[type] || []).map(ex => {
+              if (editingId === ex.id) {
+                return (
+                  <div key={ex.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                    <input
+                      style={{ ...inputStyle, width: '100%', marginBottom: 8 }}
+                      value={editDraft.name}
+                      onChange={e => setEditDraft(d => ({ ...d, name: e.target.value }))}
+                      placeholder="Exercise name"
+                      autoFocus
+                    />
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input style={smallInput} type="number" inputMode="numeric" placeholder="sets" value={editDraft.sets}
+                        onChange={e => setEditDraft(d => ({ ...d, sets: e.target.value }))} />
+                      <span style={{ color: T.muted, fontSize: 13 }}>&times;</span>
+                      <input style={{ ...smallInput, width: 80 }} placeholder="reps" value={editDraft.reps}
+                        onChange={e => setEditDraft(d => ({ ...d, reps: e.target.value }))} />
+                      <input style={{ ...smallInput, width: 70 }} type="number" inputMode="numeric" placeholder="rest s" value={editDraft.restSeconds}
+                        onChange={e => setEditDraft(d => ({ ...d, restSeconds: e.target.value }))} />
+                      <div style={{ flex: 1 }} />
+                      <button style={{ ...btnPrimary, fontSize: 13 }} onClick={() => saveEdit(ex.id)}>Save</button>
+                      <button style={{ ...btnStyle, fontSize: 13 }} onClick={() => { setEditingId(null); setEditDraft({}); }}>Cancel</button>
+                    </div>
+                  </div>
+                );
+              }
+              const metaParts = [];
+              if (ex.sets) metaParts.push(`${ex.sets}\u00D7${ex.reps || '-'}`);
+              else if (ex.reps) metaParts.push(ex.reps);
+              if (ex.restSeconds) metaParts.push(`${ex.restSeconds}s rest`);
+              return (
+                <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)', gap: 8 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ color: T.text, fontSize: 14, fontFamily: T.font }}>{ex.name}</div>
+                    {metaParts.length > 0 && (
+                      <div style={{ color: T.muted, fontSize: 12, fontFamily: T.mono, marginTop: 2 }}>
+                        {metaParts.join(' \u00B7 ')}
+                      </div>
+                    )}
+                  </div>
+                  <button style={{ ...btnStyle, padding: '4px 10px', fontSize: 12 }} onClick={() => startEdit(ex)}>Edit</button>
+                  <button
+                    style={{ ...btnStyle, padding: '4px 10px', fontSize: 12, color: '#EF4444' }}
+                    onClick={() => deleteExercise(ex.id)}
+                  >&times;</button>
+                </div>
+              );
+            })}
             {addingType === type ? (
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <div style={{ marginTop: 10 }}>
                 <input
-                  style={{ ...inputStyle, flex: 1 }}
+                  style={{ ...inputStyle, width: '100%', marginBottom: 8 }}
                   placeholder="Exercise name"
-                  value={newExercise[type] || ''}
-                  onChange={e => setNewExercise(prev => ({ ...prev, [type]: e.target.value }))}
-                  onKeyDown={e => e.key === 'Enter' && addExercise(type)}
+                  value={draft.name || ''}
+                  onChange={e => setDraft({ name: e.target.value })}
                   autoFocus
                 />
-                <button style={{ ...btnPrimary, flexShrink: 0, fontSize: 13 }} onClick={() => addExercise(type)}>Add</button>
-                <button style={{ ...btnStyle, flexShrink: 0, fontSize: 13 }} onClick={() => setAddingType(null)}>Cancel</button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input style={smallInput} type="number" inputMode="numeric" placeholder="sets" value={draft.sets || ''}
+                    onChange={e => setDraft({ sets: e.target.value })} />
+                  <span style={{ color: T.muted, fontSize: 13 }}>&times;</span>
+                  <input style={{ ...smallInput, width: 80 }} placeholder="reps" value={draft.reps || ''}
+                    onChange={e => setDraft({ reps: e.target.value })} />
+                  <input style={{ ...smallInput, width: 70 }} type="number" inputMode="numeric" placeholder="rest s" value={draft.restSeconds || ''}
+                    onChange={e => setDraft({ restSeconds: e.target.value })} />
+                  <div style={{ flex: 1 }} />
+                  <button style={{ ...btnPrimary, fontSize: 13 }} onClick={() => addExercise(type)}>Add</button>
+                  <button style={{ ...btnStyle, fontSize: 13 }} onClick={() => setAddingType(null)}>Cancel</button>
+                </div>
               </div>
             ) : (
               <button
@@ -1875,7 +1999,8 @@ function SettingsTab({ exercises, templates, onRefresh, workouts, records, metri
               >+ Add Exercise</button>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Template Management */}
@@ -2024,10 +2149,13 @@ export default function GymTracker() {
     fetchAll();
   };
 
-  const handleLogWorkout = async (type, allExercises, weightsMap) => {
-    const typeExes = (allExercises || []).filter(e => e.type === type).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    const exerciseData = typeExes.map(ex => {
-      const w = weightsMap && weightsMap[ex.id] ? parseFloat(weightsMap[ex.id]) || null : null;
+  const handleLogWorkout = async (type, activeExes, weightsMap) => {
+    // activeExes is the subset of exercises the user engaged with —
+    // weight entered or (for cardio) sets checked. Everything else is skipped.
+    const ordered = [...(activeExes || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    const exerciseData = ordered.map(ex => {
+      const raw = weightsMap && weightsMap[ex.id];
+      const w = raw != null && raw !== '' ? parseFloat(raw) || null : null;
       return {
         exerciseId: ex.id,
         name: ex.name,

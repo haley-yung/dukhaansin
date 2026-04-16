@@ -321,7 +321,7 @@ async function handleExercises(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, trainingType } = req.body || {};
+    const { name, trainingType, sets, reps, restSeconds } = req.body || {};
     if (!name || !trainingType) return res.status(400).json({ error: 'name and trainingType are required' });
 
     const { data: existing } = await supabase
@@ -334,13 +334,34 @@ async function handleExercises(req, res) {
 
     const sortOrder = existing ? (existing.sort_order || 0) + 1 : 0;
 
-    const { data, error } = await supabase.from('exercises').insert({
+    const row = {
       name,
       training_type: trainingType,
       sort_order: sortOrder,
-    }).select().single();
+    };
+    if (sets != null && sets !== '') row.sets = parseInt(sets, 10) || null;
+    if (reps != null && reps !== '') row.reps = String(reps);
+    if (restSeconds != null && restSeconds !== '') row.rest_seconds = parseInt(restSeconds, 10) || null;
+
+    const { data, error } = await supabase.from('exercises').insert(row).select().single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json(rowToCamel(data));
+  }
+
+  if (req.method === 'PUT') {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const { name, sets, reps, restSeconds } = req.body || {};
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (sets !== undefined) updates.sets = sets === '' || sets == null ? null : parseInt(sets, 10);
+    if (reps !== undefined) updates.reps = reps === '' || reps == null ? null : String(reps);
+    if (restSeconds !== undefined) updates.rest_seconds = restSeconds === '' || restSeconds == null ? null : parseInt(restSeconds, 10);
+
+    const { data, error } = await supabase.from('exercises').update(updates).eq('id', id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(rowToCamel(data));
   }
 
   if (req.method === 'DELETE') {
