@@ -2,9 +2,8 @@
   const slug = window.location.pathname.split('/album/')[1];
   if (!slug) return;
 
-  const ROW_H = 2;
-  const GAP = 12;
   const SUB_COLS = 18;
+  const MARGIN = 6; // px on each side of grid items (must match CSS)
 
   const SPAN_MAP = { 0.5: 3, 0.67: 4, 1: 6, 1.33: 8, 1.5: 9, 2: 12, 3: 18 };
   function spanToSubcols(span) {
@@ -14,6 +13,7 @@
   const grid = document.getElementById('grid-gallery');
   const titleEl = document.getElementById('album-title');
   const descEl = document.getElementById('album-description');
+  const metaEl = document.getElementById('album-meta');
   const encodedSlug = encodeURIComponent(slug);
 
   Promise.all([
@@ -23,38 +23,38 @@
     document.title = `${album.title} — dukhaansin`;
     titleEl.textContent = album.title;
     descEl.textContent = album.description || '';
+    if (metaEl) {
+      metaEl.textContent = `${String(photos.length).padStart(2, '0')} · ${photos.length === 1 ? 'Photograph' : 'Photographs'}`;
+    }
 
     const gridSpans = album.gridSpans || {};
 
     if (!photos.length) {
-      grid.innerHTML = '<p class="empty-state">No photos in this album yet.</p>';
+      grid.innerHTML = '<p class="archive-empty">No photos in this album yet.</p>';
       return;
     }
 
     grid.innerHTML = photos.map((p, i) => {
       const span = gridSpans[p.filename] || 1;
       const subcols = spanToSubcols(span);
-      const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
-      const eager = i < 6 ? 'eager' : 'lazy';
-      const priority = i < 6 ? ' fetchpriority="high"' : '';
-      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}" style="--i:${Math.min(i, 20)}"><img src="${p.src}" alt="${p.filename}" loading="${eager}" decoding="async"${priority}></div>`;
+      const cls = subcols !== 6 ? ` subcol-${subcols}` : '';
+      const eager = i < 6;
+      const loadAttr = eager ? 'eager' : 'lazy';
+      const priority = eager ? ' fetchpriority="high"' : '';
+      // --i staggers the photo fade-in (capped at 20 so later photos don't wait forever)
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}" style="--i:${Math.min(i, 20)}"><img src="${p.src}" alt="${p.filename}" loading="${loadAttr}" decoding="async"${priority}></div>`;
     }).join('');
-
-    // Album meta line (photo count + cover reference if set)
-    const metaEl = document.getElementById('album-meta');
-    if (metaEl) {
-      metaEl.textContent = `${String(photos.length).padStart(2, '0')} · ${photos.length === 1 ? 'Photograph' : 'Photographs'}`;
-    }
 
     grid.querySelectorAll('.grid-item').forEach(item => {
       const img = item.querySelector('img');
       const setRows = () => {
         const span = parseFloat(item.dataset.span) || 1;
         const subcols = spanToSubcols(span);
-        const colW = (grid.clientWidth - GAP * (SUB_COLS - 1)) / SUB_COLS * subcols + GAP * (subcols - 1);
-        const desiredH = img.naturalHeight / img.naturalWidth * colW;
-        const rows = Math.ceil((desiredH + GAP) / (ROW_H + GAP));
-        item.style.gridRowEnd = `span ${Math.max(2, rows)}`;
+        const cellW = grid.clientWidth / SUB_COLS * subcols;
+        const visibleW = cellW - MARGIN * 2;
+        const desiredH = img.naturalHeight / img.naturalWidth * visibleW;
+        const totalH = Math.ceil(desiredH + MARGIN * 2);
+        item.style.gridRowEnd = `span ${Math.max(2, totalH)}`;
       };
       if (img.complete && img.naturalWidth) setRows();
       else img.addEventListener('load', setRows);
@@ -63,7 +63,7 @@
     initLightbox(photos);
   }).catch(() => {
     titleEl.textContent = 'Album not found';
-    grid.innerHTML = '<p class="empty-state">Failed to load photos.</p>';
+    grid.innerHTML = '<p class="archive-empty">Failed to load photos.</p>';
   });
 
   function initLightbox(photos) {
@@ -75,12 +75,14 @@
     function show(i) {
       current = i;
       img.src = photos[i].src;
-      counter.textContent = `${i + 1} / ${photos.length}`;
+      counter.textContent = `${String(i + 1).padStart(2, '0')} / ${String(photos.length).padStart(2, '0')}`;
       lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
     }
     function hide() {
       lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
     function prev() { show(current > 0 ? current - 1 : photos.length - 1); }
