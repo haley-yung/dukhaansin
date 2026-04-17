@@ -35,8 +35,16 @@
       const span = gridSpans[p.filename] || 1;
       const subcols = spanToSubcols(span);
       const cls = subcols !== 4 ? ` subcol-${subcols}` : '';
-      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="lazy"></div>`;
+      const eager = i < 6 ? 'eager' : 'lazy';
+      const priority = i < 6 ? ' fetchpriority="high"' : '';
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}" style="--i:${Math.min(i, 20)}"><img src="${p.src}" alt="${p.filename}" loading="${eager}" decoding="async"${priority}></div>`;
     }).join('');
+
+    // Album meta line (photo count + cover reference if set)
+    const metaEl = document.getElementById('album-meta');
+    if (metaEl) {
+      metaEl.textContent = `${String(photos.length).padStart(2, '0')} · ${photos.length === 1 ? 'Photograph' : 'Photographs'}`;
+    }
 
     grid.querySelectorAll('.grid-item').forEach(item => {
       const img = item.querySelector('img');
