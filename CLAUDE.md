@@ -1,265 +1,463 @@
-# dukhaansin — Photography Portfolio + Personal App
+# dukhaansin — Photography Portfolio + Personal App Suite
 
-## What This Is
+> Canonical reference. Read this first when working on the site.
+> Update this file whenever the architecture, routing, schema, or
+> design system changes.
 
-A serverless photography portfolio with an admin CMS, plus a personal web app suite. Vanilla HTML/CSS/JS frontend served as static files on Vercel, with Vercel Serverless Functions as the API layer and Cloudflare R2 for image storage. Album metadata lives in R2 JSON files. The personal app (`/app`) uses Vite + React SPAs that build into the same static `frontend/` directory, with Supabase (PostgreSQL) as the database for persistent state.
+---
 
-## Architecture
+## 1. What This Is
+
+Three things that share one domain:
+
+1. **Photography portfolio** at `dukhaansin.com` — a public, editorial gallery of albums with full-bleed photos and a masonry lightbox.
+2. **Admin CMS** at `dukhaansin.com/admin` — password-gated tool to create albums, upload + reorder + resize photos, and set covers. JWT auth.
+3. **Personal app suite** at `dukhaansin.com/app` — two standalone Vite + React SPAs:
+   - `/app/gym` — a workout + PR + body metrics tracker
+   - `/app/debt` — a loan-repayment dashboard with installment tracking
+
+Everything runs on **Vercel Hobby** with **Cloudflare R2** for images and **Supabase** for app data. No framework (except the React SPAs); no build step for the gallery.
+
+---
+
+## 2. Architecture At A Glance
 
 ```
-Browser → Vercel (static frontend + serverless API) → Cloudflare R2 (images + metadata)
-                                                    → Supabase (PostgreSQL for app data)
+Browser ──► Vercel ──► static frontend/   (gallery, admin, built app SPAs)
+              │
+              └──► /api/*  serverless functions ──► Cloudflare R2  (photos, meta.json)
+                                                  └► Supabase     (Postgres: loans, gym data)
 ```
 
-- **Frontend**: Static HTML/CSS/JS in `frontend/` — no framework, no build step
-- **Backend**: Node.js serverless functions in `api/` — each file = one endpoint
-- **Storage**: Cloudflare R2 (S3-compatible) — images + `meta.json` per album
-- **Database**: Supabase (PostgreSQL) — persistent state for web apps (debt tracker loans)
-- **Auth**: JWT tokens in HttpOnly cookies, bcrypt password hashing
-- **Deploy**: `vercel.json` serves `frontend/` as static, routes `/api/*` to functions
-- **Constraint**: Vercel Hobby plan limits to 12 serverless functions — consolidate endpoints where possible
+- **Frontend**: static HTML/CSS/JS in `frontend/` — the gallery is vanilla; the apps are Vite + React and build into `frontend/app/{gym,debt}`.
+- **Backend**: Node.js serverless functions in `api/`. File = endpoint.
+- **Storage**: Cloudflare R2 (S3-compatible) for photos; a `meta.json` per album holds the album record.
+- **Database**: Supabase Postgres for the app suite (loans, exercises, workouts, records, metrics).
+- **Auth**: JWT in HttpOnly cookie + bcrypt password (admin CMS only; apps are single-user, no auth).
+- **Deploy**: `vercel.json` serves `frontend/` and routes `/api/*`.
+- **Hard constraint**: Vercel Hobby allows **12 serverless functions max**. The apps are consolidated into one function (`api/app/[app].js`) to preserve budget.
 
-## Directory Layout
+---
+
+## 3. Domain & Routing
+
+Defined in `vercel.json`:
+
+| URL                         | Serves                                |
+|-----------------------------|----------------------------------------|
+| `/`                         | `frontend/index.html` (gallery home)   |
+| `/album/:slug`              | `frontend/album.html` (photo viewer)   |
+| `/admin`                    | `frontend/admin/index.html`            |
+| `/admin/login`              | `frontend/admin/login.html`            |
+| `/admin/album/:slug`        | `frontend/admin/album.html`            |
+| `/app`                      | `frontend/app/index.html` (landing)    |
+| `/app/gym`                  | `frontend/app/gym/index.html` (SPA)    |
+| `/app/debt`                 | `frontend/app/debt/index.html` (SPA)   |
+| `/api/*`                    | matching function in `api/`            |
+
+**Cache headers**:
+- `/css/*` and `/js/*` → immutable 1 year (`?v=N` cache-bust in links).
+- `/app/*.html` → `no-cache, no-store, must-revalidate` so a new hashed bundle is never masked by stale HTML.
+- `/api/*` → `no-store`.
+
+---
+
+## 4. Directory Layout
 
 ```
-api/                        # Vercel Serverless Functions
-  _utils/auth.js            # JWT + bcrypt auth helpers
-  _utils/r2.js              # R2 client (list, get/put JSON, presigned URLs, delete)
-  _utils/supabase.js        # Supabase client (shared by app endpoints)
-  albums.js                 # GET: list albums (public) | POST: create album (admin)
-  login.js                  # POST: authenticate, set JWT cookie
-  logout.js                 # POST: clear cookie
-  me.js                     # GET: check auth status
-  storage.js                # GET: storage usage vs 10 GB limit
+api/                             # Vercel Serverless Functions (11 total, room for 1 more)
+  _utils/
+    auth.js                      # JWT + bcrypt
+    r2.js                        # R2 client (list, get/put JSON, presigned URLs, delete)
+    supabase.js                  # Shared Supabase client
+  albums.js                      # GET list / POST create album
+  login.js                       # POST set JWT cookie
+  logout.js                      # POST clear cookie
+  me.js                          # GET auth status
+  storage.js                     # GET R2 usage vs 10 GB cap
   albums/[slug]/
-    index.js                # GET: album detail | PUT: update | DELETE: delete album
-    photos.js               # GET: list photos | POST: get presigned upload URLs
-    photos/[filename].js    # DELETE: remove single photo
-    cover.js                # PUT: set cover image
-    reorder.js              # PUT: save photo order + grid spans
-    finalize.js             # POST: register newly uploaded files in metadata
+    index.js                     # GET detail / PUT update / DELETE album
+    photos.js                    # GET list / POST presigned upload URLs
+    photos/[filename].js         # DELETE one photo
+    cover.js                     # PUT set cover
+    reorder.js                   # PUT save order + grid spans
+    finalize.js                  # POST register uploaded files in meta.json
   app/
-    debt.js                 # GET: list loans | PUT: pay installment / undo (single consolidated endpoint)
+    [app].js                     # GET/PUT/POST/DELETE — consolidated gym + debt API
 
-frontend/                   # Static files (Vercel outputDirectory)
-  index.html                # Public gallery home
-  album.html                # Public album viewer (masonry grid + lightbox)
-  404.html                  # Custom 404
-  admin/
-    login.html              # Admin login
-    index.html              # Admin dashboard (albums list, storage, create)
-    album.html              # Album editor (upload, reorder, resize, cover, delete)
-  css/style.css             # All styles (single file)
-  js/gallery.js             # Public album rendering + lightbox
-  js/admin.js               # Admin dashboard + album editor logic
-```
-
-## R2 Data Model
-
-Each album is a folder in R2: `{slug}/`
-
-```
-{slug}/
-  meta.json          # Album metadata (source of truth)
-  img_001.jpg        # Photos with sequential naming
-  img_002.jpg
-  ...
-```
-
-**meta.json structure:**
-```json
-{
-  "title": "Album Title",
-  "description": "Optional",
-  "order": ["img_001.jpg", "img_002.jpg"],
-  "cover": "img_001.jpg",
-  "gridSpans": { "img_002.jpg": 1.5 },
-  "createdAt": "2026-03-29T..."
-}
-```
-
-- `order` controls display sequence
-- `gridSpans` maps filename to width multiplier (default 1 if absent)
-- `cover` is the album thumbnail on the home page
-
-## CSS Grid Masonry System
-
-The gallery uses an **18-column CSS sub-grid** for fractional photo sizing:
-
-- `grid-template-columns: repeat(18, 1fr)` — 6 sub-columns per visual column (3 visual columns)
-- `grid-auto-rows: 1px` with `gap: 0` — pixel-perfect row spanning
-- Each item gets `margin: 6px` for uniform gaps
-- Row span = `Math.ceil(imgNaturalHeight / imgNaturalWidth * visibleWidth + margin * 2)`
-
-**Width sizing (SPAN_MAP):**
-| Display Size | Sub-columns | Class |
-|---|---|---|
-| 0.5 (half) | 3 | `subcol-3` |
-| 0.67 (two-thirds) | 4 | `subcol-4` |
-| 1 (default) | 6 | `subcol-6` |
-| 1.33 (four-thirds) | 8 | `subcol-8` |
-| 1.5 (one-and-half) | 9 | `subcol-9` |
-| 2 (double) | 12 | `subcol-12` |
-| 3 (full-width) | 18 | `subcol-18` |
-
-Responsive: 18 cols > 12 cols at 1024px > single column at 600px.
-
-## Image Loading Strategy
-
-- First 6 images: `loading="eager"` + `fetchpriority="high"` (above the fold)
-- Remaining: `loading="lazy"` + `decoding="async"` (non-blocking)
-- Images served directly from R2 public URL (no proxy)
-- CSS/JS cached 1 year with `?v=12` cache-busting query strings
-
-## Upload Flow
-
-1. Admin selects files in the upload zone (drag-drop or file picker)
-2. Frontend POSTs filenames to `/api/albums/{slug}/photos` to get presigned R2 URLs
-3. Frontend PUTs files directly to R2 using presigned URLs (bypasses backend)
-4. Frontend POSTs to `/api/albums/{slug}/finalize` to update `meta.json` with new filenames
-5. Files are auto-renamed to `img_NNN.jpg` format
-
-## Admin Grid Editing
-
-Photos can be resized and reordered in the admin album editor:
-
-- **Drag-to-reorder**: Drag photos to change sequence
-- **Drag-to-resize**: Drag right edge to snap to valid spans (0.5, 0.67, 1, 1.33, 1.5, 2, 3)
-- **+/- buttons**: Increment/decrement span one step at a time
-- **Set cover**: Star button marks a photo as album cover
-- Changes saved via PUT to `/api/albums/{slug}/reorder`
-
-## Key Functions Reference
-
-### `api/_utils/r2.js`
-- `getJSON(key)` / `putJSON(key, data)` — read/write metadata
-- `listObjects(prefix)` — recursive listing with pagination
-- `getPresignedUploadUrl(key, contentType)` — 1-hour upload URL
-- `getNextImageNumber(objects)` — next sequential `img_NNN` number
-- `getOrCreateMeta(slug, objects)` — lazy-init album metadata
-
-### `api/_utils/supabase.js`
-- `supabase` — shared Supabase client instance (reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` env vars)
-
-### `api/_utils/auth.js`
-- `createToken()` — 24-hour JWT
-- `isAuthenticated(req)` — verify JWT from cookie, returns `{ role }` or `false`
-- `checkPassword(password)` — bcrypt compare against `ADMIN_PASSWORD`
-
-### `frontend/js/gallery.js`
-- `renderGallery(photos)` — builds grid HTML with subcol classes + lazy loading
-- `applyRowSpans()` — calculates pixel-precise row spans from image dimensions
-- Lightbox with keyboard nav (Escape, Left/Right arrows)
-
-### `frontend/js/admin.js`
-- `initDashboard()` / `initAlbumPage()` — page entry points
-- `renderPreviewGrid(photos)` — admin grid with resize handles + action buttons
-- `updateItemSpan(item, newSpan, grid, slug)` — apply span change + save
-- `snapToNearestSpan(rawSpan)` — snap to valid VALID_SPANS array
-- `uploadFiles(files)` — presigned URL upload pipeline
-
-## Environment Variables
-
-| Variable | Purpose |
-|---|---|
-| `ADMIN_USERNAME` | Login username |
-| `ADMIN_PASSWORD` | Bcrypt-hashed password |
-| `JWT_SECRET` | JWT signing key |
-| `R2_ACCESS_KEY_ID` | Cloudflare R2 access key |
-| `R2_SECRET_ACCESS_KEY` | Cloudflare R2 secret key |
-| `R2_ACCOUNT_ID` | Cloudflare account ID |
-| `R2_BUCKET_NAME` | R2 bucket name (`dukhaansin-images`) |
-| `R2_PUBLIC_URL` | Public R2 URL for serving images |
-| `SUPABASE_URL` | Supabase project URL (`https://drlimemicsthqpwofytm.supabase.co`) |
-| `SUPABASE_ANON_KEY` | Supabase anon/publishable key (public, safe for client-side) |
-
-## Vercel Routing (`vercel.json`)
-
-- `outputDirectory: "frontend"` — static file root
-- `/app/debt` → `/app/debt/index.html` (debt tracker)
-- `/album/:slug` → `album.html` (public album viewer)
-- `/admin` → `admin/index.html`, `/admin/album/:slug` → `admin/album.html`
-- CSS/JS: `Cache-Control: max-age=31536000, immutable`
-- API: `Cache-Control: no-store`
-
-## Dependencies
-
-5 npm packages (all for the API layer):
-- `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` — R2 access
-- `@supabase/supabase-js` — Supabase client for database access
-- `bcryptjs` — password hashing
-- `jsonwebtoken` — JWT tokens
-
-## Personal Web App (`/app`)
-
-A personal app suite at `dukhaansin.com/app/`, built as separate Vite + React SPAs that build into `frontend/app/`. Currently contains the Debt Tracker, with Fitness Tracker and a dashboard planned for the future.
-
-### Debt Tracker (`/app/debt`)
-
-A financial dashboard for tracking loan repayment progress. Single-component React app with animated numbers, progress rings, calendar heatmaps, and persistent installment payments via Supabase.
-
-**Features:**
-- Overview tab: income, remaining debt, DSR gauge, monthly cash flow breakdown
-- Loans tab: per-loan detail cards with payment heatmaps and "Pay installment" buttons
-- Cash flow tab: income allocation breakdown
-- Action plan tab: prioritized debt payoff strategy
-- Persistent state: payments survive page reloads (stored in Supabase `loans` table)
-- Optimistic UI: instant feedback on pay/undo, with API sync in background
-
-**Loans tracked:** BOCHK, Mox, Standard Chartered, X Wallet 80K (catch-up plan), X Wallet 30K
-
-**API:** Single consolidated endpoint at `/api/app/debt` handles:
-- `GET` — fetch all loans from Supabase (snake_case → camelCase mapping)
-- `PUT { action: "pay", loanId }` — record installment payment
-- `PUT { action: "undo", loanId, previous }` — revert last payment
-
-**Supabase `loans` table columns:** `id`, `name`, `borrowed`, `apr`, `monthly`, `paid`, `remaining`, `installments_paid`, `total_installments`, `interest_paid`, `principal_paid`, `interest_remaining`, `avg_payment`, `proper_installment`, `revolving`, `danger`, `color`, `start_year`, `start_month`, `updated_at`
-
-**RLS policies:** Public read + public update (no auth required — personal dashboard)
-
-### Web App Directory Layout
-
-```
-apps/
-  debt/                     # Vite + React source
-    index.html              # Entry HTML
-    vite.config.js          # Builds to ../../frontend/app/debt/
-    supabase-setup.sql      # Table creation + seed data (run once in Supabase SQL Editor)
+apps/                            # React SPAs (build into frontend/app/)
+  gym/
+    index.html                   # entry, loads Inter + JetBrains Mono
+    vite.config.js               # base: /app/gym/, outDir: ../../frontend/app/gym
+    supabase-setup.sql           # one-time schema + seed (idempotent re-run OK)
+    package.json
     src/
-      main.jsx              # React root
-      App.jsx               # FinancialDashboard component (fetches from /api/app/debt)
-
-frontend/app/               # Build output (served as static files)
+      main.jsx                   # React root
+      App.jsx                    # one-file SPA (~2300 lines)
   debt/
-    index.html              # Built entry point
-    assets/                 # Vite-hashed JS bundles
+    index.html                   # entry, loads Inter + JetBrains Mono
+    vite.config.js               # base: /app/debt/, outDir: ../../frontend/app/debt
+    supabase-setup.sql
+    package.json
+    src/
+      main.jsx
+      App.jsx
+
+frontend/                        # Vercel outputDirectory — everything served static
+  index.html                     # Public gallery home (editorial list of albums)
+  album.html                     # Public album viewer (masonry + lightbox)
+  404.html                       # Custom 404
+  admin/
+    login.html
+    index.html                   # Dashboard (albums list, storage, create form)
+    album.html                   # Album editor (upload, reorder, resize, cover, delete)
+  css/style.css                  # All styles — public + admin in one file
+  js/
+    gallery.js                   # Public gallery JS (render + lightbox)
+    admin.js                     # Admin CMS JS
+  app/                           # BUILD OUTPUT — do not hand-edit
+    index.html                   # /app landing page (numbered list of apps)
+    gym/
+      index.html                 # built from apps/gym
+      assets/index-*.js
+    debt/
+      index.html
+      assets/index-*.js
+
+vercel.json                      # routing, rewrites, headers, outputDirectory
+package.json                     # root deps + build chain for apps
 ```
 
-### Web App Build
+---
 
-The root `package.json` build script handles all app builds:
+## 5. Services & External Dependencies
+
+### Vercel
+- **Deployments**: auto-deploy from `main` to production. PR branches get preview URLs.
+- **Serverless functions**: Node.js runtime. Each file in `api/` is one function.
+- **Static**: everything in `frontend/` is served unchanged.
+- **Project name**: `dukhaansin` on Vercel (linked in `.vercel/project.json` locally).
+
+### Cloudflare R2
+- **Bucket**: `dukhaansin-images`
+- **Access**: S3-compatible via `@aws-sdk/client-s3` in `api/_utils/r2.js`.
+- **Layout**: one folder per album, `{slug}/img_NNN.jpg` + `{slug}/meta.json`.
+- **Public URL**: photos served directly from R2 (no proxy).
+- **Presigned URLs**: 1-hour validity, generated server-side for uploads (bypass API for the big file transfer).
+- **Storage cap**: 10 GB (the `/api/storage` endpoint reports current usage).
+
+### Supabase (Postgres)
+- **Project**: `drlimemicsthqpwofytm` (region: ap-northeast-2, Postgres 17)
+- **Single client**: `api/_utils/supabase.js` — used by `api/app/[app].js` only.
+- **RLS**: enabled on all tables. Policy on each: public read + write (single-user personal app, no multi-user security needed).
+
+#### Tables
+
+**loans** (debt tracker)
 ```
-npm run build → cd apps/debt && npm install && npm run build
+id, name, borrowed, apr, monthly, paid, remaining,
+installments_paid, total_installments,
+interest_paid, principal_paid, interest_remaining,
+avg_payment, proper_installment, revolving, danger,
+color, start_year, start_month, updated_at
 ```
 
-Each app's `vite.config.js` sets `base` and `outDir` to build into the correct `frontend/app/` subdirectory. Vercel runs this build command during deployment.
+**exercises** (gym tracker — exercise library)
+```
+id uuid, name, training_type, sort_order,
+sets int, reps text, rest_seconds int, created_at
+```
 
-### Web App Routing
+**workouts** (gym tracker — session log)
+```
+id uuid, date, training_type, notes, exercises jsonb, created_at
+```
+`exercises` is a JSONB array of `{ exerciseId, name, sets: [{ reps, weight }, ...] }`.
 
-Rewrites in `vercel.json`:
-- `/app/debt` → `/app/debt/index.html`
+**templates** (gym tracker — saved session templates)
+```
+id uuid, name, training_type, exercises jsonb, created_at
+```
 
-### Adding New Apps
+**personal_records**
+```
+id uuid, exercise_name, weight numeric, reps int, date,
+workout_id uuid → workouts.id (ON DELETE SET NULL)
+```
 
-1. Create `apps/{name}/` with Vite + React setup
-2. Set `base: '/app/{name}/'` and `outDir: '../../frontend/app/{name}'` in vite config
-3. Chain the build in root `package.json`: `&& cd ../apps/{name} && npm install && npm run build`
-4. Add rewrite in `vercel.json`: `/app/{name}` → `/app/{name}/index.html`
+**body_metrics**
+```
+id uuid, date (unique), weight_kg numeric, energy_level (1-5), notes, created_at
+```
 
-## Design
+---
 
-- Color scheme: light background (#fafafa), dark text (#1a1a1a)
-- Fonts: Inter (body), Playfair Display (headings/branding)
-- Minimal UI with hover-reveal admin controls
-- Responsive breakpoints: 1024px (tablet), 768px, 600px (mobile)
-- **Debt Tracker**: Dark theme (#0A0A0F), DM Sans + JetBrains Mono fonts, color-coded loans
+## 6. API Reference
+
+### Public (no auth)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET  | `/api/albums` | List albums (with cover URL + photo count) |
+| GET  | `/api/albums/{slug}` | One album (title, description, order, gridSpans) |
+| GET  | `/api/albums/{slug}/photos` | Photos in an album (src URLs) |
+
+### Admin (JWT required)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/login` | Authenticate, set JWT cookie |
+| POST | `/api/logout` | Clear cookie |
+| GET  | `/api/me` | Check auth |
+| POST | `/api/albums` | Create album |
+| PUT/DELETE | `/api/albums/{slug}` | Update / delete |
+| POST | `/api/albums/{slug}/photos` | Request presigned upload URLs |
+| DELETE | `/api/albums/{slug}/photos/{filename}` | Delete one photo |
+| PUT | `/api/albums/{slug}/cover` | Set cover |
+| PUT | `/api/albums/{slug}/reorder` | Save photo order + grid spans |
+| POST | `/api/albums/{slug}/finalize` | Register uploaded files in meta.json |
+| GET  | `/api/storage` | R2 usage |
+
+### Apps — consolidated at `/api/app/[app]`
+
+Router file `api/app/[app].js`. The `app` param is `gym` or `debt`.
+
+#### `/api/app/debt`
+
+| Method | Body/Query | Purpose |
+|--------|-----------|---------|
+| GET  | — | List all loans |
+| PUT  | `{ action: "pay", loanId, amount? }` | Record installment (amount is optional override for revolving loans) |
+| PUT  | `{ action: "undo", loanId, previous }` | Revert last pay |
+
+#### `/api/app/gym` — routed by `?resource=…`
+
+| Method | `resource` | Extra | Purpose |
+|--------|-----------|-------|---------|
+| GET    | `workouts`  | — | List workouts |
+| POST   | `workouts`  | body: `{ date, trainingType, notes, exercises }` | Create + auto-detect PRs |
+| DELETE | `workouts`  | `?id=…` | Delete one |
+| GET/POST/PUT/DELETE | `exercises` | `?id=…` on PUT/DELETE | Exercise library CRUD |
+| GET/POST/DELETE | `templates` | `?id=…` on DELETE | Templates |
+| GET    | `records`   | — | Personal records |
+| GET/POST/DELETE | `metrics` | body: `{ date, weightKg?, energyLevel?, notes? }` | Body metrics (date is unique; POST upserts) |
+| GET    | `export`    | — | Full JSON export |
+| POST   | `import`    | body: exported JSON | Replace all data |
+
+**camelCase ↔ snake_case**: the app endpoint normalizes both sides (`trainingType` ↔ `training_type`). Frontend always speaks camelCase.
+
+---
+
+## 7. Design System
+
+The apps and the gallery share one typographic system in two palettes — dark for apps, warm light for the gallery. They're visual inverses.
+
+### Tokens (apps — dark)
+
+| Token     | Value                      | Use |
+|-----------|----------------------------|------|
+| `bg`      | `#0A0A0B`                  | page |
+| `surface` | `rgba(255,255,255,0.025)`  | card bg |
+| `line`    | `rgba(255,255,255,0.06)`   | hairline |
+| `line-hi` | `rgba(255,255,255,0.12)`   | emphasis border |
+| `text`    | `#F2F2F0`                  | body |
+| `heading` | `#FAFAF7`                  | display type |
+| `secondary` | `#A6A6AB`                | body secondary |
+| `muted`   | `#6F6F76`                  | captions, labels |
+| `accent`  | `#FAFAF7` on `#0A0A0B`     | primary button |
+
+### Tokens (public gallery — light, inverse)
+
+| Token     | Value                      | Use |
+|-----------|----------------------------|------|
+| `bg`      | `#FAFAF7`                  | page |
+| `ink`     | `#0A0A0B`                  | body & heading |
+| `secondary` | `#4A4A50`                | body secondary |
+| `muted`   | `#8A8A8F`                  | captions |
+| `line`    | `rgba(10,10,11,0.08)`      | hairline |
+
+### Typography
+
+| Face           | Role                                      |
+|----------------|-------------------------------------------|
+| **Inter**      | body + app display (weight 300 for large type, tight `-0.02em` tracking) |
+| **Fraunces**   | public gallery display only (wordmark + titles, weight 300, `-0.045em` tracking) |
+| **JetBrains Mono** | numbers, labels, counters              |
+
+### Motion
+
+- `fadeUp` — page entry (600ms)
+- `scaleIn` — confirmations
+- `drawCheck` — session-complete checkmark
+- `pulse` — live dot in eyebrow
+- Photo stagger: `animation-delay: calc(var(--i) * 40ms)` via inline `style="--i:N"`
+- All transitions honor `prefers-reduced-motion`
+
+### Data-viz palette (apps only, desaturated)
+
+| Name       | Hex       | Where |
+|------------|-----------|------|
+| push_run   | `#C97B5E` | warm amber |
+| lower_a    | `#9681C4` | violet |
+| pull_run   | `#7593C2` | slate |
+| rest       | `#3B3B40` | neutral |
+| warn       | `#C9A06E` | warnings (amber) |
+| danger     | `#C56B6B` | interest paid, DSR overflow |
+| good       | `#7FA98A` | paid / cleared |
+
+---
+
+## 8. Build & Deploy
+
+### Local build
+```sh
+npm install                 # root deps (API)
+npm run build               # builds both apps into frontend/app/{gym,debt}
+```
+
+The root `build` script chains both:
+```
+cd apps/debt && npm install && npm run build
+&& cd ../gym && npm install && npm run build
+```
+
+### Local dev servers
+
+Dev servers for previewing before deploy:
+
+- **Gallery**: `vercel dev --yes --listen 3456` (runs both static + API)
+- **Gym SPA**: `cd apps/gym && npm run dev` (port 5173)
+- **Debt SPA**: `cd apps/debt && npm run dev` (port 5174)
+
+Configured in `.claude/launch.json` for `preview_start`.
+
+### Deploy
+
+`main` auto-deploys on Vercel. Workflow:
+
+```sh
+# on a feature branch
+git commit -am "..."
+git push origin my-branch
+gh pr create --title "..." --body "..."
+gh pr merge NN --merge            # merges + triggers production deploy
+```
+
+For quick personal-app changes, merge directly to `main` is fine (single-user project).
+
+---
+
+## 9. Environment Variables
+
+All configured on Vercel (Production + Preview). Not in git.
+
+| Var                    | Purpose |
+|------------------------|---------|
+| `ADMIN_USERNAME`       | admin login |
+| `ADMIN_PASSWORD`       | bcrypt hash |
+| `JWT_SECRET`           | JWT signing |
+| `R2_ACCESS_KEY_ID`     | R2 |
+| `R2_SECRET_ACCESS_KEY` | R2 |
+| `R2_ACCOUNT_ID`        | R2 account |
+| `R2_BUCKET_NAME`       | `dukhaansin-images` |
+| `R2_PUBLIC_URL`        | public photo URL base |
+| `SUPABASE_URL`         | `https://drlimemicsthqpwofytm.supabase.co` |
+| `SUPABASE_ANON_KEY`    | publishable key (safe client-side, but the API uses it server-side) |
+
+---
+
+## 10. Images — How The Masonry Works
+
+Both the public gallery and the admin editor use an **18-column CSS sub-grid** with **margin-based gaps** for pixel precision:
+
+- `grid-template-columns: repeat(18, 1fr)`
+- `grid-auto-rows: 1px; gap: 0`
+- Each `.grid-item` has `margin: 6px`
+- JS sets `grid-row-end: span {N}` per item based on image aspect ratio
+
+**SPAN_MAP** (how a `gridSpans[filename]` value becomes CSS sub-cols):
+
+| span  | sub-cols | width        |
+|-------|----------|--------------|
+| 0.5   | 3  (`subcol-3`)  | half |
+| 0.67  | 4  (`subcol-4`)  | two-thirds |
+| 1     | 6  (default)     | normal |
+| 1.33  | 8  (`subcol-8`)  | four-thirds |
+| 1.5   | 9  (`subcol-9`)  | one-and-half |
+| 2     | 12 (`subcol-12`) | double |
+| 3     | 18 (`subcol-18`) | full-width |
+
+Responsive: drops to 12 cols at 1024px, single column at 600px.
+
+**Upload flow:**
+1. Admin picks files (drag-drop or input).
+2. Frontend POSTs filenames to `/api/albums/{slug}/photos` → gets presigned URLs.
+3. Frontend PUTs each file directly to R2 (bypasses our API).
+4. Frontend POSTs `/api/albums/{slug}/finalize` to register them in `meta.json`.
+5. Files are auto-renamed to `img_NNN.jpg`.
+
+---
+
+## 11. Gym Tracker — Quick Guide
+
+- **Training types**: `push_run`, `lower_a`, `pull_run` (Lower B was removed in April 2026).
+- **Sessions**: user picks today's type → sees the exercise library → only the exercises they engage with (weight entered, or for cardio a set checked) count. Blank kg = skipped. Treadmill Run and other cardio don't have a kg input at all.
+- **Exercises**: each has `sets` (int), `reps` (text — `"10-12"` or `"15 min easy"` both OK), `rest_seconds` (int).
+- **PRs**: auto-detected on POST — compares max weight in the new workout against the exercise's current max.
+- **Timer**: presets 30/60/90/120/180s, vibrates via `navigator.vibrate()` on complete.
+- **localStorage**: the in-progress checklist for today is cached so iOS Safari tab suspensions don't eat your data. A `gym_v` version key clears stale shape on mismatch.
+
+---
+
+## 12. Debt Tracker — Quick Guide
+
+- **Tabs**: Overview, Loans, Cashflow, Action plan.
+- **Custom amount** (X Wallet 80K only): this loan is revolving credit — the user can pay a custom amount instead of the suggested monthly. The API splits it into interest + principal using `remaining * (apr/100/12)`.
+- **Undo last**: client keeps a stack of previous loan states; PUT `{ action: "undo" }` reverts on the server.
+- **Optimistic UI**: pay updates local state immediately, then hits API; reverts on failure.
+- **Not in the API**: monthly income (42,000) and family support (11,000) are hard-coded constants in `apps/debt/src/App.jsx`.
+
+---
+
+## 13. When You Change Things
+
+- **Schema changes**: update `apps/{app}/supabase-setup.sql` AND apply via the Supabase MCP or SQL editor. SQL file is documentation + cold-start; live DB is source of truth.
+- **New route**: add to `vercel.json` `rewrites`.
+- **New function**: stay under 12. If adding a new app, extend `api/app/[app].js` rather than a new file.
+- **Redesign**: keep tokens in sync. The gym's `T` object and the debt's `T` object are intentionally identical for dark; the gallery CSS `:root` mirrors them for light.
+- **Cache-busting**: bump `?v=N` on the CSS/JS links in `frontend/index.html` + `frontend/album.html` + the admin pages. Current version: `?v=13`.
+
+---
+
+## 14. Remote Work From Phone
+
+This file is the single source of truth for Claude Code running remotely on this repo. When asking Claude Code to make changes from a phone:
+
+- Reference this file (`CLAUDE.md` at repo root) as context.
+- Tell it which surface to touch (gallery / admin / gym / debt / API).
+- If it needs DB schema, point it at `apps/*/supabase-setup.sql` and the `Tables` section above.
+- For design changes, say "match the gym/debt token system" — tokens are documented in §7.
+- To deploy: merge your PR. Vercel auto-deploys `main`. No manual step.
+
+---
+
+## 15. Common Tasks
+
+**Add a training type to the gym app**
+1. Add to `TYPE_COLORS`, `TYPE_LABELS`, `TRAINING_TYPES` in `apps/gym/src/App.jsx`.
+2. Seed exercises via `INSERT INTO exercises ... training_type='new_type'` (SQL editor or MCP).
+3. Rebuild: `cd apps/gym && npm run build`.
+
+**Add a new loan to the debt tracker**
+1. `INSERT INTO loans (...) VALUES (...)` — the dashboard reads whatever's there.
+
+**Create a new album**
+1. Admin UI at `/admin` → "New album" form. Alternatively POST to `/api/albums` with `{ title, description, slug }`.
+2. Upload photos in the editor.
+
+**Add a third app under `/app/newthing`**
+1. `cp -r apps/debt apps/newthing`, update `vite.config.js` paths.
+2. Add `case 'newthing': return await handleNewThing(req, res);` in `api/app/[app].js`.
+3. Add rewrite in `vercel.json`.
+4. Chain its build in root `package.json`.
+5. Add a row to `frontend/app/index.html`.
