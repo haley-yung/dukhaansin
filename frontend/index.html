@@ -3,64 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dukhaansin — Gallery of Memories</title>
+  <title>dukhaansin — Photography</title>
+  <meta name="description" content="A personal archive of photographs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=12">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=13">
 </head>
-<body>
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="/" class="nav-logo">dukhaansin</a>
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/admin">Admin</a>
-      </div>
+<body class="public">
+  <nav class="top-nav">
+    <a href="/" class="wordmark">dukhaansin</a>
+    <div class="top-nav-links">
+      <a href="/app">Apps</a>
+      <a href="/admin">Admin</a>
     </div>
   </nav>
 
-  <section class="hero">
-    <h1 class="hero-title">Gallery of Memories</h1>
-    <p class="hero-subtitle">The Collection</p>
-  </section>
+  <header class="masthead">
+    <div class="masthead-eyebrow">
+      <span class="dot"></span>
+      <span>INDEX · 2026</span>
+    </div>
+    <h1 class="masthead-title">
+      A personal<br>archive.
+    </h1>
+    <p class="masthead-lede">
+      Photographs from the slow years. Arranged by memory, not by date.
+      <a href="#albums" class="inline-link">Browse the collection &darr;</a>
+    </p>
+  </header>
 
-  <main class="container">
-    <div class="albums-grid" id="albums-grid">
-      <p class="loading-text">Loading albums...</p>
+  <main id="albums" class="archive">
+    <div class="archive-meta">
+      <span class="label">Albums</span>
+      <span class="archive-count" id="archive-count"></span>
+    </div>
+    <div class="archive-list" id="archive-list">
+      <div class="archive-loading">Loading</div>
     </div>
   </main>
 
-  <footer class="footer">
-    <p>&copy; 2026 dukhaansin</p>
+  <footer class="site-foot">
+    <span class="mono">dukhaansin.com</span>
+    <span class="foot-sep">·</span>
+    <span>A quiet place for photographs.</span>
   </footer>
 
   <script>
     (async () => {
-      const grid = document.getElementById('albums-grid');
+      const list = document.getElementById('archive-list');
+      const countEl = document.getElementById('archive-count');
+
       try {
         const res = await fetch('/api/albums');
         const albums = await res.json();
 
         if (!albums.length) {
-          grid.innerHTML = '<p class="empty-state">No albums yet.</p>';
+          list.innerHTML = '<p class="archive-empty">No albums yet.</p>';
+          countEl.textContent = '';
           return;
         }
 
-        grid.innerHTML = albums.map(album => `
-          <a href="/album/${album.slug}" class="album-card">
-            <div class="album-card-img">
-              ${album.coverUrl
-                ? `<img src="${album.coverUrl}" alt="${album.title}" loading="lazy" decoding="async">`
-                : '<div class="album-card-placeholder"></div>'}
-            </div>
-            <div class="album-card-info">
-              <h3 class="album-card-title">${album.title}</h3>
-              <span class="album-card-count">${album.photoCount} photo${album.photoCount !== 1 ? 's' : ''}</span>
-            </div>
-          </a>`).join('');
+        countEl.textContent = `${String(albums.length).padStart(2, '0')} ${albums.length === 1 ? 'album' : 'albums'}`;
+
+        list.innerHTML = albums.map((album, i) => {
+          const idx = String(i + 1).padStart(2, '0');
+          const cover = album.coverUrl
+            ? `<img src="${album.coverUrl}" alt="" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async">`
+            : '<div class="archive-placeholder"></div>';
+          return `
+            <a href="/album/${album.slug}" class="archive-row" style="--i:${i}">
+              <span class="archive-num">${idx}</span>
+              <div class="archive-title-wrap">
+                <h2 class="archive-title">${album.title}</h2>
+                <div class="archive-sub">
+                  <span>${album.photoCount} photo${album.photoCount !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+              <div class="archive-thumb">${cover}</div>
+              <svg class="archive-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </a>`;
+        }).join('');
+
+        // Trigger staggered entry after markup is in the DOM
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.archive-row').forEach(el => el.classList.add('is-in'));
+        });
       } catch (err) {
-        grid.innerHTML = '<p class="empty-state">Failed to load albums.</p>';
+        list.innerHTML = '<p class="archive-empty">Failed to load albums.</p>';
       }
     })();
   </script>

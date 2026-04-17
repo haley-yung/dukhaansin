@@ -6,116 +6,218 @@
   <title>Apps — dukhaansin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg: #0A0A0B;
+      --heading: #FAFAF7;
+      --text: #F2F2F0;
+      --secondary: #A6A6AB;
+      --muted: #6F6F76;
+      --line: rgba(255,255,255,0.06);
+      --line-hi: rgba(255,255,255,0.12);
+      --surface: rgba(255,255,255,0.025);
+      --surface-hi: rgba(255,255,255,0.045);
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: var(--bg); }
     body {
-      background: #0A0A0F;
-      color: #E8E6E1;
-      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      opacity: 0;
+      animation: pageIn 520ms ease 80ms forwards;
+    }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body, .row { animation: none !important; }
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 80px 24px 48px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
-      padding: 24px;
     }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--heading);
+      animation: pulse 2.6s ease-in-out infinite;
+    }
+
     h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #F5F5F0;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: clamp(38px, 6vw, 56px);
+      font-weight: 300;
+      letter-spacing: -0.022em;
+      color: var(--heading);
+      line-height: 1.05;
+      margin-bottom: 14px;
     }
-    .subtitle {
-      color: #8B8B96;
-      font-size: 14px;
-      margin-bottom: 40px;
-      font-family: 'JetBrains Mono', monospace;
+    .lede {
+      font-size: 15.5px;
+      color: var(--secondary);
+      max-width: 480px;
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+      margin-bottom: 56px;
     }
-    .grid {
+
+    .apps {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      max-width: 420px;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 28px 4px;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+      transition: padding 240ms ease, color 200ms ease;
+      position: relative;
+      opacity: 0;
+      animation: rowIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    .row:nth-child(1) { animation-delay: 160ms; }
+    .row:nth-child(2) { animation-delay: 240ms; }
+    .row:hover { padding-left: 10px; }
+    .row:hover .arrow { transform: translateX(4px); opacity: 1; }
+
+    .num {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+
+    .meta { flex: 1; min-width: 0; }
+    .title {
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: -0.015em;
+      color: var(--heading);
+      margin-bottom: 4px;
+    }
+    .desc {
+      font-size: 13.5px;
+      color: var(--secondary);
+      letter-spacing: -0.005em;
+      line-height: 1.45;
+    }
+
+    .arrow {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: var(--muted);
+      opacity: 0.6;
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+
+    /* Stack into single column when tight */
+    @media (max-width: 720px) {
+      .wrap { padding: 56px 20px 32px; }
+      .apps { grid-template-columns: 1fr; }
+      .row { padding: 22px 4px; }
+      .title { font-size: 19px; }
+    }
+
+    footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 920px;
+      margin: 0 auto;
       width: 100%;
     }
-    .card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 28px 20px;
+    footer a {
+      color: var(--muted);
       text-decoration: none;
-      color: inherit;
-      transition: transform 0.15s, border-color 0.15s, background 0.15s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-    .card:hover {
-      transform: translateY(-2px);
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(255,255,255,0.12);
-    }
-    .card:active { transform: translateY(0); }
-    .icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-    .card-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #F5F5F0;
-    }
-    .card-desc {
       font-size: 12px;
-      color: #6B6B76;
-      text-align: center;
-      line-height: 1.4;
+      letter-spacing: -0.005em;
+      transition: color 180ms ease;
     }
-    .back {
-      margin-top: 40px;
-      color: #6B6B76;
-      text-decoration: none;
-      font-size: 13px;
-      font-family: 'JetBrains Mono', monospace;
-      transition: color 0.15s;
-    }
-    .back:hover { color: #8B8B96; }
-    @media (max-width: 400px) {
-      .grid { grid-template-columns: 1fr; max-width: 220px; }
+    footer a:hover { color: var(--text); }
+    footer .brand {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
     }
   </style>
 </head>
 <body>
-  <h1>Apps</h1>
-  <p class="subtitle">dukhaansin.com</p>
-  <div class="grid">
-    <a href="/app/debt" class="card">
-      <div class="icon" style="background: rgba(59,130,246,0.12);">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+  <main class="wrap">
+    <span class="eyebrow"><span class="dot"></span>Apps</span>
+    <h1>A quiet suite.</h1>
+    <p class="lede">Two small tools that show up every day — for training, and for debt. Built the way I want to use them.</p>
+
+    <nav class="apps" aria-label="Applications">
+      <a href="/app/gym" class="row">
+        <span class="num">01</span>
+        <div class="meta">
+          <div class="title">Gym Tracker</div>
+          <div class="desc">Train with intention. Log the work, not the noise.</div>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
         </svg>
-      </div>
-      <div class="card-title">Debt Tracker</div>
-      <div class="card-desc">Loan repayment progress</div>
-    </a>
-    <a href="/app/gym" class="card">
-      <div class="icon" style="background: rgba(16,185,129,0.12);">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6.5 12h11"/><path d="M3 10v4M21 10v4M5 8v8M19 8v8M8 6v12M16 6v12"/>
+      </a>
+      <a href="/app/debt" class="row">
+        <span class="num">02</span>
+        <div class="meta">
+          <div class="title">Debt Tracker</div>
+          <div class="desc">Every payment, every month — until the balance is zero.</div>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
         </svg>
-      </div>
-      <div class="card-title">Gym Tracker</div>
-      <div class="card-desc">Just go Workout</div>
-    </a>
-  </div>
-  <a href="/" class="back">&larr; dukhaansin.com</a>
+      </a>
+    </nav>
+  </main>
+
+  <footer>
+    <span class="brand">dukhaansin.com</span>
+    <a href="/">&larr; Back to gallery</a>
+  </footer>
 </body>
 </html>

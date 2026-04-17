@@ -3,7 +3,7 @@
   if (!slug) return;
 
   const SUB_COLS = 18;
-  const MARGIN = 6; // px on each side of grid items
+  const MARGIN = 6; // px on each side of grid items (must match CSS)
 
   const SPAN_MAP = { 0.5: 3, 0.67: 4, 1: 6, 1.33: 8, 1.5: 9, 2: 12, 3: 18 };
   function spanToSubcols(span) {
@@ -13,6 +13,7 @@
   const grid = document.getElementById('grid-gallery');
   const titleEl = document.getElementById('album-title');
   const descEl = document.getElementById('album-description');
+  const metaEl = document.getElementById('album-meta');
   const encodedSlug = encodeURIComponent(slug);
 
   Promise.all([
@@ -22,11 +23,14 @@
     document.title = `${album.title} — dukhaansin`;
     titleEl.textContent = album.title;
     descEl.textContent = album.description || '';
+    if (metaEl) {
+      metaEl.textContent = `${String(photos.length).padStart(2, '0')} · ${photos.length === 1 ? 'Photograph' : 'Photographs'}`;
+    }
 
     const gridSpans = album.gridSpans || {};
 
     if (!photos.length) {
-      grid.innerHTML = '<p class="empty-state">No photos in this album yet.</p>';
+      grid.innerHTML = '<p class="archive-empty">No photos in this album yet.</p>';
       return;
     }
 
@@ -37,7 +41,8 @@
       const eager = i < 6;
       const loadAttr = eager ? 'eager' : 'lazy';
       const priority = eager ? ' fetchpriority="high"' : '';
-      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}"><img src="${p.src}" alt="${p.filename}" loading="${loadAttr}" decoding="async"${priority}></div>`;
+      // --i staggers the photo fade-in (capped at 20 so later photos don't wait forever)
+      return `<div class="grid-item${cls}" data-index="${i}" data-span="${span}" style="--i:${Math.min(i, 20)}"><img src="${p.src}" alt="${p.filename}" loading="${loadAttr}" decoding="async"${priority}></div>`;
     }).join('');
 
     grid.querySelectorAll('.grid-item').forEach(item => {
@@ -58,7 +63,7 @@
     initLightbox(photos);
   }).catch(() => {
     titleEl.textContent = 'Album not found';
-    grid.innerHTML = '<p class="empty-state">Failed to load photos.</p>';
+    grid.innerHTML = '<p class="archive-empty">Failed to load photos.</p>';
   });
 
   function initLightbox(photos) {
@@ -70,12 +75,14 @@
     function show(i) {
       current = i;
       img.src = photos[i].src;
-      counter.textContent = `${i + 1} / ${photos.length}`;
+      counter.textContent = `${String(i + 1).padStart(2, '0')} / ${String(photos.length).padStart(2, '0')}`;
       lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
     }
     function hide() {
       lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
     function prev() { show(current > 0 ? current - 1 : photos.length - 1); }
