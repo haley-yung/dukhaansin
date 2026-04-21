@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="color-scheme: light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FAFAF7">
   <title>dukhaansin — Photography</title>
   <meta name="description" content="A personal archive of photographs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=13">
+  <link rel="stylesheet" href="/css/style.css?v=14">
 </head>
 <body class="public">
   <nav class="top-nav">
@@ -38,8 +39,8 @@
       <span class="label">Albums</span>
       <span class="archive-count" id="archive-count"></span>
     </div>
-    <div class="archive-list" id="archive-list">
-      <div class="archive-loading">Loading</div>
+    <div class="archive-list" id="archive-list" aria-live="polite" aria-busy="true">
+      <div class="archive-loading">Loading&hellip;</div>
     </div>
   </main>
 
@@ -66,18 +67,19 @@
 
         countEl.textContent = `${String(albums.length).padStart(2, '0')} ${albums.length === 1 ? 'album' : 'albums'}`;
 
+        // Explicit width/height prevents CLS; values match .archive-thumb in CSS
         list.innerHTML = albums.map((album, i) => {
           const idx = String(i + 1).padStart(2, '0');
           const cover = album.coverUrl
-            ? `<img src="${album.coverUrl}" alt="" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async">`
-            : '<div class="archive-placeholder"></div>';
+            ? `<img src="${album.coverUrl}" alt="" width="160" height="104" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async">`
+            : '<div class="archive-placeholder" aria-hidden="true"></div>';
           return `
             <a href="/album/${album.slug}" class="archive-row" style="--i:${i}">
-              <span class="archive-num">${idx}</span>
+              <span class="archive-num" aria-hidden="true">${idx}</span>
               <div class="archive-title-wrap">
                 <h2 class="archive-title">${album.title}</h2>
                 <div class="archive-sub">
-                  <span>${album.photoCount} photo${album.photoCount !== 1 ? 's' : ''}</span>
+                  <span>${album.photoCount}&nbsp;photo${album.photoCount !== 1 ? 's' : ''}</span>
                 </div>
               </div>
               <div class="archive-thumb">${cover}</div>
@@ -87,12 +89,15 @@
             </a>`;
         }).join('');
 
+        list.setAttribute('aria-busy', 'false');
+
         // Trigger staggered entry after markup is in the DOM
         requestAnimationFrame(() => {
           document.querySelectorAll('.archive-row').forEach(el => el.classList.add('is-in'));
         });
       } catch (err) {
-        list.innerHTML = '<p class="archive-empty">Failed to load albums.</p>';
+        list.innerHTML = '<p class="archive-empty">Couldn&rsquo;t load albums. Refresh to try again.</p>';
+        list.setAttribute('aria-busy', 'false');
       }
     })();
   </script>

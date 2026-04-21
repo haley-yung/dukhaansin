@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="color-scheme: dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apps — dukhaansin</title>
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>Apps &mdash; dukhaansin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #0A0A0B;
@@ -25,12 +26,19 @@
       color: var(--text);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
+      min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
       display: flex;
       flex-direction: column;
       opacity: 0;
       animation: pageIn 520ms ease 80ms forwards;
+    }
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--heading);
+      outline-offset: 3px;
+      border-radius: 2px;
     }
     @keyframes pageIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -45,7 +53,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
     @media (prefers-reduced-motion: reduce) {
-      body, .row { animation: none !important; }
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
     }
 
     .wrap {
@@ -84,6 +96,7 @@
       color: var(--heading);
       line-height: 1.05;
       margin-bottom: 14px;
+      text-wrap: balance;
     }
     .lede {
       font-size: 15.5px;
@@ -112,6 +125,7 @@
       position: relative;
       opacity: 0;
       animation: rowIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      touch-action: manipulation;
     }
     .row:nth-child(1) { animation-delay: 160ms; }
     .row:nth-child(2) { animation-delay: 240ms; }

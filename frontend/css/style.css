@@ -45,11 +45,34 @@ body {
   color: var(--ink);
   line-height: 1.55;
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
+
+/* Visible focus ring — never strip outline without a replacement */
+a:focus-visible,
+button:focus-visible,
+.grid-item:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Respect the system-wide motion preference. Keep transitions instant
+   but don't remove them entirely — removing breaks interactive states. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    PUBLIC STYLES
@@ -73,7 +96,7 @@ body.public .top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 32px;
+  padding: 18px max(32px, env(safe-area-inset-right)) 18px max(32px, env(safe-area-inset-left));
   background: rgba(250, 250, 247, 0.82);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -130,6 +153,7 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   line-height: 0.95;
   color: var(--ink-heading);
   margin-bottom: 32px;
+  text-wrap: balance;
 }
 .masthead-lede {
   font-size: clamp(16px, 1.5vw, 19px);
@@ -152,7 +176,7 @@ body.public .top-nav-links a:hover { color: var(--ink); }
 .archive {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 40px 32px 120px;
+  padding: 40px max(32px, env(safe-area-inset-right)) 120px max(32px, env(safe-area-inset-left));
 }
 .archive-meta {
   display: flex;
@@ -268,7 +292,7 @@ body.public .top-nav-links a:hover { color: var(--ink); }
 .album-masthead {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 72px 32px 40px;
+  padding: 72px max(32px, env(safe-area-inset-right)) 40px max(32px, env(safe-area-inset-left));
   animation: fadeUp 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .back-link {
@@ -293,6 +317,7 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   line-height: 1.02;
   color: var(--ink-heading);
   max-width: 900px;
+  text-wrap: balance;
 }
 .album-description {
   margin-top: 16px;
@@ -324,12 +349,19 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   margin: 0 auto;
 }
 .grid-item {
+  /* Reset button defaults since these are real <button> elements now */
   grid-column: span 6;
+  appearance: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  background: var(--surface);
   margin: 6px;
+  touch-action: manipulation;
   opacity: 0;
   transform: translateY(8px);
   animation: photoIn 620ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
@@ -339,11 +371,13 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   width: 100%;
   height: auto;
   display: block;
-  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 300ms ease;
+  /* Only compositor-friendly properties animate */
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease;
 }
-.grid-item:hover img {
+.grid-item:hover img,
+.grid-item:focus-visible img {
   transform: scale(1.015);
-  filter: brightness(0.96);
+  opacity: 0.92;
 }
 .grid-item.subcol-3  { grid-column: span 3; }
 .grid-item.subcol-4  { grid-column: span 4; }
@@ -363,6 +397,9 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   align-items: center;
   justify-content: center;
   opacity: 0;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
   transition: opacity 340ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .lightbox.active {
@@ -397,14 +434,19 @@ body.public .top-nav-links a:hover { color: var(--ink); }
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
   transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 .lightbox-close:hover,
 .lightbox-prev:hover,
-.lightbox-next:hover {
+.lightbox-next:hover,
+.lightbox-close:focus-visible,
+.lightbox-prev:focus-visible,
+.lightbox-next:focus-visible {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+  outline: none;
 }
 .lightbox-close { top: 20px; right: 24px; }
 .lightbox-prev  { left: 20px; top: 50%; transform: translateY(-50%); }
@@ -453,12 +495,7 @@ body.public .site-foot .foot-sep { opacity: 0.5; }
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-  }
-}
+/* Reduced-motion handled globally at the top of this file */
 
 /* — Public responsive — */
 @media (max-width: 820px) {

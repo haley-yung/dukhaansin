@@ -346,10 +346,10 @@ export default function FinancialDashboard() {
     return (
       <div style={{
         fontFamily: T.font, background: T.bg, color: T.muted,
-        minHeight: "100vh", display: "flex",
+        minHeight: "100dvh", display: "flex",
         alignItems: "center", justifyContent: "center",
       }}>
-        <div style={{ ...labelStyle, fontSize: 12 }}>Loading</div>
+        <div style={{ ...labelStyle, fontSize: 12 }}>Loading&hellip;</div>
       </div>
     );
   }
@@ -365,7 +365,7 @@ export default function FinancialDashboard() {
       fontFamily: T.font,
       background: T.bg,
       color: T.text,
-      minHeight: "100vh",
+      minHeight: "100dvh",
       paddingBottom: 80,
     }}>
       <style>{`
