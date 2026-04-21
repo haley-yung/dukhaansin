@@ -908,6 +908,35 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
   );
 }
 
+// Stat tile — hoisted out of DashboardTab so React preserves component
+// identity across re-renders (rerender-no-inline-components).
+function Stat({ value, label, sub }) {
+  return (
+    <div style={{
+      padding: '20px 4px',
+      borderTop: `1px solid ${T.line}`,
+    }}>
+      <div className="tnum" style={{
+        fontSize: 44, fontWeight: 300, letterSpacing: '-0.03em',
+        color: T.heading, fontFamily: T.display, lineHeight: 1,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
+        color: T.muted, fontWeight: 500, marginTop: 10,
+      }}>
+        {label}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 12.5, color: T.secondary, marginTop: 6, lineHeight: 1.45 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DashboardTab({ workouts, records, exercises, timerState, setTimerState, onLogRest, onLogWorkout, newPRs }) {
   const todayWorkout = (workouts || []).find(w => sameDay(w.date, new Date()));
 
@@ -934,32 +963,6 @@ function DashboardTab({ workouts, records, exercises, timerState, setTimerState,
   const handleStartTimer = (seconds) => {
     setTimerState({ seconds, total: seconds, running: true, collapsed: false });
   };
-
-  // Stat tile
-  const Stat = ({ value, label, sub }) => (
-    <div style={{
-      padding: '20px 4px',
-      borderTop: `1px solid ${T.line}`,
-    }}>
-      <div className="tnum" style={{
-        fontSize: 44, fontWeight: 300, letterSpacing: '-0.03em',
-        color: T.heading, fontFamily: T.display, lineHeight: 1,
-      }}>
-        {value}
-      </div>
-      <div style={{
-        fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
-        color: T.muted, fontWeight: 500, marginTop: 10,
-      }}>
-        {label}
-      </div>
-      {sub && (
-        <div style={{ fontSize: 12.5, color: T.secondary, marginTop: 6, lineHeight: 1.45 }}>
-          {sub}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div>
@@ -1162,7 +1165,7 @@ function WorkoutLogger({ exercises: exerciseLib, templates, onClose, onSave }) {
   const modalStyle = {
     background: T.bg, flex: 1, maxWidth: 600, width: '100%',
     margin: '0 auto', padding: 20, boxSizing: 'border-box',
-    minHeight: '100vh',
+    minHeight: '100dvh',
   };
 
   return (
@@ -2192,7 +2195,7 @@ export default function GymTracker() {
     padding: '0 24px 120px 24px',
     fontFamily: T.font,
     color: T.text,
-    minHeight: '100vh',
+    minHeight: '100dvh',
     background: T.bg,
     boxSizing: 'border-box',
   };
