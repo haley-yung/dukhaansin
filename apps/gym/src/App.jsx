@@ -557,8 +557,8 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
   // An exercise is "active" (intended for today) when the user has
-  // engaged with it — typed a weight or ticked any set. Cardio is active
-  // as soon as any set is checked. Blank kg + no checks = skip.
+  // engaged with it — typed a weight or ticked any set. Cardio is a
+  // single yes/no, so any check counts. Blank kg + no checks = skip.
   const isActive = (ex) => {
     const checks = setChecked[ex.id] || [];
     const anyChecked = checks.some(Boolean);
@@ -568,14 +568,14 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
   };
 
   const isExerciseDone = (ex) => {
-    const numSets = ex.sets || 1;
     const checks = setChecked[ex.id];
+    if (isCardio(ex)) return !!(checks && checks[0]);
+    const numSets = ex.sets || 1;
     return checks && checks.length >= numSets && checks.every(Boolean);
   };
 
   const activeExercises = typeExercises.filter(isActive);
   const exerciseDoneCount = activeExercises.filter(isExerciseDone).length;
-  const allDone = activeExercises.length > 0 && exerciseDoneCount === activeExercises.length;
 
   const selectType = (t) => {
     setSelectedType(t);
@@ -605,17 +605,16 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
     });
   };
 
-  // Auto-submit when all active sets are checked — single POST with only
-  // the exercises the user actually engaged with.
-  const activeIds = activeExercises.map(e => e.id).join(',');
-  useEffect(() => {
-    if (!submitted && !todayLogged && allDone) {
-      setSubmitted(true);
-      onLogWorkout(selectedType, activeExercises, weights);
-    }
-    // activeIds is a stable-string summary so deep-equality isn't required
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [submitted, todayLogged, allDone, selectedType, activeIds, weights, onLogWorkout]);
+  // Manual submission — user controls when the session ends.
+  // (Auto-submit was removed because it fired the moment the
+  // first batch of active exercises was complete, even though the
+  // user might still be planning to do more.)
+  const handleEndSession = () => {
+    if (submitted || todayLogged) return;
+    if (activeExercises.length === 0) return;
+    setSubmitted(true);
+    onLogWorkout(selectedType, activeExercises, weights);
+  };
 
   const reset = () => {
     setSelectedType(null);
@@ -779,11 +778,11 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
       {typeExercises.map((ex, i) => {
         const isWarmup = ex.sortOrder === 0;
         if (!isWarmup) exerciseNum++;
-        const numSets = ex.sets || 1;
+        const cardio = isCardio(ex);
+        const numSets = cardio ? 1 : (ex.sets || 1);
         const checks = setChecked[ex.id] || new Array(numSets).fill(false);
         const allSetsChecked = checks.length >= numSets && checks.every(Boolean);
         const fmtRest = ex.restSeconds ? (ex.restSeconds >= 120 ? `${ex.restSeconds / 60}min` : `${ex.restSeconds}s`) : null;
-        const cardio = isCardio(ex);
         const active = isActive(ex);
         // Skipped = user hasn't engaged and hasn't completed → visually muted, lets them know it won't be logged.
         const skipped = !active && !allSetsChecked;
@@ -821,43 +820,138 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
                   {isWarmup ? `W. ${ex.name}` : `${exerciseNum}. ${ex.name}`}
                 </div>
                 <div style={{ fontSize: 12, color: T.muted, fontFamily: T.mono, marginTop: 2 }}>
-                  {ex.sets ? `${ex.sets}\u00D7${ex.reps || ''}` : (ex.reps || '')}
-                  {fmtRest ? ` \u00B7 ${fmtRest} rest` : ''}
+                  {cardio ? (ex.reps || 'Cardio') : (ex.sets ? `${ex.sets}\u00D7${ex.reps || ''}` : (ex.reps || ''))}
+                  {fmtRest && !cardio ? ` \u00B7 ${fmtRest} rest` : ''}
                 </div>
               </div>
             </div>
 
-            {/* Bottom row: weight input + per-set checkboxes */}
+            {/* Bottom row: cardio gets a single yes/no pill; everything else gets weight + per-set checkboxes */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingLeft: 34 }}>
-              {!isWarmup && !cardio && (
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="kg"
-                  value={weights[ex.id] || ''}
-                  onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
-                  style={{
-                    width: 60, padding: '6px 8px', fontSize: 13,
-                    fontFamily: T.mono, color: T.text,
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 6, outline: 'none', textAlign: 'center',
-                    minHeight: 36,
+              {cardio && !isWarmup ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSetChecked(prev => {
+                      const cur = prev[ex.id] && prev[ex.id][0];
+                      return { ...prev, [ex.id]: [!cur] };
+                    });
                   }}
-                />
-              )}
-              <div style={{ display: 'flex', gap: 4 }}>
-                {Array.from({ length: numSets }).map((_, si) => (
-                  <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
-                    <SmallCheck checked={!!checks[si]} color={TYPE_COLORS[selectedType]} />
+                  aria-pressed={allSetsChecked}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: 12.5,
+                    fontFamily: T.font,
+                    fontWeight: 500,
+                    letterSpacing: '-0.005em',
+                    borderRadius: T.rPill,
+                    cursor: 'pointer',
+                    border: `1px solid ${allSetsChecked ? T.accent : T.line}`,
+                    background: allSetsChecked ? T.accent : 'transparent',
+                    color: allSetsChecked ? T.accentInk : T.text,
+                    transition: 'background 200ms ease, border-color 200ms ease, color 200ms ease',
+                    minHeight: 36,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  {allSetsChecked ? (
+                    <>
+                      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M3 7.5L6 10.5L11 4.5" stroke={T.accentInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Did it
+                    </>
+                  ) : (
+                    <>Did you run?</>
+                  )}
+                </button>
+              ) : (
+                <>
+                  {!isWarmup && (
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="kg"
+                      value={weights[ex.id] || ''}
+                      onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
+                      style={{
+                        width: 60, padding: '6px 8px', fontSize: 13,
+                        fontFamily: T.mono, color: T.text,
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 6, outline: 'none', textAlign: 'center',
+                        minHeight: 36,
+                      }}
+                    />
+                  )}
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {Array.from({ length: numSets }).map((_, si) => (
+                      <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
+                        <SmallCheck checked={!!checks[si]} color={TYPE_COLORS[selectedType]} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
             </div>
           </div>
         );
       })}
 
-      {allDone && (
+      {/* End-session controls — user explicitly decides when the session is over.
+          Auto-submit fired too eagerly when the first batch was complete. */}
+      {!submitted && activeExercises.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '14px 16px',
+            border: `1px solid ${T.line}`,
+            borderRadius: T.r2,
+            background: 'rgba(255,255,255,0.02)',
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: T.text, letterSpacing: '-0.005em' }}>
+                {exerciseDoneCount}/{activeExercises.length} logged
+                {exerciseDoneCount < activeExercises.length && (
+                  <span style={{ color: T.muted }}>
+                    {' · '}{activeExercises.length - exerciseDoneCount} unfinished
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: T.muted, marginTop: 2, letterSpacing: '-0.005em' }}>
+                {exerciseDoneCount === activeExercises.length
+                  ? 'Looks good. End the session when you’re ready.'
+                  : 'Finish what you started, or end now to save what’s done.'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleEndSession}
+              disabled={exerciseDoneCount === 0}
+              style={{
+                padding: '10px 18px',
+                fontSize: 13, fontWeight: 500,
+                fontFamily: T.font,
+                letterSpacing: '-0.005em',
+                borderRadius: T.r2,
+                cursor: exerciseDoneCount === 0 ? 'not-allowed' : 'pointer',
+                background: exerciseDoneCount === 0 ? 'transparent' : T.accent,
+                color: exerciseDoneCount === 0 ? T.muted : T.accentInk,
+                border: `1px solid ${exerciseDoneCount === 0 ? T.line : T.accent}`,
+                transition: 'background 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease',
+                opacity: exerciseDoneCount === 0 ? 0.7 : 1,
+                flexShrink: 0,
+              }}
+            >
+              End session
+            </button>
+          </div>
+        </div>
+      )}
+
+      {submitted && (
         <div style={{
           marginTop: 20, padding: '24px 20px',
           textAlign: 'center',
