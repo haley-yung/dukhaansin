@@ -829,42 +829,32 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
             {/* Bottom row: cardio gets a single yes/no pill; everything else gets weight + per-set checkboxes */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 8, paddingLeft: 34 }}>
               {cardio && !isWarmup ? (
-                <button
-                  type="button"
+                /* Single checkbox — same affordance as other exercises.
+                   Click = ran today; leave unchecked + end session = not logged. */
+                <div
                   onClick={() => {
                     setSetChecked(prev => {
                       const cur = prev[ex.id] && prev[ex.id][0];
                       return { ...prev, [ex.id]: [!cur] };
                     });
                   }}
-                  aria-pressed={allSetsChecked}
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: 12.5,
-                    fontFamily: T.font,
-                    fontWeight: 500,
-                    letterSpacing: '-0.005em',
-                    borderRadius: T.rPill,
-                    cursor: 'pointer',
-                    border: `1px solid ${allSetsChecked ? T.accent : T.line}`,
-                    background: allSetsChecked ? T.accent : 'transparent',
-                    color: allSetsChecked ? T.accentInk : T.text,
-                    transition: 'background 200ms ease, border-color 200ms ease, color 200ms ease',
-                    minHeight: 36,
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                  role="checkbox"
+                  aria-checked={allSetsChecked}
+                  aria-label={`Mark ${ex.name} as done`}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      setSetChecked(prev => {
+                        const cur = prev[ex.id] && prev[ex.id][0];
+                        return { ...prev, [ex.id]: [!cur] };
+                      });
+                    }
                   }}
+                  style={{ cursor: 'pointer', display: 'inline-flex' }}
                 >
-                  {allSetsChecked ? (
-                    <>
-                      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                        <path d="M3 7.5L6 10.5L11 4.5" stroke={T.accentInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Did it
-                    </>
-                  ) : (
-                    <>Did you run?</>
-                  )}
-                </button>
+                  <SmallCheck checked={allSetsChecked} color={TYPE_COLORS[selectedType]} />
+                </div>
               ) : (
                 <>
                   {!isWarmup && (
