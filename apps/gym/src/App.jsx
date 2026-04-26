@@ -247,9 +247,14 @@ function Heatmap({ workouts }) {
   const weeks = Math.round((gridEnd - gridStart) / (1000 * 60 * 60 * 24) / 7);
 
   const workoutMap = {};
+  const ranMap = {};
   (workouts || []).forEach(w => {
     const key = toDateStr(w.date);
     workoutMap[key] = w.type;
+    // Folded-corner mark: did this session include any cardio?
+    // exercises is a JSONB array of { name, sets, ... }; isCardio() matches by name.
+    const exs = Array.isArray(w.exercises) ? w.exercises : [];
+    if (exs.some(e => isCardio(e))) ranMap[key] = true;
   });
 
   const cells = [];
@@ -279,20 +284,35 @@ function Heatmap({ workouts }) {
         }
       }
 
+      const ran = !!ranMap[key];
+      const cellX = col * step + labelW;
+      const cellY = row * step + 20;
+      const wedge = 5; // size of folded corner triangle in px
+
       cells.push(
-        <rect
-          key={key}
-          x={col * step + labelW}
-          y={row * step + 20}
-          width={cellSize}
-          height={cellSize}
-          rx={2}
-          fill={fill}
-          stroke={isToday ? '#fff' : 'none'}
-          strokeWidth={isToday ? 1.5 : 0}
-        >
-          <title>{`${key}${type ? ` — ${typeLabel(type)}` : ''}`}</title>
-        </rect>
+        <g key={key}>
+          <rect
+            x={cellX}
+            y={cellY}
+            width={cellSize}
+            height={cellSize}
+            rx={2}
+            fill={fill}
+            stroke={isToday ? '#fff' : 'none'}
+            strokeWidth={isToday ? 1.5 : 0}
+          >
+            <title>{`${key}${type ? ` — ${typeLabel(type)}` : ''}${ran ? ' · ran' : ''}`}</title>
+          </rect>
+          {ran && type && (
+            // Top-right folded-corner wedge — marks days that included cardio.
+            <polygon
+              points={`${cellX + cellSize - wedge},${cellY} ${cellX + cellSize},${cellY} ${cellX + cellSize},${cellY + wedge}`}
+              fill={T.heading}
+              opacity={0.95}
+              pointerEvents="none"
+            />
+          )}
+        </g>
       );
     }
   }
@@ -335,6 +355,16 @@ function Heatmap({ workouts }) {
             </span>
           </div>
         ))}
+        {/* Folded-corner mark = ran that day */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width={10} height={10} viewBox="0 0 10 10" aria-hidden="true">
+            <rect width={10} height={10} rx={2} fill={T.darkMuted} />
+            <polygon points="6,0 10,0 10,4" fill={T.heading} />
+          </svg>
+          <span style={{ fontSize: 11.5, color: T.secondary, fontFamily: T.font, letterSpacing: '-0.005em' }}>
+            Ran that day
+          </span>
+        </div>
       </div>
     </div>
   );
