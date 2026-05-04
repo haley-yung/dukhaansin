@@ -551,7 +551,7 @@ function SmallCheck({ checked, color }) {
   );
 }
 
-function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, todayLogged }) {
+function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogWorkout, todayLogged }) {
   const storageKey = `gym_checklist_${today()}`;
 
   // Restore state from localStorage on mount (survives iOS Safari tab suspension)
@@ -585,6 +585,26 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
   }, [storageKey]);
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+  // Heaviest weight per exercise from the most recent prior session.
+  // Workouts are returned date-desc by the API, so the first hit per key wins.
+  const todayStr = today();
+  const prevByExercise = {};
+  for (const w of (workouts || [])) {
+    if (toDateStr(w.date) === todayStr) continue;
+    const exs = Array.isArray(w.exercises) ? w.exercises : [];
+    for (const e of exs) {
+      const sets = Array.isArray(e.sets) ? e.sets : [];
+      let best = 0;
+      for (const s of sets) {
+        const wt = parseFloat(s?.weight) || 0;
+        if (wt > best) best = wt;
+      }
+      if (best <= 0) continue;
+      if (e.exerciseId && !(e.exerciseId in prevByExercise)) prevByExercise[e.exerciseId] = best;
+      if (e.name && !(e.name in prevByExercise)) prevByExercise[e.name] = best;
+    }
+  }
 
   // An exercise is "active" (intended for today) when the user has
   // engaged with it — typed a weight or ticked any set. Cardio is a
@@ -887,22 +907,38 @@ function WorkoutChecklist({ exercises, onLogRest, onStartTimer, onLogWorkout, to
                 </div>
               ) : (
                 <>
-                  {!isWarmup && (
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="kg"
-                      value={weights[ex.id] || ''}
-                      onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
-                      style={{
-                        width: 60, padding: '6px 8px', fontSize: 13,
-                        fontFamily: T.mono, color: T.text,
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: 6, outline: 'none', textAlign: 'center',
-                        minHeight: 36,
-                      }}
-                    />
-                  )}
+                  {!isWarmup && (() => {
+                    const prevW = prevByExercise[ex.id] ?? prevByExercise[ex.name];
+                    return (
+                      <>
+                        {prevW != null && (
+                          <span
+                            title="Last session"
+                            style={{
+                              fontSize: 12, fontFamily: T.mono, color: T.muted,
+                              letterSpacing: '-0.005em', whiteSpace: 'nowrap',
+                            }}
+                          >
+                            last {prevW}kg
+                          </span>
+                        )}
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="kg"
+                          value={weights[ex.id] || ''}
+                          onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
+                          style={{
+                            width: 60, padding: '6px 8px', fontSize: 13,
+                            fontFamily: T.mono, color: T.text,
+                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 6, outline: 'none', textAlign: 'center',
+                            minHeight: 36,
+                          }}
+                        />
+                      </>
+                    );
+                  })()}
                   <div style={{ display: 'flex', gap: 4 }}>
                     {Array.from({ length: numSets }).map((_, si) => (
                       <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
@@ -1127,6 +1163,7 @@ function DashboardTab({ workouts, records, exercises, timerState, setTimerState,
         </div>
         <WorkoutChecklist
           exercises={exercises}
+          workouts={workouts}
           onLogRest={onLogRest}
           onStartTimer={handleStartTimer}
           onLogWorkout={onLogWorkout}
