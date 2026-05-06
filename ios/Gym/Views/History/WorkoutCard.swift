@@ -68,8 +68,8 @@ struct WorkoutCard: View {
     private func setsSummary(_ sets: [LoggedSet]) -> String {
         let weights = sets.compactMap(\.weight).filter { $0 > 0 }
         if let max = weights.max() {
-            let reps = sets.compactMap(\.reps).first ?? 0
-            return "\(format(max))kg × \(sets.count)\(reps > 0 ? " · \(reps)" : "")"
+            let reps = sets.compactMap(\.reps).first ?? ""
+            return "\(format(max))kg × \(sets.count)\(reps.isEmpty ? "" : " · \(reps)")"
         }
         return "\(sets.count) sets"
     }

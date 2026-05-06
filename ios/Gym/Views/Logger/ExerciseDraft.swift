@@ -33,13 +33,13 @@ struct ExerciseDraft: Identifiable, Hashable {
     }
 
     func toLoggedExercise() -> LoggedExercise {
-        let parsedReps = Stats.parseReps(exercise.reps)
+        let repsString = exercise.reps
         if exercise.isCardio {
             return LoggedExercise(
                 exerciseId: exercise.id,
                 name: exercise.name,
                 sets: setChecks.filter { $0 }.map { _ in
-                    LoggedSet(weight: nil, reps: parsedReps, distance: nil, duration: nil)
+                    LoggedSet(weight: nil, reps: repsString, distance: nil, duration: nil)
                 }
             )
         }
@@ -48,7 +48,7 @@ struct ExerciseDraft: Identifiable, Hashable {
             exerciseId: exercise.id,
             name: exercise.name,
             sets: setChecks.indices.map { _ in
-                LoggedSet(weight: parsedWeight, reps: parsedReps, distance: nil, duration: nil)
+                LoggedSet(weight: parsedWeight, reps: repsString, distance: nil, duration: nil)
             }
         )
     }

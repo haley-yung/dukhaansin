@@ -12,6 +12,9 @@ struct DashboardView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         header
+                        if let err = store.lastError {
+                            errorBanner(err)
+                        }
                         statsRow
                         todayCard
                         recentPRs
@@ -142,5 +145,30 @@ struct DashboardView: View {
         let f = DateFormatter()
         f.dateFormat = "EEEE, MMM d"
         return f.string(from: Date())
+    }
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Tokens.DataViz.danger)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Sync issue")
+                    .font(Type.mono(10))
+                    .textCase(.uppercase)
+                    .kerning(1.2)
+                    .foregroundStyle(Tokens.DataViz.danger)
+                Text(message)
+                    .font(Type.body(12))
+                    .foregroundStyle(Tokens.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Tokens.DataViz.danger.opacity(0.4), lineWidth: 0.5)
+        )
     }
 }

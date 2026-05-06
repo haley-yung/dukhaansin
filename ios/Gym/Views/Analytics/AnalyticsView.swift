@@ -158,7 +158,7 @@ struct AnalyticsView: View {
                 guard let date = Stats.date(from: workout.date), date >= start, date < end else { return }
                 for ex in workout.exercises {
                     for set in ex.sets {
-                        if let w = set.weight, let r = set.reps { acc += w * Double(r) }
+                        if let w = set.weight, let r = set.repsInt { acc += w * Double(r) }
                         else if let dist = set.distance { acc += dist * 100 }
                     }
                 }
