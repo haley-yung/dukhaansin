@@ -52,12 +52,9 @@ struct HistoryView: View {
                 .kerning(1.4)
                 .foregroundStyle(Tokens.muted)
             ForEach(workouts) { workout in
-                WorkoutCard(workout: workout)
-                    .contextMenu {
-                        Button("Delete", role: .destructive) {
-                            pendingDelete = workout
-                        }
-                    }
+                WorkoutCard(workout: workout) {
+                    pendingDelete = workout
+                }
             }
         }
     }

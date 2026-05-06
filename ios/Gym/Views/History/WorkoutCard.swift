@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WorkoutCard: View {
     let workout: Workout
+    var onDelete: () -> Void = {}
     @State private var expanded = false
 
     var body: some View {
@@ -45,6 +46,27 @@ struct WorkoutCard: View {
                             .foregroundStyle(Tokens.secondary)
                             .padding(.top, 4)
                     }
+                    Button(role: .destructive, action: onDelete) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 12, weight: .medium))
+                            Text("Delete workout")
+                                .font(Type.body(13))
+                        }
+                        .foregroundStyle(Tokens.DataViz.danger)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Tokens.DataViz.danger.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Tokens.DataViz.danger.opacity(0.4), lineWidth: 0.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 4)
                 }
             }
         }
