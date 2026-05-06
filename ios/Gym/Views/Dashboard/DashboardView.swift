@@ -3,6 +3,7 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(GymStore.self) private var store
     @State private var loggerPresented = false
+    @State private var celebrationPRs: [PersonalRecord] = []
 
     var body: some View {
         NavigationStack {
@@ -25,13 +26,19 @@ struct DashboardView: View {
             .toolbar(.hidden)
         }
         .sheet(isPresented: $loggerPresented) {
-            // Phase 4 hooks the real WorkoutLoggerSheet here.
-            ZStack {
-                Tokens.bg.ignoresSafeArea()
-                Text("Workout logger lands in phase 4")
-                    .foregroundStyle(Tokens.muted)
+            WorkoutLoggerSheet { resp in
+                if !resp.newPRs.isEmpty { celebrationPRs = resp.newPRs }
             }
-            .presentationDetents([.large])
+            .environment(store)
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { !celebrationPRs.isEmpty },
+            set: { if !$0 { celebrationPRs = [] } }
+        )) {
+            PRCelebrationView(prs: celebrationPRs) {
+                celebrationPRs = []
+            }
+            .presentationBackground(.clear)
         }
     }
 
@@ -52,20 +59,9 @@ struct DashboardView: View {
 
     private var statsRow: some View {
         HStack(spacing: 8) {
-            StatTile(
-                label: "This Week",
-                value: "\(Stats.workoutsInLastDays(store.workouts, days: 7))",
-                hint: "sessions"
-            )
-            StatTile(
-                label: "Streak",
-                value: "\(Stats.currentStreak(store.workouts))",
-                hint: "days"
-            )
-            StatTile(
-                label: "PRs",
-                value: "\(store.records.count)"
-            )
+            StatTile(label: "This Week", value: "\(Stats.workoutsInLastDays(store.workouts, days: 7))", hint: "sessions")
+            StatTile(label: "Streak", value: "\(Stats.currentStreak(store.workouts))", hint: "days")
+            StatTile(label: "PRs", value: "\(store.records.count)")
         }
     }
 
@@ -87,14 +83,23 @@ struct DashboardView: View {
                 Text("\(today.exercises.count) exercises")
                     .font(Type.body(15))
                     .foregroundStyle(Tokens.text)
+                Button {
+                    loggerPresented = true
+                } label: {
+                    HStack {
+                        Text("Log another")
+                            .font(Type.body(13))
+                        Image(systemName: "arrow.right")
+                    }
+                    .foregroundStyle(Tokens.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Tokens.line, lineWidth: 0.5)
-            )
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tokens.line, lineWidth: 0.5))
         } else {
             Button {
                 loggerPresented = true
@@ -138,17 +143,4 @@ struct DashboardView: View {
         f.dateFormat = "EEEE, MMM d"
         return f.string(from: Date())
     }
-}
-
-#Preview {
-    DashboardView()
-        .environment({
-            let s = GymStore()
-            s.records = [
-                PersonalRecord(id: UUID(), exerciseName: "Bench Press", weight: 80, reps: 5, date: "2026-04-30", workoutId: nil),
-                PersonalRecord(id: UUID(), exerciseName: "Squat", weight: 105.5, reps: 3, date: "2026-04-28", workoutId: nil),
-            ]
-            return s
-        }())
-        .preferredColorScheme(.dark)
 }

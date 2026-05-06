@@ -4,3 +4,14 @@ node_modules/
 /albums/
 .vercel
 .env*.local
+
+# iOS
+ios/Gym/Secrets.swift
+ios/Gym.xcodeproj/
+ios/Gym.xcworkspace/
+ios/build/
+ios/DerivedData/
+ios/.build/
+ios/.swiftpm/
+*.xcuserstate
+xcuserdata/
