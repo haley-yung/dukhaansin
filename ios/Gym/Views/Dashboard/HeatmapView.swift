@@ -2,7 +2,6 @@ import SwiftUI
 
 struct HeatmapView: View {
     let workouts: [Workout]
-    var year: Int = Calendar.current.component(.year, from: Date())
 
     private struct Cell {
         let date: Date?
@@ -21,13 +20,13 @@ struct HeatmapView: View {
                     .kerning(1.4)
                     .foregroundStyle(Tokens.muted)
                 Spacer()
-                Text(String(year))
+                Text(monthLabel)
                     .font(Type.mono(10))
                     .foregroundStyle(Tokens.muted)
             }
 
             GeometryReader { geo in
-                let gap: CGFloat = 2
+                let gap: CGFloat = 4
                 let cellSize = max(0, (geo.size.width - CGFloat(weekCount - 1) * gap) / CGFloat(weekCount))
                 HStack(alignment: .top, spacing: gap) {
                     ForEach(weeks.indices, id: \.self) { wi in
@@ -54,23 +53,31 @@ struct HeatmapView: View {
         } else {
             let isToday = Calendar.current.isDateInToday(cell.date!)
             let base: Color = cell.workout?.trainingType.color ?? Tokens.DataViz.rest.opacity(0.55)
-            RoundedRectangle(cornerRadius: 1.5)
+            RoundedRectangle(cornerRadius: 3)
                 .fill(base)
                 .opacity(cell.workout == nil ? 0.45 : 1.0)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 1.5)
+                    RoundedRectangle(cornerRadius: 3)
                         .stroke(isToday ? Tokens.heading : .clear, lineWidth: 1)
                 )
         }
     }
 
+    private var monthLabel: String {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM yyyy"
+        return f.string(from: Date()).uppercased()
+    }
+
     private func buildWeeks() -> [[Cell]] {
         let cal = Calendar(identifier: .gregorian)
-        let byDate = Stats.workoutsByDate(workouts)
+        let now = Date()
 
-        guard let start = cal.date(from: DateComponents(year: year, month: 1, day: 1)),
-              let end = cal.date(from: DateComponents(year: year, month: 12, day: 31))
-        else { return [] }
+        guard let monthInterval = cal.dateInterval(of: .month, for: now) else { return [] }
+        let start = monthInterval.start
+        let end = cal.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
+
+        let byDate = Stats.workoutsByDate(workouts)
 
         let startWeekday = cal.component(.weekday, from: start) - 1 // 0=Sun
         var weeks: [[Cell]] = []
