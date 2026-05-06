@@ -805,48 +805,61 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
             {exerciseDoneCount}/{activeExercises.length || 0}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
-          <button
-            type="button"
-            onClick={openDatePicker}
-            title="Log this session for a different date"
-            aria-label={sessionDate === today() ? 'Logging for today' : `Logging for ${fmtShort(sessionDate)}`}
-            style={{
-              background: 'transparent',
-              border: `1px solid ${sessionDate === today() ? 'transparent' : T.lineHi}`,
-              padding: '5px 10px', borderRadius: T.r1,
-              color: sessionDate === today() ? T.muted : T.text,
-              fontSize: 12, fontFamily: T.mono, cursor: 'pointer',
-              letterSpacing: '-0.005em',
-            }}
-          >
-            {sessionDate === today() ? 'Today' : fmtShort(sessionDate)}
-          </button>
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={sessionDate}
-            max={today()}
-            onChange={e => setSessionDate(e.target.value || today())}
-            aria-hidden="true"
-            tabIndex={-1}
-            style={{
-              position: 'absolute', left: 0, bottom: -2,
-              opacity: 0, pointerEvents: 'none',
-              width: 1, height: 1, padding: 0, margin: 0, border: 0,
-            }}
-          />
-          <button
-            style={{
-              background: 'transparent', border: 'none', padding: '6px 4px',
-              color: T.muted, fontSize: 13, cursor: 'pointer',
-              fontFamily: T.font, letterSpacing: '-0.005em',
-            }}
-            onClick={reset}
-          >
-            Change
-          </button>
-        </div>
+        {(() => {
+          const headerBtnStyle = {
+            background: T.surface,
+            border: `1px solid ${T.line}`,
+            padding: '6px 12px',
+            borderRadius: T.r1,
+            fontSize: 12.5,
+            fontFamily: T.font,
+            fontWeight: 400,
+            color: T.text,
+            cursor: 'pointer',
+            letterSpacing: '-0.005em',
+            lineHeight: 1.2,
+            transition: 'background 180ms ease, border-color 180ms ease, color 180ms ease',
+          };
+          const isToday = sessionDate === today();
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+              <button
+                type="button"
+                onClick={openDatePicker}
+                title="Log this session for a different date"
+                aria-label={isToday ? 'Logging for today' : `Logging for ${fmtShort(sessionDate)}`}
+                style={{
+                  ...headerBtnStyle,
+                  borderColor: isToday ? T.line : T.lineHi,
+                  color: isToday ? T.secondary : T.heading,
+                }}
+              >
+                {isToday ? 'Today' : fmtShort(sessionDate)}
+              </button>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={sessionDate}
+                max={today()}
+                onChange={e => setSessionDate(e.target.value || today())}
+                aria-hidden="true"
+                tabIndex={-1}
+                style={{
+                  position: 'absolute', left: 0, bottom: -2,
+                  opacity: 0, pointerEvents: 'none',
+                  width: 1, height: 1, padding: 0, margin: 0, border: 0,
+                }}
+              />
+              <button
+                type="button"
+                onClick={reset}
+                style={{ ...headerBtnStyle, color: T.secondary }}
+              >
+                Change
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Progress bar — hairline */}
