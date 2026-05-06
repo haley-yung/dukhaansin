@@ -26,7 +26,7 @@ struct HeatmapView: View {
             }
 
             GeometryReader { geo in
-                let gap: CGFloat = 4
+                let gap: CGFloat = 3
                 let cellSize = max(0, (geo.size.width - CGFloat(weekCount - 1) * gap) / CGFloat(weekCount))
                 HStack(alignment: .top, spacing: gap) {
                     ForEach(weeks.indices, id: \.self) { wi in
@@ -64,18 +64,26 @@ struct HeatmapView: View {
     }
 
     private var monthLabel: String {
+        let cal = Calendar(identifier: .gregorian)
+        let now = Date()
+        guard let twoMonthsAgo = cal.date(byAdding: .month, value: -2, to: now) else { return "" }
         let f = DateFormatter()
-        f.dateFormat = "MMMM yyyy"
-        return f.string(from: Date()).uppercased()
+        f.dateFormat = "MMM"
+        let yearF = DateFormatter()
+        yearF.dateFormat = "yyyy"
+        return "\(f.string(from: twoMonthsAgo)) – \(f.string(from: now)) \(yearF.string(from: now))".uppercased()
     }
 
     private func buildWeeks() -> [[Cell]] {
         let cal = Calendar(identifier: .gregorian)
         let now = Date()
 
-        guard let monthInterval = cal.dateInterval(of: .month, for: now) else { return [] }
-        let start = monthInterval.start
-        let end = cal.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
+        guard let twoMonthsAgo = cal.date(byAdding: .month, value: -2, to: now),
+              let firstMonth = cal.dateInterval(of: .month, for: twoMonthsAgo),
+              let currentMonth = cal.dateInterval(of: .month, for: now)
+        else { return [] }
+        let start = firstMonth.start
+        let end = cal.date(byAdding: .day, value: -1, to: currentMonth.end) ?? currentMonth.end
 
         let byDate = Stats.workoutsByDate(workouts)
 
