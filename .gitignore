@@ -4,6 +4,7 @@ node_modules/
 /albums/
 .vercel
 .env*.local
+.claude/
 
 # iOS
 ios/Gym/Secrets.swift
