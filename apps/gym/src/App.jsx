@@ -567,12 +567,16 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
   const [setChecked, setSetChecked] = useState(saved.current.checks || {});
   const [weights, setWeights] = useState(saved.current.weights || {});
   const [submitted, setSubmitted] = useState(saved.current.submitted || false);
+  // Date the session is being logged for. Defaults to today; can be back-
+  // dated when the user forgot to log on the actual day.
+  const [sessionDate, setSessionDate] = useState(saved.current.sessionDate || today());
+  const dateInputRef = useRef(null);
 
   // Persist to localStorage whenever state changes
   useEffect(() => {
-    const data = { type: selectedType, checks: setChecked, weights, submitted };
+    const data = { type: selectedType, checks: setChecked, weights, submitted, sessionDate };
     try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
-  }, [selectedType, setChecked, weights, submitted, storageKey]);
+  }, [selectedType, setChecked, weights, submitted, sessionDate, storageKey]);
 
   // Clean up old days' entries
   useEffect(() => {
@@ -586,12 +590,13 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
 
   const typeExercises = (exercises || []).filter(e => e.type === selectedType).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-  // Heaviest weight per exercise from the most recent prior session.
-  // Workouts are returned date-desc by the API, so the first hit per key wins.
-  const todayStr = today();
+  // Heaviest weight per exercise from the most recent prior session,
+  // relative to the date being logged. When backdating, we skip the
+  // session date itself plus anything more recent, so "last" reflects
+  // what came BEFORE the date being entered.
   const prevByExercise = {};
   for (const w of (workouts || [])) {
-    if (toDateStr(w.date) === todayStr) continue;
+    if (toDateStr(w.date) >= sessionDate) continue;
     const exs = Array.isArray(w.exercises) ? w.exercises : [];
     for (const e of exs) {
       const sets = Array.isArray(e.sets) ? e.sets : [];
@@ -663,7 +668,7 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
     if (submitted || todayLogged) return;
     if (activeExercises.length === 0) return;
     setSubmitted(true);
-    onLogWorkout(selectedType, activeExercises, weights);
+    onLogWorkout(selectedType, activeExercises, weights, sessionDate);
   };
 
   const reset = () => {
@@ -671,6 +676,16 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
     setSetChecked({});
     setWeights({});
     setSubmitted(false);
+    setSessionDate(today());
+  };
+
+  const openDatePicker = () => {
+    const el = dateInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === 'function') {
+      try { el.showPicker(); return; } catch {}
+    }
+    el.click();
   };
 
   if (!selectedType) {
@@ -790,16 +805,48 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
             {exerciseDoneCount}/{activeExercises.length || 0}
           </span>
         </div>
-        <button
-          style={{
-            background: 'transparent', border: 'none', padding: '6px 4px',
-            color: T.muted, fontSize: 13, cursor: 'pointer',
-            fontFamily: T.font, letterSpacing: '-0.005em',
-          }}
-          onClick={reset}
-        >
-          Change
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
+          <button
+            type="button"
+            onClick={openDatePicker}
+            title="Log this session for a different date"
+            aria-label={sessionDate === today() ? 'Logging for today' : `Logging for ${fmtShort(sessionDate)}`}
+            style={{
+              background: 'transparent',
+              border: `1px solid ${sessionDate === today() ? 'transparent' : T.lineHi}`,
+              padding: '5px 10px', borderRadius: T.r1,
+              color: sessionDate === today() ? T.muted : T.text,
+              fontSize: 12, fontFamily: T.mono, cursor: 'pointer',
+              letterSpacing: '-0.005em',
+            }}
+          >
+            {sessionDate === today() ? 'Today' : fmtShort(sessionDate)}
+          </button>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={sessionDate}
+            max={today()}
+            onChange={e => setSessionDate(e.target.value || today())}
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{
+              position: 'absolute', left: 0, bottom: -2,
+              opacity: 0, pointerEvents: 'none',
+              width: 1, height: 1, padding: 0, margin: 0, border: 0,
+            }}
+          />
+          <button
+            style={{
+              background: 'transparent', border: 'none', padding: '6px 4px',
+              color: T.muted, fontSize: 13, cursor: 'pointer',
+              fontFamily: T.font, letterSpacing: '-0.005em',
+            }}
+            onClick={reset}
+          >
+            Change
+          </button>
+        </div>
       </div>
 
       {/* Progress bar — hairline */}
@@ -2303,7 +2350,7 @@ export default function GymTracker() {
     fetchAll();
   };
 
-  const handleLogWorkout = async (type, activeExes, weightsMap) => {
+  const handleLogWorkout = async (type, activeExes, weightsMap, date) => {
     // activeExes is the subset of exercises the user engaged with —
     // weight entered or (for cardio) sets checked. Everything else is skipped.
     const ordered = [...(activeExes || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
@@ -2316,7 +2363,8 @@ export default function GymTracker() {
         sets: Array.from({ length: ex.sets || 1 }, () => ({ reps: ex.reps || null, weight: w })),
       };
     });
-    const result = await api('workouts', 'POST', { date: today(), trainingType: type, exercises: exerciseData, notes: '' });
+    const logDate = date || today();
+    const result = await api('workouts', 'POST', { date: logDate, trainingType: type, exercises: exerciseData, notes: '' });
     if (result?.newPRs?.length > 0) {
       setCelebratePRs(result.newPRs);
       setNewPRs(result.newPRs.map(pr => pr.id));
