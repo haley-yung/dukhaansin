@@ -1073,6 +1073,9 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
         const active = isActive(ex);
         // Skipped = user hasn't engaged and hasn't completed → visually muted, lets them know it won't be logged.
         const skipped = !active && !allSetsChecked;
+        const prevW = (!isWarmup && !cardio)
+          ? (prevByExercise[ex.id] ?? prevByExercise[ex.name])
+          : null;
 
         return (
           <div
@@ -1109,6 +1112,9 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
                 <div style={{ fontSize: 12, color: T.muted, fontFamily: T.mono, marginTop: 2 }}>
                   {cardio ? (ex.reps || 'Cardio') : (ex.sets ? `${ex.sets}\u00D7${ex.reps || ''}` : (ex.reps || ''))}
                   {fmtRest && !cardio ? ` \u00B7 ${fmtRest} rest` : ''}
+                  {prevW != null ? (
+                    <span style={{ color: T.secondary }}>{` \u00B7 last ${prevW}kg`}</span>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1144,38 +1150,22 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
                 </div>
               ) : (
                 <>
-                  {!isWarmup && (() => {
-                    const prevW = prevByExercise[ex.id] ?? prevByExercise[ex.name];
-                    return (
-                      <>
-                        {prevW != null && (
-                          <span
-                            title="Last session"
-                            style={{
-                              fontSize: 12, fontFamily: T.mono, color: T.muted,
-                              letterSpacing: '-0.005em', whiteSpace: 'nowrap',
-                            }}
-                          >
-                            last {prevW}kg
-                          </span>
-                        )}
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          placeholder="kg"
-                          value={weights[ex.id] || ''}
-                          onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
-                          style={{
-                            width: 60, padding: '6px 8px', fontSize: 13,
-                            fontFamily: T.mono, color: T.text,
-                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: 6, outline: 'none', textAlign: 'center',
-                            minHeight: 36,
-                          }}
-                        />
-                      </>
-                    );
-                  })()}
+                  {!isWarmup && (
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="kg"
+                      value={weights[ex.id] || ''}
+                      onChange={e => setWeights(prev => ({ ...prev, [ex.id]: e.target.value }))}
+                      style={{
+                        width: 60, padding: '6px 8px', fontSize: 13,
+                        fontFamily: T.mono, color: T.text,
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 6, outline: 'none', textAlign: 'center',
+                        minHeight: 36,
+                      }}
+                    />
+                  )}
                   <div style={{ display: 'flex', gap: 4 }}>
                     {Array.from({ length: numSets }).map((_, si) => (
                       <div key={si} onClick={() => toggleSet(ex.id, si, ex)}>
