@@ -15,10 +15,10 @@ struct DashboardView: View {
                         if let err = store.lastError {
                             errorBanner(err)
                         }
+                        HeatmapView(workouts: store.workouts)
                         statsRow
                         todayCard
                         recentPRs
-                        HeatmapView(workouts: store.workouts)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
