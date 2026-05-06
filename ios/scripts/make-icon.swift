@@ -1,7 +1,7 @@
 #!/usr/bin/env swift
 //
-// Generates a 1024x1024 PNG app icon: cream rounded-square weights with
-// a chunky bar, on the app's dark background. Run via:
+// Generates a 1024x1024 PNG app icon: chunky cream rounded-square weights
+// with a friendly face on the bar, on the app's dark background. Run via:
 //
 //     swift ios/scripts/make-icon.swift <output.png>
 //
@@ -29,79 +29,90 @@ guard let ctx = CGContext(
 ctx.setShouldAntialias(true)
 ctx.interpolationQuality = .high
 
-// Background — dark cream-on-charcoal palette from CLAUDE.md tokens.
+// Palette — pulled from CLAUDE.md tokens.
 let bg     = CGColor(red: 0x0A/255, green: 0x0A/255, blue: 0x0B/255, alpha: 1)
 let cream  = CGColor(red: 0xFA/255, green: 0xFA/255, blue: 0xF7/255, alpha: 1)
 let accent = CGColor(red: 0x96/255, green: 0x81/255, blue: 0xC4/255, alpha: 1) // lower_a violet
 
+// Background.
 ctx.setFillColor(bg)
 ctx.fill(CGRect(x: 0, y: 0, width: size, height: size))
 
 let cx = size / 2, cy = size / 2
 
-// Soft accent glow underneath for warmth (radial gradient).
-let locations: [CGFloat] = [0, 1]
-let colors = [
-    accent.copy(alpha: 0.30)!,
+// Soft accent glow underneath the dumbbell for warmth.
+let glowColors = [
+    accent.copy(alpha: 0.32)!,
     accent.copy(alpha: 0.0)!
 ] as CFArray
-if let gradient = CGGradient(colorsSpace: cs, colors: colors, locations: locations) {
+if let gradient = CGGradient(colorsSpace: cs, colors: glowColors, locations: [0, 1]) {
     ctx.drawRadialGradient(
         gradient,
         startCenter: CGPoint(x: cx, y: cy), startRadius: 0,
-        endCenter:   CGPoint(x: cx, y: cy), endRadius: 460,
+        endCenter:   CGPoint(x: cx, y: cy), endRadius: 480,
         options: []
     )
 }
 
-// Geometry: chunky rounded weights with a fat bar.
-let weight: CGFloat = 320
-let radius: CGFloat = 88
-let spacing: CGFloat = 480     // distance between weight centers
-let barHeight: CGFloat = 96
-let barRadius: CGFloat = 28
-let barShrink: CGFloat = 60    // bar inset from each weight center
+// Geometry.
+let weight: CGFloat = 400
+let weightRadius: CGFloat = 130        // rounded, not circle — corners stay visible
+let spacing: CGFloat = 540             // distance between weight centers
+let barHeight: CGFloat = 170           // narrower than weights so silhouette reads "dumbbell"
+let barInset: CGFloat = 80             // bar extends from this far past each weight center
 
-// Bar (drawn first so weights overlap it cleanly).
-let barRect = CGRect(
-    x: cx - spacing/2 + barShrink,
-    y: cy - barHeight/2,
-    width: spacing - 2 * barShrink,
-    height: barHeight
-)
-ctx.addPath(CGPath(roundedRect: barRect, cornerWidth: barRadius, cornerHeight: barRadius, transform: nil))
+// --- Bar (drawn first; weights overlap it) ---
+let barLeftX = cx - spacing/2 + barInset
+let barWidth = spacing - 2 * barInset
+let barRect = CGRect(x: barLeftX, y: cy - barHeight/2, width: barWidth, height: barHeight)
+ctx.addPath(CGPath(roundedRect: barRect, cornerWidth: barHeight/2, cornerHeight: barHeight/2, transform: nil))
 ctx.setFillColor(cream)
 ctx.fillPath()
 
-// Left weight.
+// --- Weights (rounded squares) ---
 let leftRect = CGRect(x: cx - spacing/2 - weight/2, y: cy - weight/2, width: weight, height: weight)
-ctx.addPath(CGPath(roundedRect: leftRect, cornerWidth: radius, cornerHeight: radius, transform: nil))
+ctx.addPath(CGPath(roundedRect: leftRect, cornerWidth: weightRadius, cornerHeight: weightRadius, transform: nil))
 ctx.fillPath()
 
-// Right weight.
 let rightRect = CGRect(x: cx + spacing/2 - weight/2, y: cy - weight/2, width: weight, height: weight)
-ctx.addPath(CGPath(roundedRect: rightRect, cornerWidth: radius, cornerHeight: radius, transform: nil))
+ctx.addPath(CGPath(roundedRect: rightRect, cornerWidth: weightRadius, cornerHeight: weightRadius, transform: nil))
 ctx.fillPath()
 
-// Inner darker rectangles inside each weight for a "plate" feel.
-let plateInset: CGFloat = 56
-let plateRadius: CGFloat = 38
-let plate = CGColor(red: 0x18/255, green: 0x18/255, blue: 0x1A/255, alpha: 1)
-ctx.setFillColor(plate)
+// --- Face on the bar ---
+// Coordinate note: CGContext y is bottom-up. "Above center" = higher y.
+let dark = bg
+ctx.setFillColor(dark)
 
-let leftPlate = leftRect.insetBy(dx: plateInset, dy: plateInset)
-ctx.addPath(CGPath(roundedRect: leftPlate, cornerWidth: plateRadius, cornerHeight: plateRadius, transform: nil))
-ctx.fillPath()
+// Eyes: small dark dots, slightly above center.
+let eyeR: CGFloat = 22
+let eyeOffsetX: CGFloat = 56
+let eyeY = cy + 18
+ctx.fillEllipse(in: CGRect(x: cx - eyeOffsetX - eyeR, y: eyeY - eyeR, width: eyeR * 2, height: eyeR * 2))
+ctx.fillEllipse(in: CGRect(x: cx + eyeOffsetX - eyeR, y: eyeY - eyeR, width: eyeR * 2, height: eyeR * 2))
 
-let rightPlate = rightRect.insetBy(dx: plateInset, dy: plateInset)
-ctx.addPath(CGPath(roundedRect: rightPlate, cornerWidth: plateRadius, cornerHeight: plateRadius, transform: nil))
-ctx.fillPath()
+// Tiny cheek blush — soft pink dots flanking the smile.
+let blush = CGColor(red: 0xC9/255, green: 0x7B/255, blue: 0x5E/255, alpha: 0.55)
+ctx.setFillColor(blush)
+let blushR: CGFloat = 16
+let blushOffsetX: CGFloat = 88
+let blushY = cy - 22
+ctx.fillEllipse(in: CGRect(x: cx - blushOffsetX - blushR, y: blushY - blushR, width: blushR * 2, height: blushR * 2))
+ctx.fillEllipse(in: CGRect(x: cx + blushOffsetX - blushR, y: blushY - blushR, width: blushR * 2, height: blushR * 2))
 
-// Tiny accent dot in the center of each plate.
-ctx.setFillColor(accent)
-let dotR: CGFloat = 18
-ctx.fillEllipse(in: CGRect(x: leftPlate.midX - dotR, y: leftPlate.midY - dotR, width: dotR * 2, height: dotR * 2))
-ctx.fillEllipse(in: CGRect(x: rightPlate.midX - dotR, y: rightPlate.midY - dotR, width: dotR * 2, height: dotR * 2))
+// Smile: small downward arc, stroked.
+ctx.setStrokeColor(dark)
+ctx.setLineWidth(14)
+ctx.setLineCap(.round)
+let smileWidth: CGFloat = 90
+let smileY = cy - 18
+let smile = CGMutablePath()
+smile.move(to: CGPoint(x: cx - smileWidth/2, y: smileY + 6))
+smile.addQuadCurve(
+    to: CGPoint(x: cx + smileWidth/2, y: smileY + 6),
+    control: CGPoint(x: cx, y: smileY - 30)
+)
+ctx.addPath(smile)
+ctx.strokePath()
 
 // Encode PNG.
 guard let image = ctx.makeImage(),
