@@ -551,6 +551,192 @@ function SmallCheck({ checked, color }) {
   );
 }
 
+// Compact calendar popover that matches the dark/Inter aesthetic.
+// Native <input type="date"> pickers vary wildly across browsers and
+// look out of place on this surface — this gives us full control.
+function DatePopover({ value, max, onPick, onClose, triggerRef }) {
+  const popRef = useRef(null);
+  const sel = value || today();
+  const [selY, selM, selD] = sel.split('-').map(Number);
+  const [view, setView] = useState({ y: selY, m: selM - 1 });
+  const todayStr = today();
+
+  useEffect(() => {
+    const handleDown = (e) => {
+      if (popRef.current && popRef.current.contains(e.target)) return;
+      if (triggerRef && triggerRef.current && triggerRef.current.contains(e.target)) return;
+      onClose();
+    };
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('mousedown', handleDown);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleDown);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [onClose, triggerRef]);
+
+  const monthName = new Date(view.y, view.m, 1)
+    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const startDow = new Date(view.y, view.m, 1).getDay();
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const goto = (delta) => {
+    const total = view.m + delta;
+    setView({
+      y: view.y + Math.floor(total / 12),
+      m: ((total % 12) + 12) % 12,
+    });
+  };
+
+  const Arrow = ({ dir, label }) => (
+    <button
+      type="button"
+      onClick={() => goto(dir < 0 ? -1 : 1)}
+      aria-label={label}
+      style={{
+        width: 28, height: 28, padding: 0,
+        background: 'transparent',
+        border: `1px solid ${T.line}`,
+        borderRadius: T.r1,
+        color: T.secondary,
+        cursor: 'pointer',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 160ms ease, border-color 160ms ease, color 160ms ease',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = T.surfaceHi; e.currentTarget.style.color = T.heading; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.secondary; }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {dir < 0 ? <path d="M15 18l-6-6 6-6"/> : <path d="M9 18l6-6-6-6"/>}
+      </svg>
+    </button>
+  );
+
+  const dows = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  return (
+    <div
+      ref={popRef}
+      role="dialog"
+      aria-label="Pick a date"
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 8px)',
+        right: 0,
+        width: 284,
+        background: '#0E0E10',
+        border: `1px solid ${T.lineHi}`,
+        borderRadius: T.r2,
+        boxShadow: '0 14px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)',
+        padding: 14,
+        zIndex: 50,
+        animation: 'gymDateIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+      }}
+    >
+      <style>{`@keyframes gymDateIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+
+      {/* Header: prev / month-year / next */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 12,
+      }}>
+        <Arrow dir={-1} label="Previous month" />
+        <div style={{
+          fontSize: 13.5, fontFamily: T.font, color: T.heading,
+          fontWeight: 500, letterSpacing: '-0.01em',
+        }}>
+          {monthName}
+        </div>
+        <Arrow dir={1} label="Next month" />
+      </div>
+
+      {/* Day-of-week row */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+        gap: 2, marginBottom: 6,
+      }}>
+        {dows.map((d, i) => (
+          <div key={i} style={{
+            fontSize: 10, fontFamily: T.mono, color: T.muted,
+            textAlign: 'center', letterSpacing: '0.08em',
+            padding: '4px 0',
+          }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {cells.map((d, i) => {
+          if (d == null) return <div key={`b${i}`} style={{ height: 32 }} />;
+          const dStr = `${view.y}-${String(view.m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const isSel = dStr === sel;
+          const isToday = dStr === todayStr;
+          const disabled = max ? dStr > max : false;
+          return (
+            <button
+              key={`d${i}`}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPick(dStr)}
+              aria-label={dStr}
+              aria-pressed={isSel}
+              style={{
+                height: 32,
+                padding: 0,
+                background: isSel ? T.accent : 'transparent',
+                color: isSel ? T.accentInk : disabled ? T.darkMuted : T.text,
+                border: isToday && !isSel ? `1px solid ${T.lineHi}` : '1px solid transparent',
+                borderRadius: T.r1,
+                fontSize: 12.5, fontFamily: T.font,
+                fontWeight: isSel ? 500 : 400,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
+              }}
+              onMouseEnter={e => {
+                if (!isSel && !disabled) e.currentTarget.style.background = T.surfaceHi;
+              }}
+              onMouseLeave={e => {
+                if (!isSel && !disabled) e.currentTarget.style.background = 'transparent';
+              }}
+            >{d}</button>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.line}`,
+      }}>
+        <button
+          type="button"
+          onClick={() => onPick(todayStr)}
+          style={{
+            background: 'transparent', border: 'none', padding: 0,
+            color: T.secondary, fontSize: 12, fontFamily: T.font,
+            cursor: 'pointer', letterSpacing: '-0.005em',
+          }}
+        >Jump to today</button>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            background: 'transparent', border: 'none', padding: 0,
+            color: T.muted, fontSize: 12, fontFamily: T.font,
+            cursor: 'pointer', letterSpacing: '-0.005em',
+          }}
+        >Close</button>
+      </div>
+    </div>
+  );
+}
+
 function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogWorkout, todayLogged }) {
   const storageKey = `gym_checklist_${today()}`;
 
@@ -570,7 +756,8 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
   // Date the session is being logged for. Defaults to today; can be back-
   // dated when the user forgot to log on the actual day.
   const [sessionDate, setSessionDate] = useState(saved.current.sessionDate || today());
-  const dateInputRef = useRef(null);
+  const [dateOpen, setDateOpen] = useState(false);
+  const dateBtnRef = useRef(null);
 
   // Persist to localStorage whenever state changes
   useEffect(() => {
@@ -677,15 +864,7 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
     setWeights({});
     setSubmitted(false);
     setSessionDate(today());
-  };
-
-  const openDatePicker = () => {
-    const el = dateInputRef.current;
-    if (!el) return;
-    if (typeof el.showPicker === 'function') {
-      try { el.showPicker(); return; } catch {}
-    }
-    el.click();
+    setDateOpen(false);
   };
 
   if (!selectedType) {
@@ -824,9 +1003,12 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
               <button
+                ref={dateBtnRef}
                 type="button"
-                onClick={openDatePicker}
+                onClick={() => setDateOpen(o => !o)}
                 title="Log this session for a different date"
+                aria-haspopup="dialog"
+                aria-expanded={dateOpen}
                 aria-label={isToday ? 'Logging for today' : `Logging for ${fmtShort(sessionDate)}`}
                 style={{
                   ...headerBtnStyle,
@@ -836,20 +1018,6 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
               >
                 {isToday ? 'Today' : fmtShort(sessionDate)}
               </button>
-              <input
-                ref={dateInputRef}
-                type="date"
-                value={sessionDate}
-                max={today()}
-                onChange={e => setSessionDate(e.target.value || today())}
-                aria-hidden="true"
-                tabIndex={-1}
-                style={{
-                  position: 'absolute', left: 0, bottom: -2,
-                  opacity: 0, pointerEvents: 'none',
-                  width: 1, height: 1, padding: 0, margin: 0, border: 0,
-                }}
-              />
               <button
                 type="button"
                 onClick={reset}
@@ -857,6 +1025,15 @@ function WorkoutChecklist({ exercises, workouts, onLogRest, onStartTimer, onLogW
               >
                 Change
               </button>
+              {dateOpen && (
+                <DatePopover
+                  value={sessionDate}
+                  max={today()}
+                  triggerRef={dateBtnRef}
+                  onPick={(d) => { setSessionDate(d); setDateOpen(false); }}
+                  onClose={() => setDateOpen(false)}
+                />
+              )}
             </div>
           );
         })()}
