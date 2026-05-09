@@ -65,19 +65,19 @@ const T = {
 // Training types — desaturated, premium dataviz palette (only in charts/badges)
 const TYPE_COLORS = {
   push_run: '#C97B5E', // warm amber
-  lower_a:  '#9681C4', // muted violet
+  leg_day:  '#9681C4', // muted violet
   pull_run: '#7593C2', // slate blue
   rest:     '#3B3B40',
 };
 
 const TYPE_LABELS = {
   push_run: 'Push + Run',
-  lower_a: 'Lower A: Quad Focus',
+  leg_day: 'Leg Day',
   pull_run: 'Pull + Run',
   rest: 'Rest Day',
 };
 
-const TRAINING_TYPES = ['push_run', 'lower_a', 'pull_run'];
+const TRAINING_TYPES = ['push_run', 'leg_day', 'pull_run'];
 
 const ENERGY_EMOJIS = ['', '\u{1F634}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F525}'];
 
