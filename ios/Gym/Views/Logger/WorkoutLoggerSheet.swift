@@ -12,8 +12,9 @@ struct WorkoutLoggerSheet: View {
     @State private var error: String?
     @State private var showSaveTemplate: Bool = false
     @State private var templateName: String = ""
+    @State private var didRestore: Bool = false
     @State private var timer = RestTimer()
-    @FocusState private var notesFocused: Bool
+    @FocusState private var anyFieldFocused: Bool
 
     var onComplete: (WorkoutCreateResponse) -> Void
 
@@ -40,6 +41,7 @@ struct WorkoutLoggerSheet: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 RestTimerBanner(timer: timer)
                     .padding(.top, 8)
             }
@@ -55,9 +57,19 @@ struct WorkoutLoggerSheet: View {
                         .datePickerStyle(.compact)
                         .labelsHidden()
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { dismissKeyboard() }
+                        .foregroundStyle(Tokens.heading)
+                }
             }
             .sheet(isPresented: $showSaveTemplate) { saveTemplateSheet }
         }
+        .onAppear { restoreIfPossible() }
+        .onChange(of: trainingType) { _, _ in persist() }
+        .onChange(of: drafts) { _, _ in persist() }
+        .onChange(of: notes) { _, _ in persist() }
+        .onChange(of: sessionDate) { _, _ in persist() }
     }
 
     // MARK: - Type picker
@@ -175,14 +187,14 @@ struct WorkoutLoggerSheet: View {
                 .foregroundStyle(Tokens.muted)
             TextField("Optional", text: $notes, axis: .vertical)
                 .lineLimit(2...4)
-                .focused($notesFocused)
+                .focused($anyFieldFocused)
                 .font(Type.body(14))
                 .foregroundStyle(Tokens.text)
                 .padding(12)
                 .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(notesFocused ? Tokens.lineHi : Tokens.line, lineWidth: 0.5)
+                        .stroke(anyFieldFocused ? Tokens.lineHi : Tokens.line, lineWidth: 0.5)
                 )
         }
     }
@@ -243,6 +255,7 @@ struct WorkoutLoggerSheet: View {
             notes: notes.isEmpty ? nil : notes,
             exercises: active
         ) {
+            DraftStore.clear()
             onComplete(resp)
             dismiss()
         } else {
@@ -281,5 +294,60 @@ struct WorkoutLoggerSheet: View {
             }
         }
         .presentationDetents([.medium])
+    }
+
+    // MARK: - Persistence
+
+    private func restoreIfPossible() {
+        guard !didRestore else { return }
+        didRestore = true
+        guard let saved = DraftStore.loadForToday() else { return }
+        sessionDate = Stats.date(from: saved.sessionDateISO) ?? Date()
+        notes = saved.notes
+        trainingType = saved.trainingType
+
+        let exercisesForType = store.exercises.filter { $0.trainingType == saved.trainingType }
+        drafts = exercisesForType.map { exercise in
+            var draft = ExerciseDraft.make(
+                from: exercise,
+                lastWeight: Stats.previousWeight(for: exercise, in: store.workouts)
+            )
+            if let entry = saved.entries.first(where: { $0.exerciseId == exercise.id }) {
+                draft.weight = entry.weight
+                if entry.setChecks.count == draft.setChecks.count {
+                    draft.setChecks = entry.setChecks
+                }
+            }
+            return draft
+        }
+    }
+
+    private func persist() {
+        guard let trainingType else {
+            DraftStore.clear()
+            return
+        }
+        let entries = drafts.compactMap { draft -> SessionDraft.Entry? in
+            // Skip blank entries to keep the blob small.
+            guard !draft.weight.isEmpty || draft.setChecks.contains(true) else { return nil }
+            return SessionDraft.Entry(
+                exerciseId: draft.exercise.id,
+                weight: draft.weight,
+                setChecks: draft.setChecks
+            )
+        }
+        DraftStore.save(SessionDraft(
+            trainingType: trainingType,
+            sessionDateISO: Stats.iso(sessionDate),
+            notes: notes,
+            entries: entries
+        ))
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil, from: nil, for: nil
+        )
     }
 }

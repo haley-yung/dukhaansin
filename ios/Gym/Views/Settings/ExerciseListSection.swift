@@ -5,6 +5,7 @@ struct ExerciseListSection: View {
     @Environment(GymStore.self) private var store
     @State private var showAdd = false
     @State private var editing: Exercise?
+    @State private var pendingDelete: Exercise?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -42,6 +43,20 @@ struct ExerciseListSection: View {
             ExerciseEditorSheet(trainingType: trainingType, existing: ex)
                 .environment(store)
         }
+        .alert("Delete \(pendingDelete?.name ?? "exercise")?", isPresented: Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let ex = pendingDelete {
+                    Task { await store.deleteExercise(ex) }
+                }
+                pendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text("This removes the exercise from the library. Past workouts that used it stay in history.")
+        }
     }
 
     private var filtered: [Exercise] {
@@ -49,10 +64,10 @@ struct ExerciseListSection: View {
     }
 
     private func row(for ex: Exercise) -> some View {
-        Button {
-            editing = ex
-        } label: {
-            HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Button {
+                editing = ex
+            } label: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(ex.name)
                         .font(Type.body(15))
@@ -61,21 +76,29 @@ struct ExerciseListSection: View {
                         .font(Type.mono(11))
                         .foregroundStyle(Tokens.muted)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Tokens.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .padding(.vertical, 10)
+            .buttonStyle(.plain)
+
+            Button {
+                pendingDelete = ex
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Tokens.DataViz.danger.opacity(0.85))
+                    .padding(8)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Tokens.muted)
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Tokens.line).frame(height: 0.5)
-        }
-        .contextMenu {
-            Button("Delete", role: .destructive) {
-                Task { await store.deleteExercise(ex) }
-            }
         }
     }
 
@@ -112,6 +135,7 @@ struct ExerciseEditorSheet: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle(existing == nil ? "New exercise" : "Edit")
             .navigationBarTitleDisplayMode(.inline)
@@ -124,6 +148,15 @@ struct ExerciseEditorSheet: View {
                         Task { await save() }
                     }
                     .disabled(name.isEmpty)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
+                    }
                 }
             }
         }

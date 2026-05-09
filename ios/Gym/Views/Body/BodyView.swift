@@ -28,11 +28,24 @@ struct BodyView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 40)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .refreshable { await store.fetchAll() }
             }
             .navigationTitle("Body")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Tokens.bg, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
+                    }
+                    .foregroundStyle(Tokens.heading)
+                }
+            }
             .onAppear { prefillForToday() }
         }
     }
