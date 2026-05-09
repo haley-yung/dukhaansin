@@ -109,7 +109,7 @@ struct AnalyticsView: View {
                         )
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Tokens.DataViz.lowerA, Tokens.DataViz.pullRun],
+                                colors: [Tokens.DataViz.legDay, Tokens.DataViz.pullRun],
                                 startPoint: .top, endPoint: .bottom
                             )
                         )

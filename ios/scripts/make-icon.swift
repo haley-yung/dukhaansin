@@ -32,7 +32,7 @@ ctx.interpolationQuality = .high
 // Palette — pulled from CLAUDE.md tokens.
 let bg     = CGColor(red: 0x0A/255, green: 0x0A/255, blue: 0x0B/255, alpha: 1)
 let cream  = CGColor(red: 0xFA/255, green: 0xFA/255, blue: 0xF7/255, alpha: 1)
-let accent = CGColor(red: 0x96/255, green: 0x81/255, blue: 0xC4/255, alpha: 1) // lower_a violet
+let accent = CGColor(red: 0x96/255, green: 0x81/255, blue: 0xC4/255, alpha: 1) // leg_day violet
 
 // Background.
 ctx.setFillColor(bg)

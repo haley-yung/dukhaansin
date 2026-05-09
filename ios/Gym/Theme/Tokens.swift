@@ -12,7 +12,7 @@ enum Tokens {
 
     enum DataViz {
         static let pushRun = Color(red: 0xC9/255, green: 0x7B/255, blue: 0x5E/255)
-        static let lowerA  = Color(red: 0x96/255, green: 0x81/255, blue: 0xC4/255)
+        static let legDay  = Color(red: 0x96/255, green: 0x81/255, blue: 0xC4/255)
         static let pullRun = Color(red: 0x75/255, green: 0x93/255, blue: 0xC2/255)
         static let rest    = Color(red: 0x3B/255, green: 0x3B/255, blue: 0x40/255)
         static let warn    = Color(red: 0xC9/255, green: 0xA0/255, blue: 0x6E/255)

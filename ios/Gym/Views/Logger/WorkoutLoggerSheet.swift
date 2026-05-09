@@ -82,7 +82,7 @@ struct WorkoutLoggerSheet: View {
                 .kerning(1.4)
                 .foregroundStyle(Tokens.muted)
             HStack(spacing: 8) {
-                ForEach([TrainingType.pushRun, .lowerA, .pullRun]) { type in
+                ForEach([TrainingType.pushRun, .legDay, .pullRun]) { type in
                     Button {
                         select(type: type)
                     } label: {

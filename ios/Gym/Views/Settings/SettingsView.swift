@@ -45,7 +45,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             sectionLabel("Exercises")
             ExerciseListSection(trainingType: .pushRun)
-            ExerciseListSection(trainingType: .lowerA)
+            ExerciseListSection(trainingType: .legDay)
             ExerciseListSection(trainingType: .pullRun)
         }
     }
