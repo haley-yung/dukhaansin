@@ -81,9 +81,9 @@ INSERT INTO exercises (name, training_type, sort_order, sets, reps, rest_seconds
   ('Lateral Raise',      'push_run', 4, 3, '12-15', 60),
   ('Tricep Pushdown',    'push_run', 5, 3, '12-15', 60),
   ('Treadmill Run',      'push_run', 6, NULL, '15 min easy', NULL),
-  -- Lower A: Quad Focus
-  ('Leg Press',          'lower_a', 1, 4, '10-12', 120),
-  ('Leg Extension',      'lower_a', 2, 3, '12-15', 60),
+  -- Leg Day
+  ('Leg Press',          'leg_day', 1, 4, '10-12', 120),
+  ('Leg Extension',      'leg_day', 2, 3, '12-15', 60),
   -- Pull + Run
   ('Lat Pulldown',       'pull_run', 1, 3, '10-12', 90),
   ('Seated Cable Row',   'pull_run', 2, 3, '10-12', 90),

@@ -298,7 +298,7 @@ The apps and the gallery share one typographic system in two palettes — dark f
 | Name       | Hex       | Where |
 |------------|-----------|------|
 | push_run   | `#C97B5E` | warm amber |
-| lower_a    | `#9681C4` | violet |
+| leg_day    | `#9681C4` | violet |
 | pull_run   | `#7593C2` | slate |
 | rest       | `#3B3B40` | neutral |
 | warn       | `#C9A06E` | warnings (amber) |
@@ -400,7 +400,7 @@ Responsive: drops to 12 cols at 1024px, single column at 600px.
 
 ## 11. Gym Tracker — Quick Guide
 
-- **Training types**: `push_run`, `lower_a`, `pull_run` (Lower B was removed in April 2026).
+- **Training types**: `push_run`, `leg_day`, `pull_run` (Lower B was removed in April 2026; `lower_a` was renamed to `leg_day` in May 2026).
 - **Sessions**: user picks today's type → sees the exercise library → only the exercises they engage with (weight entered, or for cardio a set checked) count. Blank kg = skipped. Treadmill Run and other cardio don't have a kg input at all.
 - **Exercises**: each has `sets` (int), `reps` (text — `"10-12"` or `"15 min easy"` both OK), `rest_seconds` (int).
 - **PRs**: auto-detected on POST — compares max weight in the new workout against the exercise's current max.
