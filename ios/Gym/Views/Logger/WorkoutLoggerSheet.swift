@@ -206,14 +206,23 @@ struct WorkoutLoggerSheet: View {
             Task { await save() }
         } label: {
             HStack {
-                if saving { ProgressView().tint(Tokens.bg) }
+                if saving { ProgressView().tint(Tokens.onCTA) }
                 Text(saving ? "Saving…" : "End session")
-                    .font(Type.body(16, weight: .medium))
+                    .font(Type.display(20, weight: .bold))
+                    .textCase(.uppercase)
+                    .kerning(1.4)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .foregroundStyle(Tokens.bg)
-            .background(activeCount > 0 ? Tokens.heading : Tokens.muted, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, 18)
+            .foregroundStyle(Tokens.onCTA)
+            .background(
+                activeCount > 0 ? Tokens.cta : Tokens.muted.opacity(0.45),
+                in: RoundedRectangle(cornerRadius: 24)
+            )
+            .shadow(
+                color: activeCount > 0 ? Tokens.cta.opacity(0.25) : .clear,
+                radius: 12, x: 0, y: 6
+            )
         }
         .buttonStyle(.plain)
         .disabled(activeCount == 0 || saving)

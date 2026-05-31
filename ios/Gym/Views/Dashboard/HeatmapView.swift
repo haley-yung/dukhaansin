@@ -41,9 +41,9 @@ struct HeatmapView: View {
             }
             .aspectRatio(CGFloat(weekCount) / 7.0, contentMode: .fit)
         }
-        .padding(14)
-        .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tokens.line, lineWidth: 0.5))
+        .padding(16)
+        .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 22))
+        .shadow(color: Color.black.opacity(0.04), radius: 0, x: 0, y: 2)
     }
 
     @ViewBuilder

@@ -183,14 +183,19 @@ struct BodyView: View {
                 Task { await save() }
             } label: {
                 HStack {
-                    if saving { ProgressView().tint(Tokens.bg) }
+                    if saving { ProgressView().tint(Tokens.onCTA) }
                     Text(saving ? "Saving…" : "Save entry")
-                        .font(Type.body(15, weight: .medium))
+                        .font(Type.display(17, weight: .bold))
+                        .textCase(.uppercase)
+                        .kerning(1.4)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .foregroundStyle(Tokens.bg)
-                .background(canSave ? Tokens.heading : Tokens.muted, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 14)
+                .foregroundStyle(Tokens.onCTA)
+                .background(canSave ? Tokens.cta : Tokens.muted.opacity(0.45),
+                            in: RoundedRectangle(cornerRadius: 20))
+                .shadow(color: canSave ? Tokens.cta.opacity(0.25) : .clear,
+                        radius: 10, x: 0, y: 5)
             }
             .buttonStyle(.plain)
             .disabled(!canSave || saving)

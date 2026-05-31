@@ -53,8 +53,9 @@ struct DashboardView: View {
                 .kerning(1.4)
                 .foregroundStyle(Tokens.muted)
             Text("Today")
-                .font(Type.display(40, weight: .light))
-                .kerning(-0.8)
+                .font(Type.display(52, weight: .bold))
+                .textCase(.uppercase)
+                .kerning(-1.2)
                 .foregroundStyle(Tokens.heading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,25 +100,29 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .padding(.top, 4)
             }
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tokens.line, lineWidth: 0.5))
+            .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 22))
+            .shadow(color: Color.black.opacity(0.04), radius: 0, x: 0, y: 2)
         } else {
             Button {
                 loggerPresented = true
             } label: {
                 HStack {
                     Text("Start session")
-                        .font(Type.body(16, weight: .medium))
+                        .font(Type.display(20, weight: .bold))
+                        .textCase(.uppercase)
+                        .kerning(1.4)
                     Spacer()
                     Image(systemName: "arrow.right")
+                        .font(.system(size: 15, weight: .semibold))
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 18)
                 .frame(maxWidth: .infinity)
-                .foregroundStyle(Tokens.bg)
-                .background(Tokens.heading, in: RoundedRectangle(cornerRadius: 14))
+                .foregroundStyle(Tokens.onCTA)
+                .background(Tokens.cta, in: RoundedRectangle(cornerRadius: 24))
+                .shadow(color: Tokens.cta.opacity(0.25), radius: 12, x: 0, y: 6)
             }
             .buttonStyle(.plain)
         }

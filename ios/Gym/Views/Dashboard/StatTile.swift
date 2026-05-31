@@ -9,27 +9,28 @@ struct StatTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(Type.mono(10))
+                .font(Type.display(11, weight: .semibold))
                 .textCase(.uppercase)
-                .kerning(1.4)
+                .kerning(1.6)
                 .foregroundStyle(Tokens.muted)
             Text(value)
-                .font(Type.display(28, weight: .light))
+                .font(Type.display(40, weight: .bold))
                 .foregroundStyle(accent)
-                .kerning(-0.5)
+                .kerning(-0.8)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             if let hint {
                 Text(hint)
-                    .font(Type.body(11))
+                    .font(Type.mono(9))
+                    .textCase(.uppercase)
+                    .kerning(1.0)
                     .foregroundStyle(Tokens.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Tokens.line, lineWidth: 0.5)
-        )
+        .padding(16)
+        .background(Tokens.surface, in: RoundedRectangle(cornerRadius: 20))
+        .shadow(color: Color.black.opacity(0.04), radius: 0, x: 0, y: 2)
     }
 }
 
