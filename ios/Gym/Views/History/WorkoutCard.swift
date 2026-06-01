@@ -102,8 +102,6 @@ struct WorkoutCard: View {
 
     private var prettyDate: String {
         guard let date = Stats.date(from: workout.date) else { return workout.date }
-        let f = DateFormatter()
-        f.dateFormat = "EEE, MMM d"
-        return f.string(from: date)
+        return Stats.displayFormatter("EEE, MMM d").string(from: date)
     }
 }

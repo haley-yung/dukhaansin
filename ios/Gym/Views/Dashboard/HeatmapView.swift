@@ -51,7 +51,7 @@ struct HeatmapView: View {
         if cell.date == nil {
             Color.clear
         } else {
-            let isToday = Calendar.current.isDateInToday(cell.date!)
+            let isToday = Stats.calendar.isDateInToday(cell.date!)
             let base: Color = cell.workout?.trainingType.color ?? Tokens.DataViz.rest.opacity(0.55)
             RoundedRectangle(cornerRadius: 3)
                 .fill(base)
@@ -64,18 +64,16 @@ struct HeatmapView: View {
     }
 
     private var monthLabel: String {
-        let cal = Calendar(identifier: .gregorian)
+        let cal = Stats.calendar
         let now = Date()
         guard let twoMonthsAgo = cal.date(byAdding: .month, value: -2, to: now) else { return "" }
-        let f = DateFormatter()
-        f.dateFormat = "MMM"
-        let yearF = DateFormatter()
-        yearF.dateFormat = "yyyy"
+        let f = Stats.displayFormatter("MMM")
+        let yearF = Stats.displayFormatter("yyyy")
         return "\(f.string(from: twoMonthsAgo)) – \(f.string(from: now)) \(yearF.string(from: now))".uppercased()
     }
 
     private func buildWeeks() -> [[Cell]] {
-        let cal = Calendar(identifier: .gregorian)
+        let cal = Stats.calendar
         let now = Date()
 
         guard let twoMonthsAgo = cal.date(byAdding: .month, value: -2, to: now),

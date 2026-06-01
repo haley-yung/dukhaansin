@@ -147,9 +147,7 @@ struct DashboardView: View {
     }
 
     private var prettyToday: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMM d"
-        return f.string(from: Date())
+        Stats.displayFormatter("EEEE, MMM d").string(from: Date())
     }
 
     private func errorBanner(_ message: String) -> some View {

@@ -1,13 +1,36 @@
 import Foundation
 
 enum Stats {
+    /// The app is pinned to Hong Kong time (UTC+8) so a workout's calendar day
+    /// is computed the same way no matter where the device physically is, and
+    /// the heatmap day-cells line up with the dates stored on the server.
+    static let timeZone = TimeZone(identifier: "Asia/Hong_Kong")!
+
+    /// Gregorian calendar in app time. Use this everywhere instead of
+    /// `Calendar.current` so day boundaries are consistent.
+    static var calendar: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = timeZone
+        return c
+    }
+
     static let isoFormatter: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .iso8601)
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.timeZone = timeZone
         return f
     }()
+
+    /// A display formatter pinned to app time. Pass any `DateFormatter`
+    /// `dateFormat` string.
+    static func displayFormatter(_ format: String) -> DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = format
+        f.timeZone = timeZone
+        return f
+    }
 
     static func date(from iso: String) -> Date? {
         isoFormatter.date(from: iso)
@@ -19,7 +42,7 @@ enum Stats {
 
     /// Workouts logged in the last `days` days.
     static func workoutsInLastDays(_ workouts: [Workout], days: Int) -> Int {
-        guard let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date()) else { return 0 }
+        guard let cutoff = calendar.date(byAdding: .day, value: -days, to: Date()) else { return 0 }
         return workouts.filter { (date(from: $0.date) ?? .distantPast) >= cutoff }.count
     }
 
@@ -29,7 +52,7 @@ enum Stats {
         if dates.isEmpty { return 0 }
         var cursor = Date()
         var streak = 0
-        let cal = Calendar.current
+        let cal = calendar
         if !dates.contains(iso(cursor)) {
             guard let yesterday = cal.date(byAdding: .day, value: -1, to: cursor) else { return 0 }
             cursor = yesterday
@@ -84,8 +107,7 @@ enum Stats {
 
     /// Group workouts by Month YYYY label, newest month first.
     static func groupByMonth(_ workouts: [Workout]) -> [(label: String, workouts: [Workout])] {
-        let f = DateFormatter()
-        f.dateFormat = "MMMM yyyy"
+        let f = displayFormatter("MMMM yyyy")
         var seen: [String] = []
         var groups: [String: [Workout]] = [:]
         for workout in workouts.sorted(by: { $0.date > $1.date }) {

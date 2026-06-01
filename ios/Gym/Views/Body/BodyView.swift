@@ -130,6 +130,7 @@ struct BodyView: View {
             DatePicker("Date", selection: $entryDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .foregroundStyle(Tokens.text)
+                .environment(\.timeZone, Stats.timeZone)
                 .onChange(of: entryDate) { _, _ in prefillForDate() }
 
             HStack(spacing: 10) {

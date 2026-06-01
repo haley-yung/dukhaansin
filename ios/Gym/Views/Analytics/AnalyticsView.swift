@@ -44,7 +44,7 @@ struct AnalyticsView: View {
     }
 
     private var monthWorkoutCount: Int {
-        let cal = Calendar.current
+        let cal = Stats.calendar
         let now = Date()
         return store.workouts.filter {
             guard let date = Stats.date(from: $0.date) else { return false }
@@ -142,12 +142,11 @@ struct AnalyticsView: View {
     }
 
     private func weeklyBuckets() -> [WeekBucket] {
-        let cal = Calendar(identifier: .iso8601)
+        let cal = Stats.calendar
         var anchor = cal.startOfDay(for: Date())
         let weekday = cal.component(.weekday, from: anchor) - cal.firstWeekday
         anchor = cal.date(byAdding: .day, value: -weekday, to: anchor) ?? anchor
-        let f = DateFormatter()
-        f.dateFormat = "M/d"
+        let f = Stats.displayFormatter("M/d")
 
         var buckets: [WeekBucket] = []
         for offset in stride(from: 7, through: 0, by: -1) {

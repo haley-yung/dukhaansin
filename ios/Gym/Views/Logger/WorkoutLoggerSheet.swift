@@ -56,6 +56,7 @@ struct WorkoutLoggerSheet: View {
                     DatePicker("", selection: $sessionDate, displayedComponents: .date)
                         .datePickerStyle(.compact)
                         .labelsHidden()
+                        .environment(\.timeZone, Stats.timeZone)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
