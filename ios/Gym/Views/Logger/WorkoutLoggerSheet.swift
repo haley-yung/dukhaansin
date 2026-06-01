@@ -66,6 +66,7 @@ struct WorkoutLoggerSheet: View {
             .sheet(isPresented: $showSaveTemplate) { saveTemplateSheet }
         }
         .onAppear { restoreIfPossible() }
+        .onChange(of: store.exercises) { _, _ in restoreIfPossible() }
         .onChange(of: trainingType) { _, _ in persist() }
         .onChange(of: drafts) { _, _ in persist() }
         .onChange(of: notes) { _, _ in persist() }
@@ -110,6 +111,9 @@ struct WorkoutLoggerSheet: View {
     }
 
     private func select(type: TrainingType) {
+        // User manually engaged — lock out any pending auto-restore so a late
+        // exercises fetch can't clobber their pick.
+        didRestore = true
         trainingType = type
         let exercisesForType = store.exercises.filter { $0.trainingType == type }
         drafts = exercisesForType.map {
@@ -309,8 +313,21 @@ struct WorkoutLoggerSheet: View {
 
     private func restoreIfPossible() {
         guard !didRestore else { return }
+
+        // If there's no draft to restore, mark done and skip — but only after
+        // the store has loaded so a transient empty exercises array doesn't
+        // wrongly cause us to give up.
+        guard let saved = DraftStore.loadForToday() else {
+            if !store.exercises.isEmpty { didRestore = true }
+            return
+        }
+
+        // Wait for store.exercises to arrive before building drafts; otherwise
+        // we'd set trainingType but produce an empty drafts array, and a later
+        // user re-pick of the same type would wipe the saved entries.
+        guard !store.exercises.isEmpty else { return }
+
         didRestore = true
-        guard let saved = DraftStore.loadForToday() else { return }
         sessionDate = Stats.date(from: saved.sessionDateISO) ?? Date()
         notes = saved.notes
         trainingType = saved.trainingType
