@@ -12,30 +12,29 @@ Three things that share one domain:
 
 1. **Photography portfolio** at `dukhaansin.com` — a public, editorial gallery of albums with full-bleed photos and a masonry lightbox.
 2. **Admin CMS** at `dukhaansin.com/admin` — password-gated tool to create albums, upload + reorder + resize photos, and set covers. JWT auth.
-3. **Personal app suite** at `dukhaansin.com/app` — two standalone Vite + React SPAs:
+3. **Personal app** at `dukhaansin.com/app` — a standalone Vite + React SPA:
    - `/app/gym` — a workout + PR + body metrics tracker
-   - `/app/debt` — a loan-repayment dashboard with installment tracking
 
-Everything runs on **Vercel Hobby** with **Cloudflare R2** for images and **Supabase** for app data. No framework (except the React SPAs); no build step for the gallery.
+Everything runs on **Vercel Hobby** with **Cloudflare R2** for images and **Supabase** for app data. No framework (except the React SPA); no build step for the gallery.
 
 ---
 
 ## 2. Architecture At A Glance
 
 ```
-Browser ──► Vercel ──► static frontend/   (gallery, admin, built app SPAs)
+Browser ──► Vercel ──► static frontend/   (gallery, admin, built gym SPA)
               │
               └──► /api/*  serverless functions ──► Cloudflare R2  (photos, meta.json)
-                                                  └► Supabase     (Postgres: loans, gym data)
+                                                  └► Supabase     (Postgres: gym data)
 ```
 
-- **Frontend**: static HTML/CSS/JS in `frontend/` — the gallery is vanilla; the apps are Vite + React and build into `frontend/app/{gym,debt}`.
+- **Frontend**: static HTML/CSS/JS in `frontend/` — the gallery is vanilla; the gym app is Vite + React and builds into `frontend/app/gym`.
 - **Backend**: Node.js serverless functions in `api/`. File = endpoint.
 - **Storage**: Cloudflare R2 (S3-compatible) for photos; a `meta.json` per album holds the album record.
-- **Database**: Supabase Postgres for the app suite (loans, exercises, workouts, records, metrics).
-- **Auth**: JWT in HttpOnly cookie + bcrypt password (admin CMS only; apps are single-user, no auth).
+- **Database**: Supabase Postgres for the gym app (exercises, workouts, records, metrics).
+- **Auth**: JWT in HttpOnly cookie + bcrypt password (admin CMS only; the app is single-user, no auth).
 - **Deploy**: `vercel.json` serves `frontend/` and routes `/api/*`.
-- **Hard constraint**: Vercel Hobby allows **12 serverless functions max**. The apps are consolidated into one function (`api/app/[app].js`) to preserve budget.
+- **Hard constraint**: Vercel Hobby allows **12 serverless functions max**. The app API is a single function (`api/app/[app].js`) to preserve budget.
 
 ---
 
@@ -52,7 +51,6 @@ Defined in `vercel.json`:
 | `/admin/album/:slug`        | `frontend/admin/album.html`            |
 | `/app`                      | `frontend/app/index.html` (landing)    |
 | `/app/gym`                  | `frontend/app/gym/index.html` (SPA)    |
-| `/app/debt`                 | `frontend/app/debt/index.html` (SPA)   |
 | `/api/*`                    | matching function in `api/`            |
 
 **Cache headers**:
@@ -83,9 +81,9 @@ api/                             # Vercel Serverless Functions (11 total, room f
     reorder.js                   # PUT save order + grid spans
     finalize.js                  # POST register uploaded files in meta.json
   app/
-    [app].js                     # GET/PUT/POST/DELETE — consolidated gym + debt API
+    [app].js                     # GET/PUT/POST/DELETE — gym app API
 
-apps/                            # React SPAs (build into frontend/app/)
+apps/                            # React SPA (builds into frontend/app/)
   gym/
     index.html                   # entry, loads Inter + JetBrains Mono
     vite.config.js               # base: /app/gym/, outDir: ../../frontend/app/gym
@@ -94,14 +92,6 @@ apps/                            # React SPAs (build into frontend/app/)
     src/
       main.jsx                   # React root
       App.jsx                    # one-file SPA (~2300 lines)
-  debt/
-    index.html                   # entry, loads Inter + JetBrains Mono
-    vite.config.js               # base: /app/debt/, outDir: ../../frontend/app/debt
-    supabase-setup.sql
-    package.json
-    src/
-      main.jsx
-      App.jsx
 
 frontend/                        # Vercel outputDirectory — everything served static
   index.html                     # Public gallery home (editorial list of albums)
@@ -116,12 +106,9 @@ frontend/                        # Vercel outputDirectory — everything served 
     gallery.js                   # Public gallery JS (render + lightbox)
     admin.js                     # Admin CMS JS
   app/                           # BUILD OUTPUT — do not hand-edit
-    index.html                   # /app landing page (numbered list of apps)
+    index.html                   # /app landing page
     gym/
       index.html                 # built from apps/gym
-      assets/index-*.js
-    debt/
-      index.html
       assets/index-*.js
 
 vercel.json                      # routing, rewrites, headers, outputDirectory
@@ -152,15 +139,6 @@ package.json                     # root deps + build chain for apps
 - **RLS**: enabled on all tables. Policy on each: public read + write (single-user personal app, no multi-user security needed).
 
 #### Tables
-
-**loans** (debt tracker)
-```
-id, name, borrowed, apr, monthly, paid, remaining,
-installments_paid, total_installments,
-interest_paid, principal_paid, interest_remaining,
-avg_payment, proper_installment, revolving, danger,
-color, start_year, start_month, updated_at
-```
 
 **exercises** (gym tracker — exercise library)
 ```
@@ -218,17 +196,9 @@ id uuid, date (unique), weight_kg numeric, energy_level (1-5), notes, created_at
 | POST | `/api/albums/{slug}/finalize` | Register uploaded files in meta.json |
 | GET  | `/api/storage` | R2 usage |
 
-### Apps — consolidated at `/api/app/[app]`
+### App API — `/api/app/[app]`
 
-Router file `api/app/[app].js`. The `app` param is `gym` or `debt`.
-
-#### `/api/app/debt`
-
-| Method | Body/Query | Purpose |
-|--------|-----------|---------|
-| GET  | — | List all loans |
-| PUT  | `{ action: "pay", loanId, amount? }` | Record installment (amount is optional override for revolving loans) |
-| PUT  | `{ action: "undo", loanId, previous }` | Revert last pay |
+Router file `api/app/[app].js`. The `app` param is `gym`.
 
 #### `/api/app/gym` — routed by `?resource=…`
 
@@ -250,9 +220,9 @@ Router file `api/app/[app].js`. The `app` param is `gym` or `debt`.
 
 ## 7. Design System
 
-The apps and the gallery share one typographic system in two palettes — dark for apps, warm light for the gallery. They're visual inverses.
+The gym app and the gallery share one typographic system in two palettes — dark for the app, warm light for the gallery. They're visual inverses.
 
-### Tokens (apps — dark)
+### Tokens (gym app — dark)
 
 | Token     | Value                      | Use |
 |-----------|----------------------------|------|
@@ -293,7 +263,7 @@ The apps and the gallery share one typographic system in two palettes — dark f
 - Photo stagger: `animation-delay: calc(var(--i) * 40ms)` via inline `style="--i:N"`
 - All transitions honor `prefers-reduced-motion`
 
-### Data-viz palette (apps only, desaturated)
+### Data-viz palette (gym app only, desaturated)
 
 | Name       | Hex       | Where |
 |------------|-----------|------|
@@ -302,8 +272,8 @@ The apps and the gallery share one typographic system in two palettes — dark f
 | pull_run   | `#7593C2` | slate |
 | rest       | `#3B3B40` | neutral |
 | warn       | `#C9A06E` | warnings (amber) |
-| danger     | `#C56B6B` | interest paid, DSR overflow |
-| good       | `#7FA98A` | paid / cleared |
+| danger     | `#C56B6B` | alerts, overload |
+| good       | `#7FA98A` | completed / cleared |
 
 ---
 
@@ -312,13 +282,12 @@ The apps and the gallery share one typographic system in two palettes — dark f
 ### Local build
 ```sh
 npm install                 # root deps (API)
-npm run build               # builds both apps into frontend/app/{gym,debt}
+npm run build               # builds the gym app into frontend/app/gym
 ```
 
-The root `build` script chains both:
+The root `build` script builds the gym app:
 ```
-cd apps/debt && npm install && npm run build
-&& cd ../gym && npm install && npm run build
+cd apps/gym && npm install && npm run build
 ```
 
 ### Local dev servers
@@ -327,7 +296,6 @@ Dev servers for previewing before deploy:
 
 - **Gallery**: `vercel dev --yes --listen 3456` (runs both static + API)
 - **Gym SPA**: `cd apps/gym && npm run dev` (port 5173)
-- **Debt SPA**: `cd apps/debt && npm run dev` (port 5174)
 
 Configured in `.claude/launch.json` for `preview_start`.
 
@@ -409,54 +377,41 @@ Responsive: drops to 12 cols at 1024px, single column at 600px.
 
 ---
 
-## 12. Debt Tracker — Quick Guide
-
-- **Tabs**: Overview, Loans, Cashflow, Action plan.
-- **Custom amount** (X Wallet 80K only): this loan is revolving credit — the user can pay a custom amount instead of the suggested monthly. The API splits it into interest + principal using `remaining * (apr/100/12)`.
-- **Undo last**: client keeps a stack of previous loan states; PUT `{ action: "undo" }` reverts on the server.
-- **Optimistic UI**: pay updates local state immediately, then hits API; reverts on failure.
-- **Not in the API**: monthly income (42,000) and family support (11,000) are hard-coded constants in `apps/debt/src/App.jsx`.
-
----
-
-## 13. When You Change Things
+## 12. When You Change Things
 
 - **Schema changes**: update `apps/{app}/supabase-setup.sql` AND apply via the Supabase MCP or SQL editor. SQL file is documentation + cold-start; live DB is source of truth.
 - **New route**: add to `vercel.json` `rewrites`.
 - **New function**: stay under 12. If adding a new app, extend `api/app/[app].js` rather than a new file.
-- **Redesign**: keep tokens in sync. The gym's `T` object and the debt's `T` object are intentionally identical for dark; the gallery CSS `:root` mirrors them for light.
+- **Redesign**: keep tokens in sync. The gym's `T` object defines the dark palette; the gallery CSS `:root` mirrors it for light.
 - **Cache-busting**: bump `?v=N` on the CSS/JS links in `frontend/index.html` + `frontend/album.html` + the admin pages. Current version: `?v=13`.
 
 ---
 
-## 14. Remote Work From Phone
+## 13. Remote Work From Phone
 
 This file is the single source of truth for Claude Code running remotely on this repo. When asking Claude Code to make changes from a phone:
 
 - Reference this file (`CLAUDE.md` at repo root) as context.
-- Tell it which surface to touch (gallery / admin / gym / debt / API).
-- If it needs DB schema, point it at `apps/*/supabase-setup.sql` and the `Tables` section above.
-- For design changes, say "match the gym/debt token system" — tokens are documented in §7.
+- Tell it which surface to touch (gallery / admin / gym / API).
+- If it needs DB schema, point it at `apps/gym/supabase-setup.sql` and the `Tables` section above.
+- For design changes, say "match the gym token system" — tokens are documented in §7.
 - To deploy: merge your PR. Vercel auto-deploys `main`. No manual step.
 
 ---
 
-## 15. Common Tasks
+## 14. Common Tasks
 
 **Add a training type to the gym app**
 1. Add to `TYPE_COLORS`, `TYPE_LABELS`, `TRAINING_TYPES` in `apps/gym/src/App.jsx`.
 2. Seed exercises via `INSERT INTO exercises ... training_type='new_type'` (SQL editor or MCP).
 3. Rebuild: `cd apps/gym && npm run build`.
 
-**Add a new loan to the debt tracker**
-1. `INSERT INTO loans (...) VALUES (...)` — the dashboard reads whatever's there.
-
 **Create a new album**
 1. Admin UI at `/admin` → "New album" form. Alternatively POST to `/api/albums` with `{ title, description, slug }`.
 2. Upload photos in the editor.
 
-**Add a third app under `/app/newthing`**
-1. `cp -r apps/debt apps/newthing`, update `vite.config.js` paths.
+**Add a second app under `/app/newthing`**
+1. `cp -r apps/gym apps/newthing`, update `vite.config.js` paths.
 2. Add `case 'newthing': return await handleNewThing(req, res);` in `api/app/[app].js`.
 3. Add rewrite in `vercel.json`.
 4. Chain its build in root `package.json`.
