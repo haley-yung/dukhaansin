@@ -12,8 +12,9 @@ Three things that share one domain:
 
 1. **Photography portfolio** at `dukhaansin.com` — a public, editorial gallery of albums with full-bleed photos and a masonry lightbox.
 2. **Admin CMS** at `dukhaansin.com/admin` — password-gated tool to create albums, upload + reorder + resize photos, and set covers. JWT auth.
-3. **Personal app** at `dukhaansin.com/app` — a standalone Vite + React SPA:
+3. **Personal apps** at `dukhaansin.com/app` — standalone Vite + React SPAs:
    - `/app/gym` — a workout + PR + body metrics tracker
+   - `/app/habits` — an Apple-style daily habit tracker (streaks, calendar backfill, heatmaps, insights)
 
 Everything runs on **Vercel Hobby** with **Cloudflare R2** for images and **Supabase** for app data. No framework (except the React SPA); no build step for the gallery.
 
@@ -51,6 +52,7 @@ Defined in `vercel.json`:
 | `/admin/album/:slug`        | `frontend/admin/album.html`            |
 | `/app`                      | `frontend/app/index.html` (landing)    |
 | `/app/gym`                  | `frontend/app/gym/index.html` (SPA)    |
+| `/app/habits`               | `frontend/app/habits/index.html` (SPA) |
 | `/api/*`                    | matching function in `api/`            |
 
 **Cache headers**:
@@ -81,9 +83,9 @@ api/                             # Vercel Serverless Functions (11 total, room f
     reorder.js                   # PUT save order + grid spans
     finalize.js                  # POST register uploaded files in meta.json
   app/
-    [app].js                     # GET/PUT/POST/DELETE — gym app API
+    [app].js                     # GET/PUT/POST/DELETE — gym + habits app API
 
-apps/                            # React SPA (builds into frontend/app/)
+apps/                            # React SPAs (build into frontend/app/)
   gym/
     index.html                   # entry, loads Inter + JetBrains Mono
     vite.config.js               # base: /app/gym/, outDir: ../../frontend/app/gym
@@ -92,6 +94,14 @@ apps/                            # React SPA (builds into frontend/app/)
     src/
       main.jsx                   # React root
       App.jsx                    # one-file SPA (~2300 lines)
+  habits/
+    index.html                   # entry, iOS-style theme-color metas
+    vite.config.js               # base: /app/habits/, outDir: ../../frontend/app/habits
+    supabase-setup.sql           # habits + habit_checks schema (idempotent)
+    package.json
+    src/
+      main.jsx                   # React root
+      App.jsx                    # one-file SPA (~1450 lines, Apple/iOS design language)
 
 frontend/                        # Vercel outputDirectory — everything served static
   index.html                     # Public gallery home (editorial list of albums)
@@ -109,6 +119,9 @@ frontend/                        # Vercel outputDirectory — everything served 
     index.html                   # /app landing page
     gym/
       index.html                 # built from apps/gym
+      assets/index-*.js
+    habits/
+      index.html                 # built from apps/habits
       assets/index-*.js
 
 vercel.json                      # routing, rewrites, headers, outputDirectory
@@ -168,6 +181,20 @@ workout_id uuid → workouts.id (ON DELETE SET NULL)
 id uuid, date (unique), weight_kg numeric, energy_level (1-5), notes, created_at
 ```
 
+**habits** (habit tracker — habit definitions)
+```
+id uuid, name, icon text, color text, schedule jsonb, sort_order int,
+archived bool, created_at
+```
+`schedule` is an array of weekday ints (0=Sun … 6=Sat). `icon`/`color` are
+names resolved by the SPA (12 SF-style glyphs, 10 iOS system colors).
+
+**habit_checks** (habit tracker — one row per habit per completed day)
+```
+id uuid, habit_id uuid → habits.id (ON DELETE CASCADE), date,
+created_at, UNIQUE(habit_id, date)
+```
+
 ---
 
 ## 6. API Reference
@@ -198,7 +225,7 @@ id uuid, date (unique), weight_kg numeric, energy_level (1-5), notes, created_at
 
 ### App API — `/api/app/[app]`
 
-Router file `api/app/[app].js`. The `app` param is `gym`.
+Router file `api/app/[app].js`. The `app` param is `gym` or `habits`.
 
 #### `/api/app/gym` — routed by `?resource=…`
 
@@ -213,6 +240,20 @@ Router file `api/app/[app].js`. The `app` param is `gym`.
 | GET/POST/DELETE | `metrics` | body: `{ date, weightKg?, energyLevel?, notes? }` | Body metrics (date is unique; POST upserts) |
 | GET    | `export`    | — | Full JSON export |
 | POST   | `import`    | body: exported JSON | Replace all data |
+
+#### `/api/app/habits` — routed by `?resource=…`
+
+| Method | `resource` | Extra | Purpose |
+|--------|-----------|-------|---------|
+| GET    | `habits`  | — | List habits (incl. archived) |
+| POST   | `habits`  | body: `{ name, icon, color, schedule }` | Create |
+| PUT    | `habits`  | `?id=…`, partial body (`name/icon/color/schedule/archived/sortOrder`) | Update |
+| DELETE | `habits`  | `?id=…` | Delete (cascades checks) |
+| GET    | `checks`  | — | All checks (`{ id, habitId, date }`) |
+| POST   | `checks`  | body: `{ habitId, date }` | **Toggle** a day (idempotent, returns `{ checked }`) |
+| PUT    | `reorder` | body: `{ ids: [...] }` | Persist sort order |
+| GET    | `export`  | — | Full JSON export |
+| POST   | `import`  | body: exported JSON | Replace all habit data |
 
 **camelCase ↔ snake_case**: the app endpoint normalizes both sides (`trainingType` ↔ `training_type`). Frontend always speaks camelCase.
 
@@ -282,12 +323,12 @@ The gym app and the gallery share one typographic system in two palettes — dar
 ### Local build
 ```sh
 npm install                 # root deps (API)
-npm run build               # builds the gym app into frontend/app/gym
+npm run build               # builds gym + habits into frontend/app/*
 ```
 
-The root `build` script builds the gym app:
+The root `build` script builds both SPAs:
 ```
-cd apps/gym && npm install && npm run build
+cd apps/gym && npm install && npm run build && cd ../habits && npm install && npm run build
 ```
 
 ### Local dev servers
@@ -296,6 +337,7 @@ Dev servers for previewing before deploy:
 
 - **Gallery**: `vercel dev --yes --listen 3456` (runs both static + API)
 - **Gym SPA**: `cd apps/gym && npm run dev` (port 5173)
+- **Habits SPA**: `cd apps/habits && npm run dev` (port 5174; proxies `/api` → `localhost:3456`)
 
 Configured in `.claude/launch.json` for `preview_start`.
 
@@ -374,6 +416,30 @@ Responsive: drops to 12 cols at 1024px, single column at 600px.
 - **PRs**: auto-detected on POST — compares max weight in the new workout against the exercise's current max.
 - **Timer**: presets 30/60/90/120/180s, vibrates via `navigator.vibrate()` on complete.
 - **localStorage**: the in-progress checklist for today is cached so iOS Safari tab suspensions don't eat your data. A `gym_v` version key clears stale shape on mismatch.
+
+---
+
+## 11b. Habit Tracker — Quick Guide
+
+- **Design language**: Apple/iOS — SF Pro system font stack, iOS system colors
+  (10 habit colors with light/dark variants as CSS vars `--c-*`), `#F2F2F7`/`#000`
+  backgrounds, inset grouped cards, bottom sheets, floating glass tab bar,
+  large-title header that condenses into a blurred compact bar on scroll.
+  Follows `prefers-color-scheme` (no manual toggle).
+- **Views**: Today (progress ring + check-off list + celebration burst on a
+  perfect day), Habits (manage, drag-reorder in Edit mode, archive), Insights
+  (perfect days, completions, longest streak, 30-day bars, weekday rhythm,
+  year heatmap). Habit detail sheet: stats, month calendar (tap past days to
+  backfill), per-habit year heatmap, archive/delete.
+- **Scheduling**: each habit repeats on chosen weekdays (`schedule` array).
+  Unscheduled habits still appear under "Not scheduled today" and can be
+  checked; they don't count toward the day's progress ring or streaks.
+- **Streaks**: consecutive *scheduled* days completed; an unchecked "today"
+  doesn't break the streak until the day passes.
+- **Dates pinned to HKT (UTC+8)** — all day boundaries computed via
+  `Date.now() + 8h` and `getUTC*`, matching the iOS app convention.
+- **Offline-ish**: last habits+checks snapshot cached in `localStorage`
+  (`habits_cache_v1`) for instant paint; optimistic toggles with rollback + toast.
 
 ---
 

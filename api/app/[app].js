@@ -43,6 +43,7 @@ module.exports = async (req, res) => {
   try {
     switch (app) {
       case 'gym': return await handleGym(req, res);
+      case 'habits': return await handleHabitsApp(req, res);
       default: return res.status(404).json({ error: `Unknown app: ${app}` });
     }
   } catch (err) {
@@ -383,6 +384,236 @@ async function handleExport(req, res) {
     personalRecords: rowsToCamel(records.data),
     bodyMetrics: rowsToCamel(metrics.data),
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HABITS TRACKER
+// ══════════════════════════════════════════════════════════════
+
+async function handleHabitsApp(req, res) {
+  const resource = req.query.resource;
+  if (!resource) return res.status(400).json({ error: 'Missing resource query parameter' });
+
+  switch (resource) {
+    case 'habits': return await handleHabits(req, res);
+    case 'checks': return await handleChecks(req, res);
+    case 'reorder': return await handleHabitsReorder(req, res);
+    case 'export': return await handleHabitsExport(req, res);
+    case 'import': return await handleHabitsImport(req, res);
+    default: return res.status(400).json({ error: `Unknown resource: ${resource}` });
+  }
+}
+
+// ── Habits ────────────────────────────────────────────────
+
+const HABIT_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
+
+function normalizeSchedule(schedule) {
+  if (!Array.isArray(schedule)) return HABIT_WEEKDAYS;
+  const days = [...new Set(schedule.map(d => parseInt(d, 10)).filter(d => d >= 0 && d <= 6))].sort();
+  return days.length ? days : HABIT_WEEKDAYS;
+}
+
+async function handleHabits(req, res) {
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('habits')
+      .select('*')
+      .order('sort_order')
+      .order('created_at');
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(rowsToCamel(data));
+  }
+
+  if (req.method === 'POST') {
+    const { name, icon, color, schedule } = req.body || {};
+    if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' });
+
+    const { data: existing } = await supabase
+      .from('habits')
+      .select('sort_order')
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single();
+    const sortOrder = existing ? (existing.sort_order || 0) + 1 : 0;
+
+    const { data, error } = await supabase.from('habits').insert({
+      name: name.trim(),
+      icon: icon || 'sparkle',
+      color: color || 'blue',
+      schedule: normalizeSchedule(schedule),
+      sort_order: sortOrder,
+    }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(201).json(rowToCamel(data));
+  }
+
+  if (req.method === 'PUT') {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const { name, icon, color, schedule, archived, sortOrder } = req.body || {};
+
+    const updates = {};
+    if (name !== undefined) {
+      if (!name || !name.trim()) return res.status(400).json({ error: 'name cannot be empty' });
+      updates.name = name.trim();
+    }
+    if (icon !== undefined) updates.icon = icon;
+    if (color !== undefined) updates.color = color;
+    if (schedule !== undefined) updates.schedule = normalizeSchedule(schedule);
+    if (archived !== undefined) updates.archived = !!archived;
+    if (sortOrder !== undefined) updates.sort_order = parseInt(sortOrder, 10) || 0;
+
+    const { data, error } = await supabase.from('habits').update(updates).eq('id', id).select().maybeSingle();
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Habit not found' });
+    return res.json(rowToCamel(data));
+  }
+
+  if (req.method === 'DELETE') {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const { error } = await supabase.from('habits').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ── Checks (one row per habit per completed day) ──────────
+
+async function handleChecks(req, res) {
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('habit_checks')
+      .select('id, habit_id, date')
+      .order('date');
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(rowsToCamel(data));
+  }
+
+  // POST sets or toggles a day.
+  // With body.checked (boolean): idempotent set — safe to retry, converges.
+  // Without it: legacy toggle behavior.
+  if (req.method === 'POST') {
+    const { habitId, date, checked } = req.body || {};
+    if (!habitId || !date) return res.status(400).json({ error: 'habitId and date are required' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+
+    if (checked === true) {
+      const { error } = await supabase.from('habit_checks').insert({ habit_id: habitId, date });
+      if (error && error.code !== '23505') return res.status(500).json({ error: error.message });
+      return res.status(201).json({ ok: true, checked: true });
+    }
+    if (checked === false) {
+      const { error } = await supabase.from('habit_checks').delete().eq('habit_id', habitId).eq('date', date);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ ok: true, checked: false });
+    }
+
+    const { data: existing, error: findError } = await supabase
+      .from('habit_checks')
+      .select('id')
+      .eq('habit_id', habitId)
+      .eq('date', date)
+      .maybeSingle();
+    if (findError) return res.status(500).json({ error: findError.message });
+
+    if (existing) {
+      const { error } = await supabase.from('habit_checks').delete().eq('id', existing.id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json({ ok: true, checked: false });
+    }
+
+    const { data, error } = await supabase.from('habit_checks').insert({
+      habit_id: habitId,
+      date,
+    }).select('id, habit_id, date').single();
+    if (error) {
+      // unique(habit_id, date) race: a concurrent toggle already inserted it
+      if (error.code === '23505') return res.json({ ok: true, checked: true });
+      return res.status(500).json({ error: error.message });
+    }
+    return res.status(201).json({ ok: true, checked: true, check: rowToCamel(data) });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ── Reorder ───────────────────────────────────────────────
+
+async function handleHabitsReorder(req, res) {
+  if (req.method !== 'PUT') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { ids } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array is required' });
+
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await supabase.from('habits').update({ sort_order: i }).eq('id', ids[i]);
+    if (error) return res.status(500).json({ error: error.message });
+  }
+  return res.json({ ok: true });
+}
+
+// ── Export / Import ───────────────────────────────────────
+
+async function handleHabitsExport(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const [habits, checks] = await Promise.all([
+    supabase.from('habits').select('*').order('sort_order'),
+    supabase.from('habit_checks').select('*').order('date'),
+  ]);
+  for (const result of [habits, checks]) {
+    if (result.error) return res.status(500).json({ error: result.error.message });
+  }
+  return res.json({
+    habits: rowsToCamel(habits.data),
+    habitChecks: rowsToCamel(checks.data),
+  });
+}
+
+async function handleHabitsImport(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { habits, habitChecks } = req.body || {};
+
+  // Validate the whole payload BEFORE touching existing data — the wipe below
+  // is destructive and non-transactional.
+  if (!Array.isArray(habits) || !Array.isArray(habitChecks)) {
+    return res.status(400).json({ error: 'Invalid import payload: habits and habitChecks arrays are required' });
+  }
+  for (const h of habits) {
+    if (!h || !h.id || !h.name) return res.status(400).json({ error: 'Invalid habit row in import payload' });
+  }
+  for (const c of habitChecks) {
+    if (!c || !(c.habitId || c.habit_id) || !c.date) {
+      return res.status(400).json({ error: 'Invalid habit check row in import payload' });
+    }
+  }
+
+  for (const table of ['habit_checks', 'habits']) {
+    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) return res.status(500).json({ error: `Failed to clear ${table}: ${error.message}` });
+  }
+
+  const counts = {};
+  for (const { table, rows } of [
+    { table: 'habits', rows: habits },
+    { table: 'habit_checks', rows: habitChecks },
+  ]) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      counts[table] = 0;
+      continue;
+    }
+    const snakeRows = rows.map(rowToSnake);
+    const { error } = await supabase.from(table).insert(snakeRows);
+    if (error) return res.status(500).json({ error: `Failed to import ${table}: ${error.message}` });
+    counts[table] = rows.length;
+  }
+
+  return res.json({ ok: true, imported: counts });
 }
 
 // ── Import ────────────────────────────────────────────────
