@@ -34,6 +34,15 @@
       ],
       "port": 5174,
       "cwd": "apps/habits"
+    },
+    {
+      "name": "static-frontend",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": [
+        "scripts/static-server.mjs",
+        "3458"
+      ],
+      "port": 3458
     }
   ]
 }
