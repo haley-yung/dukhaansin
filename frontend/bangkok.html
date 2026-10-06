@@ -17,6 +17,7 @@
   --sep:rgba(60,60,67,.16); --fill:rgba(120,120,128,.12); --fill2:rgba(120,120,128,.07);
   --blue:#0071e3; --blue-tint:rgba(0,113,227,.10); --on-blue:#ffffff;
   --orange:#ff9500; --orange-text:#b65b00; --orange-tint:rgba(255,149,0,.13);
+  --yellow:#ffcc00; --yellow-tint:rgba(255,204,0,.18); --yellow-tint2:rgba(255,204,0,.30);
   --glass:rgba(255,255,255,.72);
   --land:#eef0f3; --water:#c7dcf0; --park:#d6e9d3;
   --bts:#7cb342; --silom:#00897b; --mrt:#2155a3; --arl:#d3302f;
@@ -60,6 +61,7 @@ a{color:var(--blue);text-decoration:none}
 .dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font:700 11px var(--font);flex:none}
 .dot.plan{background:var(--blue);color:var(--on-blue);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .dot.sugg{background:var(--card);color:var(--orange-text);border:2.5px solid var(--orange)}
+.dot.wish{background:var(--yellow);color:var(--label);font-size:11px}
 .dot.hotel{border-radius:6px;background:var(--label);color:var(--bg)}
 
 /* Day tiles */
@@ -101,6 +103,10 @@ section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--n
 .row:hover{background:var(--fill2)}
 .row.is-active{background:var(--blue-tint)}
 .row.sugg.is-active{background:var(--orange-tint)}
+.row.wish{background:var(--yellow-tint)}
+.row.wish:hover,.row.wish.is-active{background:var(--yellow-tint2)}
+.row h4 .emo{margin-right:6px}
+.planline .step .emo{margin-right:2px}
 .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--font);margin-top:1px}
 .row.plan .n{background:var(--blue);color:var(--on-blue)}
 .row.sugg .n{background:transparent;color:var(--orange-text);border:2.5px solid var(--orange)}
@@ -160,13 +166,15 @@ footer .wrap{max-width:70ch}
     <p class="lede">7–11 October, 2026</p>
     <div class="facts">
       <span class="pill"><b>CX717</b> Wed 7 Oct, HKG 09:00 → BKK 11:05</span>
-      <span class="pill"><b>CX706</b> Sun 11 Oct, BKK 16:25 → HKG 20:30</span>
+      <span class="pill"><b>CX654</b> Sun 11 Oct, BKK 15:00 → HKG 19:05, one of us</span>
+      <span class="pill"><b>CX706</b> Sun 11 Oct, BKK 16:25 → HKG 20:30, the other two</span>
       <span class="pill"><b>Grande Centre Point Terminal 21</b> Asok</span>
     </div>
     <div class="keys">
       <span class="key"><span class="dot plan">1</span>Plan — booked or decided by the group</span>
       <span class="key"><span class="dot sugg">2</span>Suggestion — from the Wishlist, nothing booked</span>
       <span class="key"><span class="dot hotel">H</span>Hotel</span>
+      <span class="key"><span class="dot wish">★</span>Yellow — someone asked to go</span>
     </div>
   </header>
 
@@ -182,13 +190,13 @@ footer .wrap{max-width:70ch}
             <div class="grp-h">Arrival, Wednesday</div>
             <div class="grp">
               <div class="row plan"><span class="n">1</span><div><div class="meta"><span class="time">11:05</span></div><h4>Suvarnabhumi → ARL to Makkasan</h4><p>Immigration and bags take about an hour. The City Line leaves from the basement, 35 THB, around 25 minutes.</p></div></div>
-              <div class="row plan"><span class="n">2</span><div><div class="meta"><span class="time">≈ 12:45</span></div><h4>Makkasan → MRT Phetchaburi → Sukhumvit</h4><p>Covered walkway to the MRT, one stop, then exit straight into Terminal 21. Check-in is 14:00; drop bags if the room isn’t ready.</p><p class="go"><b>Instead</b><span>Grab is about 400 THB and 45–70 minutes with the airport-road works. Haley’s ARL → Phaya Thai → BTS route also works but means the Siam interchange with suitcases.</span></p></div></div>
+              <div class="row plan"><span class="n">2</span><div><div class="meta"><span class="time">≈ 12:45</span></div><h4>Makkasan → MRT Phetchaburi → Sukhumvit</h4><p>Covered walkway to the MRT, one stop, then exit straight into Terminal 21. Check-in is 14:00; drop bags if the room isn’t ready.</p><p class="go"><b>Instead</b><span>Grab is about 400 THB and 45–70 minutes with the airport-road works. The ARL → Phaya Thai → BTS route also works but means the Siam interchange with suitcases.</span></p></div></div>
             </div>
           </div>
           <div>
             <div class="grp-h">Departure, Sunday</div>
             <div class="grp">
-              <div class="row plan"><span class="n">3</span><div><div class="meta"><span class="time">12:45</span></div><h4>Reverse it: MRT → Makkasan → ARL → airport</h4><p>About 40 minutes. Be at the airport by 14:00 for the 16:25 flight; Sunday afternoons are busy and you’ll have shopping.</p></div></div>
+              <div class="row plan"><span class="n">3</span><div><div class="meta"><span class="time">12:00 and 12:45</span></div><h4>Reverse it: MRT → Makkasan → ARL → airport</h4><p>About 40 minutes. Two waves: the CX654 traveller leaves at check-out, around 12:00, to be at the airport by 12:45 for the 15:00 flight. The other two leave by 12:45 to be there by 14:00 for CX706 at 16:25. Sunday afternoons are busy and you’ll have shopping.</p></div></div>
             </div>
           </div>
         </div>
@@ -263,92 +271,94 @@ const DAYS = [
  { id:"wed", wd:"Wednesday", short:"Wed", date:"7 Oct", title:"Arrive, Siam, Vaso", sub:"Land late morning, drop the bags, eat in Siam, dinner booked on Lang Suan.",
    labels:["Asok","Siam","Chit Lom","Phloen Chit","National Stadium","Sam Yan","Lumphini","Ratchathewi","Phetchaburi","Makkasan","Nana"],
    stops:[
-    {kind:"plan", t:"11:05", name:"CX717 lands at Suvarnabhumi", nopin:true, note:"Immigration and bags take about an hour. Keep the 20,000 THB reachable in case of a funds check.", go:"ARL to Makkasan, walk to MRT Phetchaburi, one stop to Sukhumvit. About an hour, around 80 THB."},
-    {kind:"plan", t:"≈ 13:15", name:"Check in at Grande Centre Point Terminal 21", lat:HOTEL.lat, lng:HOTEL.lng, hotel:true, note:"Check-in is 14:00. Drop bags if the room isn’t ready. The MRT exit leads straight into Terminal 21."},
-    {kind:"plan", t:"Afternoon", name:"Siam 區食嘢 — venue to pick", lat:13.7447, lng:100.5342, note:"Kaelyn: 一到埗放低嘢 SIAM 食嘢. Pick from the suggestions; Banthat Thong is the strongest cluster on the Wishlist.", go:"BTS Asok to Siam, 4 stops, about 10 minutes."},
-    {kind:"plan", t:"18:00–20:00", badge:"Booked", name:"Vaso – Spanish Tapas Bar", lat:13.7374926, lng:100.5430589, note:"Velaa Sindhorn Village A103, Lang Suan Rd. ฿2,000+ a head, the splurge meal of the trip.", go:"BTS Chit Lom, then 10 minutes down Lang Suan. Home is Chit Lom to Asok, 3 stops."},
-    {kind:"sugg", src:"list", name:"EVEANDBOY The Underground, Siam Square One", lat:13.7446227, lng:100.533643, note:"The whole cosmetics Wishlist in one shop: Dazzle Me, 4U2, Charmiss, Merrez’ca, Mistine."},
-    {kind:"sugg", src:"list", name:"TRES.", lat:13.7448519, lng:100.5343967, note:"Ladies’ clothes, Siam Square Soi 5."},
-    {kind:"sugg", src:"list", name:"Banthat Thong food street", lat:13.7428274, lng:100.5237459, note:"Six Wishlist places on one street: Baan Kook Kai, Pork Satay Nai Song, Ice Cream Samosorn, June Pang and Nueng Nom Nua for toast, Somboon Seafood 建興酒家, Tang Sui Heng. 12 minutes west of Siam, or MRT Sam Yan."},
-    {kind:"sugg", src:"list", name:"Jeh O Chula", lat:13.7425057, lng:100.522519, note:"The famous Tom Yum Mama. Opens 16:30 and the queue is brutal. Kaelyn’s call: order delivery to the hotel one night instead."},
-    {kind:"sugg", src:"list", quote:"must go!", name:"Platinum Fashion Mall", lat:13.750032, lng:100.5392574, note:"Zone 2, 3/F: stall 673 for trousers around 600 THB, stall 738 for casual. 15 minutes from Siam over the CentralWorld skywalk. Friday afternoon if it doesn’t fit today."},
-    {kind:"sugg", src:"list", name:"Shibuya Pratunam, Krungthong Plaza, Red Corner Plaza", lat:13.7513795, lng:100.5384679, note:"Same block as Platinum. Sabkoonsong wonton mee on Phetchaburi 15 is round the corner."},
-    {kind:"sugg", src:"list", name:"TOFU Skincare Megamart", lat:13.7477127, lng:100.541715, note:"Wholesale cosmetics on Ratchadamri Rd, on the walk back from Pratunam."},
-    {kind:"sugg", src:"list", name:"Thong Smith, Central Embassy 5/F", lat:13.7440037, lng:100.546124, note:"Boat noodles. A light bite on the way to Lang Suan, not a meal before Vaso."},
-    {kind:"sugg", src:"list", quote:"米芝蓮", name:"Thai Niyom Cuisine", lat:13.741911, lng:100.549135, note:"Mahatun Plaza, Phloen Chit, 5 minutes from Vaso. Save it for a night that falls through."},
-    {kind:"sugg", src:"list", name:"Stolen Sala rooftop café", lat:13.7432927, lng:100.5462164, note:"Canvas Ploenchit 7/F. Nightcap option after Vaso."},
-    {kind:"sugg", src:"list", name:"One Bangkok: MIRR, Mr. Joe 脆皮豬雜湯, KAEW Boutique", lat:13.7262736, lng:100.5477333, note:"15 minutes south of Vaso on foot; three Wishlist places in one mall. Also reachable Friday from MRT Lumphini."}
+    {kind:"plan", e:"✈️", t:"11:05", name:"CX717 lands at Suvarnabhumi", nopin:true, note:"Immigration and bags take about an hour. Keep the 20,000 THB reachable in case of a funds check.", go:"ARL to Makkasan, walk to MRT Phetchaburi, one stop to Sukhumvit. About an hour, around 80 THB."},
+    {kind:"plan", e:"🏨", t:"≈ 13:15", name:"Check in at Grande Centre Point Terminal 21", lat:HOTEL.lat, lng:HOTEL.lng, hotel:true, note:"Check-in is 14:00. Drop bags if the room isn’t ready. The MRT exit leads straight into Terminal 21."},
+    {kind:"plan", e:"🍽️", wish:true, t:"Afternoon", name:"Siam 區食嘢 — venue to pick", lat:13.7447, lng:100.5342, note:"The group’s call: 一到埗放低嘢 SIAM 食嘢. Pick from the suggestions; Banthat Thong is the strongest cluster on the Wishlist.", go:"BTS Asok to Siam, 4 stops, about 10 minutes."},
+    {kind:"plan", e:"🍷", t:"18:00–20:00", badge:"Booked", name:"Vaso – Spanish Tapas Bar", lat:13.7374926, lng:100.5430589, note:"Velaa Sindhorn Village A103, Lang Suan Rd. ฿2,000+ a head, the splurge meal of the trip.", go:"BTS Chit Lom, then 10 minutes down Lang Suan. Home is Chit Lom to Asok, 3 stops."},
+    {kind:"sugg", e:"💄", src:"list", name:"EVEANDBOY The Underground, Siam Square One", lat:13.7446227, lng:100.533643, note:"The whole cosmetics Wishlist in one shop: Dazzle Me, 4U2, Charmiss, Merrez’ca, Mistine."},
+    {kind:"sugg", e:"👗", src:"list", name:"TRES.", lat:13.7448519, lng:100.5343967, note:"Ladies’ clothes, Siam Square Soi 5."},
+    {kind:"sugg", e:"🍢", src:"list", name:"Banthat Thong food street", lat:13.7428274, lng:100.5237459, note:"Six Wishlist places on one street: Baan Kook Kai, Pork Satay Nai Song, Ice Cream Samosorn, June Pang and Nueng Nom Nua for toast, Somboon Seafood 建興酒家, Tang Sui Heng. 12 minutes west of Siam, or MRT Sam Yan."},
+    {kind:"sugg", e:"🍜", wish:true, src:"list", name:"Jeh O Chula", lat:13.7425057, lng:100.522519, note:"The famous Tom Yum Mama. Opens 16:30 and the queue is brutal. The group’s call: order delivery to the hotel one night instead."},
+    {kind:"sugg", e:"🛍️", wish:true, src:"list", quote:"must go!", name:"Platinum Fashion Mall", lat:13.750032, lng:100.5392574, note:"Zone 2, 3/F: stall 673 for trousers around 600 THB, stall 738 for casual. 15 minutes from Siam over the CentralWorld skywalk. Friday afternoon if it doesn’t fit today."},
+    {kind:"sugg", e:"🛍️", src:"list", name:"Shibuya Pratunam, Krungthong Plaza, Red Corner Plaza", lat:13.7513795, lng:100.5384679, note:"Same block as Platinum. Sabkoonsong wonton mee on Phetchaburi 15 is round the corner."},
+    {kind:"sugg", e:"🧴", src:"list", name:"TOFU Skincare Megamart", lat:13.7477127, lng:100.541715, note:"Wholesale cosmetics on Ratchadamri Rd, on the walk back from Pratunam."},
+    {kind:"sugg", e:"🍜", src:"list", name:"Thong Smith, Central Embassy 5/F", lat:13.7440037, lng:100.546124, note:"Boat noodles. A light bite on the way to Lang Suan, not a meal before Vaso."},
+    {kind:"sugg", e:"🍽️", src:"list", quote:"米芝蓮", name:"Thai Niyom Cuisine", lat:13.741911, lng:100.549135, note:"Mahatun Plaza, Phloen Chit, 5 minutes from Vaso. Save it for a night that falls through."},
+    {kind:"sugg", e:"☕", src:"list", name:"Stolen Sala rooftop café", lat:13.7432927, lng:100.5462164, note:"Canvas Ploenchit 7/F. Nightcap option after Vaso."},
+    {kind:"sugg", e:"🏬", src:"list", name:"One Bangkok: MIRR, Mr. Joe 脆皮豬雜湯, KAEW Boutique", lat:13.7262736, lng:100.5477333, note:"15 minutes south of Vaso on foot; three Wishlist places in one mall. Also reachable Friday from MRT Lumphini."}
    ]},
  { id:"thu", wd:"Thursday", short:"Thu", date:"8 Oct", title:"Chinatown, 頭療, 靚境 dinner", sub:"A free morning in Chinatown, head spa at two, dinner facing Wat Arun.",
    labels:["Asok","Phrom Phong","Wat Mangkon","Hua Lamphong","Sanam Chai","Sam Yot","Itsaraphap","Siam","Chit Lom","Silom (MRT)","Sukhumvit (MRT)","Saphan Taksin","Lumphini"],
    stops:[
-    {kind:"sugg", src:"list", t:"Morning", quote:"手信", name:"Nguan Soon 源順, Hand Brand No.1", lat:13.741871, lng:100.5089227, note:"Century-old curry-powder shop on Soi Yaowarat 6, the souvenir Kaelyn flagged near the shark-fin place. Daytime only, and some Chinatown shops close Sundays, so Thursday is the day.", go:"MRT Sukhumvit to Wat Mangkon, direct, about 16 minutes."},
-    {kind:"sugg", src:"list", name:"Pa Tong Go Savoey", lat:13.7396077, lng:100.5113855, note:"Yaowarat youtiao stall. Breakfast on arrival."},
-    {kind:"sugg", src:"list", t:"≈ 11:30", name:"Hengdee 興利魚翅", lat:13.7403376, lng:100.5101132, note:"Charlene’s 魚翅 lunch, back on the plan now the cooking class took Friday’s lunch slot. 429 Yaowarat Rd."},
-    {kind:"sugg", src:"list", name:"Khao Moo Daeng Si Morakot", lat:13.7371129, lng:100.5147189, note:"Talat Noi red-pork rice, ฿1–200. The lunch alternative if shark fin loses the vote."},
-    {kind:"sugg", src:"list", name:"Wanjai Cafe House, Song Wat Rd", lat:13.7381288, lng:100.5066424, note:"The Song Wat café stretch; MTCH tea shop is two doors down."},
-    {kind:"sugg", src:"list", name:"KHIRI Thai Tea flagship", lat:13.7374099, lng:100.5133056, note:"Talat Noi. Iced Thai tea for the walk."},
-    {kind:"plan", t:"14:00–16:00", badge:"Booked", name:"Be Perfect head spa, Full Dream 120 min × 3", lat:13.734093, lng:100.5681053, note:"12/9 Sukhumvit Soi 33. 1,999 × 3 = 5,997 THB, pay cash (3% on card). Blow-dry adds 10–15 minutes, so out around 16:15.", go:"MRT Wat Mangkon to Sukhumvit, BTS Asok to Phrom Phong, 8 minutes on foot. About 35 minutes; leave Chinatown by 13:10."},
-    {kind:"sugg", src:"list", name:"Peppina, Sukhumvit 33", lat:13.7377195, lng:100.5674442, note:"Same soi as the spa. Pizza if anyone skipped lunch."},
-    {kind:"plan", t:"17:30–19:30", badge:"Booked", name:"RONGROS 靚境 dinner", lat:13.7442541, lng:100.4917082, note:"392/16 Maharat Rd, Tha Tien, facing Wat Arun. Confirmed Zone 1 indoor, “not by the window”. Ask at the host stand; it’s their first sitting, so early arrivals get freed tables. Held 15 minutes.", go:"BTS Phrom Phong to Asok, MRT Sukhumvit to Sanam Chai (22 minutes), 8 minutes on foot. Leave Soi 33 by 16:25. Not Grab: 45–75 minutes in rush hour."},
-    {kind:"sugg", src:"list", t:"After dinner", name:"sala rattanakosin eatery & bar", lat:13.7453838, lng:100.49091, note:"Rooftop bar facing a lit-up Wat Arun, 3 minutes from Rongros. This quietly settles the sunset-bar wish."},
-    {kind:"sugg", src:"list", name:"TYME, INN A DAY 4/F", lat:13.7450726, lng:100.4910718, note:"Another rooftop on the same block; MITR STREET is next door."},
-    {kind:"sugg", src:"list", name:"T & K Seafood", lat:13.7400778, lng:100.510636, note:"If you’d rather end the night in Chinatown: MRT Sanam Chai to Wat Mangkon, 2 stops. Yaowarat street seafood."}
+    {kind:"sugg", e:"🎁", wish:true, src:"list", t:"Morning", quote:"手信", name:"Nguan Soon 源順, Hand Brand No.1", lat:13.741871, lng:100.5089227, note:"Century-old curry-powder shop on Soi Yaowarat 6, the souvenir flagged in the chat, near the shark-fin place. Daytime only, and some Chinatown shops close Sundays, so Thursday is the day.", go:"MRT Sukhumvit to Wat Mangkon, direct, about 16 minutes."},
+    {kind:"sugg", e:"🥖", src:"list", name:"Pa Tong Go Savoey", lat:13.7396077, lng:100.5113855, note:"Yaowarat youtiao stall. Breakfast on arrival."},
+    {kind:"sugg", e:"🍲", wish:true, src:"list", t:"≈ 11:30", name:"Hengdee 興利魚翅", lat:13.7403376, lng:100.5101132, note:"The 魚翅 lunch someone asked for, back on the plan now the cooking class took Friday’s lunch slot. 429 Yaowarat Rd."},
+    {kind:"sugg", e:"🍚", src:"list", name:"Khao Moo Daeng Si Morakot", lat:13.7371129, lng:100.5147189, note:"Talat Noi red-pork rice, ฿1–200. The lunch alternative if shark fin loses the vote."},
+    {kind:"sugg", e:"☕", src:"list", name:"Wanjai Cafe House, Song Wat Rd", lat:13.7381288, lng:100.5066424, note:"The Song Wat café stretch; MTCH tea shop is two doors down."},
+    {kind:"sugg", e:"🧋", src:"list", name:"KHIRI Thai Tea flagship", lat:13.7374099, lng:100.5133056, note:"Talat Noi. Iced Thai tea for the walk."},
+    {kind:"plan", e:"💆", t:"14:00–16:00", badge:"Booked", name:"Be Perfect head spa, Full Dream 120 min × 3", lat:13.734093, lng:100.5681053, note:"12/9 Sukhumvit Soi 33. 1,999 × 3 = 5,997 THB, pay cash (3% on card). Blow-dry adds 10–15 minutes, so out around 16:15.", go:"MRT Wat Mangkon to Sukhumvit, BTS Asok to Phrom Phong, 8 minutes on foot. About 35 minutes; leave Chinatown by 13:10."},
+    {kind:"sugg", e:"🍕", src:"list", name:"Peppina, Sukhumvit 33", lat:13.7377195, lng:100.5674442, note:"Same soi as the spa. Pizza if anyone skipped lunch."},
+    {kind:"plan", e:"🍽️", t:"17:30–19:30", badge:"Booked", name:"RONGROS 靚境 dinner", lat:13.7442541, lng:100.4917082, note:"392/16 Maharat Rd, Tha Tien, facing Wat Arun. Confirmed Zone 1 indoor, “not by the window”. Ask at the host stand; it’s their first sitting, so early arrivals get freed tables. Held 15 minutes.", go:"BTS Phrom Phong to Asok, MRT Sukhumvit to Sanam Chai (22 minutes), 8 minutes on foot. Leave Soi 33 by 16:25. Not Grab: 45–75 minutes in rush hour."},
+    {kind:"sugg", e:"🍸", src:"list", t:"After dinner", name:"sala rattanakosin eatery & bar", lat:13.7453838, lng:100.49091, note:"Rooftop bar facing a lit-up Wat Arun, 3 minutes from Rongros. This quietly settles the sunset-bar wish."},
+    {kind:"sugg", e:"🍸", src:"list", name:"TYME, INN A DAY 4/F", lat:13.7450726, lng:100.4910718, note:"Another rooftop on the same block; MITR STREET is next door."},
+    {kind:"sugg", e:"🦐", src:"list", name:"T & K Seafood", lat:13.7400778, lng:100.510636, note:"If you’d rather end the night in Chinatown: MRT Sanam Chai to Wat Mangkon, 2 stops. Yaowarat street seafood."}
    ]},
  { id:"fri", wd:"Friday", short:"Fri", date:"9 Oct", title:"煮飯仔, Pratunam, COPPER", sub:"Cooking class in Silom, a loose afternoon, the birthday buffet at Gaysorn Amarin.",
    labels:["Asok","Silom (MRT)","Sala Daeng","Chong Nonsi","Surasak","Siam","Chit Lom","Lumphini","Sukhumvit (MRT)","Phloen Chit","Ratchathewi","Phaya Thai","Makkasan","Sam Yan"],
    stops:[
-    {kind:"plan", t:"08:40–12:20", badge:"Booked", name:"Silom Thai Cooking School 煮飯仔", lat:13.7261788, lng:100.5252297, note:"Meet at 6/14 Decho Rd, beside Luxx Hotel Silom. Market tour, then five dishes from scratch. Skip breakfast; closed shoes.", go:"MRT Sukhumvit to Silom, 4 stops, about 10 minutes, then 12 minutes along Silom Rd. Leave 07:50."},
-    {kind:"sugg", src:"list", t:"Afternoon", name:"Silom Edge", lat:13.7292548, lng:100.5358354, note:"Mall at Sala Daeng. Air-con and a sit-down after class."},
-    {kind:"sugg", src:"list", name:"AURASOL Thai massage", lat:13.7230333, lng:100.5302122, note:"Sathorn Nakhon Tower 11/F. A post-class massage before the buffet."},
-    {kind:"sugg", src:"list", name:"Lon Lon Local Diner", lat:13.7246309, lng:100.5307626, note:"Silom Soi 3. Only if someone is somehow still hungry."},
-    {kind:"sugg", src:"list", quote:"optional", name:"Fran’s Sathorn", lat:13.7216257, lng:100.5461175, note:"Ngam Duphli, near MRT Lumphini."},
-    {kind:"sugg", src:"list", name:"One Bangkok (MIRR, Mr. Joe, KAEW)", lat:13.7256868, lng:100.5477913, note:"MRT Silom to Lumphini, one stop, if you skipped it Wednesday."},
-    {kind:"sugg", src:"list", quote:"must go!", name:"Platinum Fashion Mall, Krungthong Plaza", lat:13.7511329, lng:100.5392824, note:"If Wednesday ran out of time: BTS Sala Daeng to Siam, walk over CentralWorld. Then 10–15 minutes on foot to Gaysorn Amarin for Copper."},
-    {kind:"sugg", src:"list", name:"Topkart Bangkok", lat:13.7498517, lng:100.543752, note:"Haley’s 賽車, 400 m east of Platinum on Phetchaburi Rd. Kaelyn can spectate after Pattaya."},
-    {kind:"sugg", src:"list", name:"Healthy Massage Sukhumvit 19", lat:13.7391111, lng:100.5601123, note:"5 minutes from the hotel. The nap-and-reset option before a two-hour buffet."},
-    {kind:"plan", t:"19:30–21:30", badge:"Booked", name:"COPPER Beyond Buffet, Gaysorn Amarin 3/F", lat:13.7442, lng:100.5412, note:"Lobster Lover package, prepaid through Hungry Hub, each of you a different lobster dish. It’s the “we treat you” birthday meal; mention Kaelyn’s 30th on arrival.", go:"BTS Chit Lom skywalk into Gaysorn Amarin. Home is Chit Lom to Asok, 3 stops."}
+    {kind:"plan", e:"🍳", t:"08:40–12:20", badge:"Booked", name:"Silom Thai Cooking School 煮飯仔", lat:13.7261788, lng:100.5252297, note:"Meet at 6/14 Decho Rd, beside Luxx Hotel Silom. Market tour, then five dishes from scratch. Skip breakfast; closed shoes.", go:"MRT Sukhumvit to Silom, 4 stops, about 10 minutes, then 12 minutes along Silom Rd. Leave 07:50."},
+    {kind:"sugg", e:"🏬", src:"list", t:"Afternoon", name:"Silom Edge", lat:13.7292548, lng:100.5358354, note:"Mall at Sala Daeng. Air-con and a sit-down after class."},
+    {kind:"sugg", e:"💆", src:"list", name:"AURASOL Thai massage", lat:13.7230333, lng:100.5302122, note:"Sathorn Nakhon Tower 11/F. A post-class massage before the buffet."},
+    {kind:"sugg", e:"🍽️", src:"list", name:"Lon Lon Local Diner", lat:13.7246309, lng:100.5307626, note:"Silom Soi 3. Only if someone is somehow still hungry."},
+    {kind:"sugg", e:"🍽️", src:"list", quote:"optional", name:"Fran’s Sathorn", lat:13.7216257, lng:100.5461175, note:"Ngam Duphli, near MRT Lumphini."},
+    {kind:"sugg", e:"🏬", src:"list", name:"One Bangkok (MIRR, Mr. Joe, KAEW)", lat:13.7256868, lng:100.5477913, note:"MRT Silom to Lumphini, one stop, if you skipped it Wednesday."},
+    {kind:"sugg", e:"🛍️", wish:true, src:"list", quote:"must go!", name:"Platinum Fashion Mall, Krungthong Plaza", lat:13.7511329, lng:100.5392824, note:"If Wednesday ran out of time: BTS Sala Daeng to Siam, walk over CentralWorld. Then 10–15 minutes on foot to Gaysorn Amarin for Copper."},
+    {kind:"sugg", e:"🏎️", wish:true, src:"list", name:"Topkart Bangkok", lat:13.7498517, lng:100.543752, note:"The 賽車 request, 400 m east of Platinum on Phetchaburi Rd. Anyone who had enough karting in Pattaya can spectate."},
+    {kind:"sugg", e:"💆", src:"list", name:"Healthy Massage Sukhumvit 19", lat:13.7391111, lng:100.5601123, note:"5 minutes from the hotel. The nap-and-reset option before a two-hour buffet."},
+    {kind:"plan", e:"🦞", t:"19:30–21:30", badge:"Booked", name:"COPPER Beyond Buffet, Gaysorn Amarin 3/F", lat:13.7442, lng:100.5412, note:"Lobster Lover package, prepaid through Hungry Hub, each of you a different lobster dish. It’s the “we treat you” birthday meal; mention the 30th birthday on arrival.", go:"BTS Chit Lom skywalk into Gaysorn Amarin. Home is Chit Lom to Asok, 3 stops."}
    ]},
  { id:"sat", wd:"Saturday", short:"Sat", date:"10 Oct", title:"JJ Market, Akara Sky Hanuman", sub:"Chatuchak before the heat, a loose afternoon, then the sky bar on Ploenchit at eight.",
    labels:["Kamphaeng Phet","Chatuchak Park","Mo Chit","Phahon Yothin","Ari","Victory Monument","Asok","Phrom Phong","Thong Lo","Ekkamai","Phloen Chit","Siam","Lat Phrao","Phetchaburi","Phra Ram 9"],
    stops:[
-    {kind:"plan", t:"09:30", badge:"Plan", name:"JJ Market, Chatuchak Weekend Market", lat:13.7999, lng:100.5502, note:"Kaelyn’s targets: dog clothes in Section 13, Soi 11/5; RIZHON tees in Sections 2–3, 270 THB for three. Cash only. Unbearable after noon.", go:"MRT Sukhumvit to Kamphaeng Phet, about 20 minutes, exits into the market. Or BTS Asok to Mo Chit, 11 stops."},
-    {kind:"sugg", src:"list", name:"Ngen Pager Yor, Karen Silver", lat:13.7985118, lng:100.5492189, note:"Inside JJ, Section 18."},
-    {kind:"sugg", src:"list", t:"Lunch", name:"Lay Lao, Ari", lat:13.7817476, lng:100.5437851, note:"Isan food, on the Wishlist twice, so someone really wants it. BTS Mo Chit to Ari, 2 stops."},
-    {kind:"sugg", src:"list", name:"Vata Vayu Private Onsen & Spa", lat:13.7797159, lng:100.5489612, note:"Ari. Recovery after the market."},
-    {kind:"sugg", src:"list", quote:"Local 船面", name:"Baan Kuay Tiew Ruathong", lat:13.7657518, lng:100.5394974, note:"Boat noodles at Victory Monument, on the BTS line home."},
-    {kind:"sugg", src:"list", name:"Kuang Seafood 光海鮮", lat:13.7590293, lng:100.54218, note:"Rang Nam Rd, Victory Monument. Dinner option A."},
-    {kind:"sugg", src:"list", name:"Union Mall, Central Ladprao", lat:13.8133637, lng:100.5618612, note:"MRT Phahon Yothin. Teen fashion and blind-box territory, the likeliest home of the 狗仔盲盒 shop Kaelyn wants to hit early."},
-    {kind:"sugg", src:"list", name:"Kushiro Omakase", lat:13.815288, lng:100.5782152, note:"Kaelyn’s 貴但高質 (4.9★, ฿2,000+). Ratchada 32, the one Wishlist place near the JJ side of town. Needs a booking."},
-    {kind:"sugg", src:"chat", t:"≈ 17:30", name:"Rosewood Bangkok 30/F", lat:13.7436, lng:100.5478, note:"Kaelyn’s rooftop pick, a 3-minute walk from Akara Sky Hanuman. Sunset around 17:55; a sunset drink here first, or skip it now the sky bar is booked. Dress code: no shorts or flip-flops."},
-    {kind:"sugg", src:"list", quote:"must go!", name:"BENKOFF", lat:13.7315085, lng:100.581171, note:"Thonglor coffee, NT Tower, 850 m north of BTS Thong Lo. Nothing booked passes close: nearest are Sunday’s Phrom Phong breakfast (1.2 km) and Thursday’s head spa on Soi 33 (1.4 km). Saturday afternoon after JJ is the freest slot, before the sky bar."},
-    {kind:"sugg", src:"list", name:"EASY! buddy, theCOMMONS Thonglor", lat:13.7351243, lng:100.5821469, note:"Dinner option B, Thai. FIRST AID KISS café is a few doors down."},
-    {kind:"sugg", src:"list", name:"Here Hai 爹讓 crab fried rice", lat:13.7302655, lng:100.586342, note:"Ekkamai. A light dinner after Friday’s buffet; expect a queue."},
-    {kind:"sugg", src:"list", quote:"optional", name:"Phed Mark", lat:13.7202176, lng:100.5838945, note:"Pad kra pao at Phra Khanong, ฿1–200. Closes 19:00."},
-    {kind:"plan", t:"20:00–22:30", badge:"Booked", name:"Akara Sky Hanuman", lat:13.7420753, lng:100.5463613, note:"One City Centre, 58–61/F, 548 Ploenchit Rd. Entry booked for 20:00, until 22:30. The Thai performance usually starts around 20:00, so don’t be late. Dress code: no sportswear, flip-flops, sleeveless tops, or open shoes for men.", go:"BTS Phloen Chit, skywalk straight into One City Centre; check in at Hanuman Reception on the ground floor. From Thonglor it’s 6 stops, about 15 minutes. Home is Phloen Chit to Asok, 2 stops."}
+    {kind:"plan", e:"🛒", wish:true, t:"09:30", badge:"Plan", name:"JJ Market, Chatuchak Weekend Market", lat:13.7999, lng:100.5502, note:"Targets: dog clothes in Section 13, Soi 11/5; RIZHON tees in Sections 2–3, 270 THB for three. Cash only. Unbearable after noon.", go:"MRT Sukhumvit to Kamphaeng Phet, about 20 minutes, exits into the market. Or BTS Asok to Mo Chit, 11 stops."},
+    {kind:"sugg", e:"💍", src:"list", name:"Ngen Pager Yor, Karen Silver", lat:13.7985118, lng:100.5492189, note:"Inside JJ, Section 18."},
+    {kind:"sugg", e:"🌶️", wish:true, src:"list", t:"Lunch", name:"Lay Lao, Ari", lat:13.7817476, lng:100.5437851, note:"Isan food, on the Wishlist twice, so someone really wants it. BTS Mo Chit to Ari, 2 stops."},
+    {kind:"sugg", e:"♨️", src:"list", name:"Vata Vayu Private Onsen & Spa", lat:13.7797159, lng:100.5489612, note:"Ari. Recovery after the market."},
+    {kind:"sugg", e:"🍜", src:"list", quote:"Local 船面", name:"Baan Kuay Tiew Ruathong", lat:13.7657518, lng:100.5394974, note:"Boat noodles at Victory Monument, on the BTS line home."},
+    {kind:"sugg", e:"🦐", src:"list", name:"Kuang Seafood 光海鮮", lat:13.7590293, lng:100.54218, note:"Rang Nam Rd, Victory Monument. Dinner option A."},
+    {kind:"sugg", e:"🛍️", wish:true, src:"list", name:"Union Mall, Central Ladprao", lat:13.8133637, lng:100.5618612, note:"MRT Phahon Yothin. Teen fashion and blind-box territory, the likeliest home of the 狗仔盲盒 shop on the list to hit early."},
+    {kind:"sugg", e:"🍣", wish:true, src:"list", name:"Kushiro Omakase", lat:13.815288, lng:100.5782152, note:"The 貴但高質 pick (4.9★, ฿2,000+). Ratchada 32, the one Wishlist place near the JJ side of town. Needs a booking."},
+    {kind:"sugg", e:"🍸", wish:true, src:"chat", t:"≈ 17:30", name:"Rosewood Bangkok 30/F", lat:13.7436, lng:100.5478, note:"The rooftop pick from the chat, a 3-minute walk from Akara Sky Hanuman. Sunset around 17:55; a sunset drink here first, or skip it now the sky bar is booked. Dress code: no shorts or flip-flops."},
+    {kind:"sugg", e:"☕", wish:true, src:"list", quote:"must go!", name:"BENKOFF", lat:13.7315085, lng:100.581171, note:"Thonglor coffee, NT Tower, 850 m north of BTS Thong Lo. Nothing booked passes close: nearest are Sunday’s Phrom Phong breakfast (1.2 km) and Thursday’s head spa on Soi 33 (1.4 km). Saturday afternoon after JJ is the freest slot, before the sky bar."},
+    {kind:"sugg", e:"🍽️", src:"list", name:"EASY! buddy, theCOMMONS Thonglor", lat:13.7351243, lng:100.5821469, note:"Dinner option B, Thai. FIRST AID KISS café is a few doors down."},
+    {kind:"sugg", e:"🦀", src:"list", name:"Here Hai 爹讓 crab fried rice", lat:13.7302655, lng:100.586342, note:"Ekkamai. A light dinner after Friday’s buffet; expect a queue."},
+    {kind:"sugg", e:"🍛", src:"list", quote:"optional", name:"Phed Mark", lat:13.7202176, lng:100.5838945, note:"Pad kra pao at Phra Khanong, ฿1–200. Closes 19:00."},
+    {kind:"plan", e:"🍸", t:"20:00–22:30", badge:"Booked", name:"Akara Sky Hanuman", lat:13.7420753, lng:100.5463613, note:"One City Centre, 58–61/F, 548 Ploenchit Rd. Entry booked for 20:00, until 22:30. The Thai performance usually starts around 20:00, so don’t be late. Dress code: no sportswear, flip-flops, sleeveless tops, or open shoes for men.", go:"BTS Phloen Chit, skywalk straight into One City Centre; check in at Hanuman Reception on the ground floor. From Thonglor it’s 6 stops, about 15 minutes. Home is Phloen Chit to Asok, 2 stops."}
    ]},
- { id:"sun", wd:"Sunday", short:"Sun", date:"11 Oct", title:"Phrom Phong, fly home", sub:"One stop down the line for breakfast and the deodorant box, then the airport.",
+ { id:"sun", wd:"Sunday", short:"Sun", date:"11 Oct", title:"Phrom Phong, fly home", sub:"One stop down the line for breakfast and the deodorant box, then the airport in two waves.",
    labels:["Asok","Phrom Phong","Nana","Thong Lo","Sukhumvit (MRT)","Phetchaburi","Makkasan","Queen Sirikit","Phloen Chit"],
    stops:[
-    {kind:"sugg", src:"list", t:"Morning", name:"Rung Rueang Pork Noodles", lat:13.7284371, lng:100.5706724, note:"Sukhumvit 26. Breakfast. BTS Phrom Phong, 1 stop."},
-    {kind:"sugg", src:"list", quote:"must go!", name:"BENKOFF", lat:13.7315085, lng:100.581171, note:"If it didn’t fit Saturday: Thonglor coffee, one more BTS stop to Thong Lo then 10 minutes north. Tight against the 12:00 check-out, so only with an early start."},
-    {kind:"sugg", src:"chat", t:"10:00", name:"rati Space, EmQuartier 1/F Building B", lat:13.7319803, lng:100.5697512, note:"Kaelyn’s deodorant box, 159 THB each, in front of Zara. Mil Toast House is on the ground floor of the same building."},
-    {kind:"sugg", src:"list", name:"KHIRI Thai Tea, EmSphere", lat:13.7322231, lng:100.5668222, note:"Oh My Godmother bakery is in the same mall."},
-    {kind:"sugg", src:"list", name:"Makkha Health & Spa, Sukhumvit 24", lat:13.7236192, lng:100.5673737, note:"Only if you’re ahead of schedule."},
-    {kind:"sugg", src:"list", name:"Savoey at Terminal 21", lat:13.7372751, lng:100.560636, note:"Zero-travel lunch inside the hotel’s mall; Pier 21 food court is upstairs."},
-    {kind:"plan", t:"12:00", name:"Check out", lat:HOTEL.lat, lng:HOTEL.lng, hotel:true, note:"Leave bags with the concierge if you want one more hour at EmQuartier."},
-    {kind:"plan", t:"12:45", name:"Leave for the airport", nopin:true, go:"MRT Sukhumvit to Phetchaburi, walkway to ARL Makkasan, ARL to Suvarnabhumi, about 40 minutes. At the airport by 14:00."},
-    {kind:"plan", t:"16:25–20:30", name:"CX706 BKK → HKG", nopin:true, note:"Kaelyn turns 30 the next day."}
+    {kind:"sugg", e:"🍜", src:"list", t:"Morning", name:"Rung Rueang Pork Noodles", lat:13.7284371, lng:100.5706724, note:"Sukhumvit 26. Breakfast. BTS Phrom Phong, 1 stop."},
+    {kind:"sugg", e:"☕", wish:true, src:"list", quote:"must go!", name:"BENKOFF", lat:13.7315085, lng:100.581171, note:"If it didn’t fit Saturday: Thonglor coffee, one more BTS stop to Thong Lo then 10 minutes north. Tight against the 12:00 check-out, so only with an early start."},
+    {kind:"sugg", e:"🛍️", wish:true, src:"chat", t:"10:00", name:"rati Space, EmQuartier 1/F Building B", lat:13.7319803, lng:100.5697512, note:"The deodorant box from the chat, 159 THB each, in front of Zara. Mil Toast House is on the ground floor of the same building."},
+    {kind:"sugg", e:"🧋", src:"list", name:"KHIRI Thai Tea, EmSphere", lat:13.7322231, lng:100.5668222, note:"Oh My Godmother bakery is in the same mall."},
+    {kind:"sugg", e:"💆", src:"list", name:"Makkha Health & Spa, Sukhumvit 24", lat:13.7236192, lng:100.5673737, note:"Only if you’re ahead of schedule."},
+    {kind:"sugg", e:"🍽️", src:"list", name:"Savoey at Terminal 21", lat:13.7372751, lng:100.560636, note:"Zero-travel lunch inside the hotel’s mall; Pier 21 food court is upstairs."},
+    {kind:"plan", e:"🧳", t:"12:00", name:"Check out", lat:HOTEL.lat, lng:HOTEL.lng, hotel:true, note:"The CX654 traveller goes straight on to the airport. The other two can leave bags with the concierge for one more hour at EmQuartier."},
+    {kind:"plan", e:"🚆", t:"12:00", name:"CX654 traveller leaves for the airport", nopin:true, go:"MRT Sukhumvit to Phetchaburi, walkway to ARL Makkasan, ARL to Suvarnabhumi, about 40 minutes. At the airport by 12:45, a bit over two hours before departure."},
+    {kind:"plan", e:"🚆", t:"12:45", name:"The other two leave for the airport", nopin:true, go:"Same route, about 40 minutes. At the airport by 14:00."},
+    {kind:"plan", e:"✈️", t:"15:00–19:05", name:"CX654 BKK → HKG", nopin:true, note:"One of us, on the earlier flight."},
+    {kind:"plan", e:"✈️", t:"16:25–20:30", name:"CX706 BKK → HKG", nopin:true, note:"The other two. A 30th birthday the next day."}
    ]}
 ];
 
 const REST = [
- {h:"Old Town and Khlong Ong Ang", s:"A half-day on its own.", items:["COF AND COW (Boriphat Rd)","Mont Nomsod, the Dinso Rd original","60年烤肉串攤 moo ping stall","White Lotus cooking school (not booked)"]},
- {h:"Riverside and Thonburi", s:"Pairs with Chinatown if there’s time.", items:["Kate Teaw Boat Noodles, ICONSIAM 6/F","Ann Tha Din Daeng seafood","Somsak Claypot Crab, Krung Thon Buri BTS","Neighbourmart, General Post Office"]},
- {h:"Sukhumvit extras", s:"All within three BTS stops of the hotel.", items:["Franca steaks, Sukhumvit 10","Ruam Sab Market, Asok (weekday lunch food court)","SW1 Market, night market by Asok","Oh My Godmother, EmSphere","KINKIN Sukhumvit 47","Caffè Olives and Bagel Babe (Napha Sap)","FIRST AID KISS, Thonglor","MITR STREET"]},
- {h:"Siam and Pratunam extras", s:"Covered by Wednesday’s cluster.", items:["Lido Connect","CentralWorld, Hey studio 5/F","Red Corner Plaza","Sabkoonsong wonton mee","Pad Thai Mae Thong Bai","Baan Kook Kai","Pork Satay Nai Song","Ice Cream Samosorn","June Pang","Nueng Nom Nua","Somboon Seafood 建興酒家","Tang Sui Heng","Krungthong Plaza","Thong Smith"]},
- {h:"Too far for this trip", s:"40 minutes or more each way.", items:["Mae Klong Hua Pla Mo Fai (Taling Chan)","Save One Go Night Market (Bang Na)","Cloud 11 (Bang Chak)","1981 Soul&Sold (Ramkhamhaeng)","Central Rama 9"]},
- {h:"Pinned outside Bangkok", s:"Worth fixing in the Wishlist.", items:["Love You So Matcha is pinned in St Petersburg, Russia","The Moon Eatery is pinned in Chiang Mai"]}
+ {h:"Old Town and Khlong Ong Ang", s:"A half-day on its own.", items:["☕ COF AND COW (Boriphat Rd)","🍞 Mont Nomsod, the Dinso Rd original","🍢 60年烤肉串攤 moo ping stall","🍳 White Lotus cooking school (not booked)"]},
+ {h:"Riverside and Thonburi", s:"Pairs with Chinatown if there’s time.", items:["🍜 Kate Teaw Boat Noodles, ICONSIAM 6/F","🦐 Ann Tha Din Daeng seafood","🦀 Somsak Claypot Crab, Krung Thon Buri BTS","🛍️ Neighbourmart, General Post Office"]},
+ {h:"Sukhumvit extras", s:"All within three BTS stops of the hotel.", items:["🥩 Franca steaks, Sukhumvit 10","🍱 Ruam Sab Market, Asok (weekday lunch food court)","🌙 SW1 Market, night market by Asok","🧁 Oh My Godmother, EmSphere","🍽️ KINKIN Sukhumvit 47","🥯 Caffè Olives and Bagel Babe (Napha Sap)","☕ FIRST AID KISS, Thonglor","🍽️ MITR STREET"]},
+ {h:"Siam and Pratunam extras", s:"Covered by Wednesday’s cluster.", items:["🎬 Lido Connect","🛍️ CentralWorld, Hey studio 5/F","🛍️ Red Corner Plaza","🍜 Sabkoonsong wonton mee","🍝 Pad Thai Mae Thong Bai","🍗 Baan Kook Kai","🍢 Pork Satay Nai Song","🍦 Ice Cream Samosorn","🍞 June Pang","🍞 Nueng Nom Nua","🦀 Somboon Seafood 建興酒家","🍮 Tang Sui Heng","🛍️ Krungthong Plaza","🍜 Thong Smith"]},
+ {h:"Too far for this trip", s:"40 minutes or more each way.", items:["🐟 Mae Klong Hua Pla Mo Fai (Taling Chan)","🌙 Save One Go Night Market (Bang Na)","🏬 Cloud 11 (Bang Chak)","🛍️ 1981 Soul&Sold (Ramkhamhaeng)","🏬 Central Rama 9"]},
+ {h:"Pinned outside Bangkok", s:"Worth fixing in the Wishlist.", items:["🍵 Love You So Matcha is pinned in St Petersburg, Russia","🍽️ The Moon Eatery is pinned in Chiang Mai"]}
 ];
 
 /* ---------- Map renderer ---------- */
@@ -451,9 +461,9 @@ function rowHTML(p){
   const src=p.kind==="sugg"?`<span class="cap-b src">${p.src==="chat"?"from the group chat":"from the Wishlist"}</span>`:"";
   const quote=p.quote?`<span class="quote">Wishlist note: “${esc(p.quote)}”</span>`:"";
   const t=p.t?`<span class="time">${esc(p.t)}</span>`:"";
-  return `<div class="row ${p.kind}" data-id="${p.id}" tabindex="0">${n}<div>
+  return `<div class="row ${p.kind}${p.wish?" wish":""}" data-id="${p.id}" tabindex="0">${n}<div>
     <div class="meta">${t}${badge}${src}${quote}</div>
-    <h4>${esc(p.name)}</h4>
+    <h4>${p.e?`<span class="emo">${p.e}</span>`:""}${esc(p.name)}</h4>
     ${p.note?`<p>${esc(p.note)}</p>`:""}
     ${p.go?`<p class="go"><b>Getting there</b><span>${esc(p.go)}</span></p>`:""}
   </div></div>`;
@@ -464,7 +474,7 @@ function build(){
     let n=0; d.stops.forEach((p,i)=>{ p.id=`${d.id}-${i}`; if(!p.nopin){ n++; p.n=n; } });
     const plans=d.stops.filter(p=>p.kind==="plan"), suggs=d.stops.filter(p=>p.kind==="sugg");
     tiles+=`<a class="tile" href="#${d.id}"><div class="wd">${esc(d.short)}</div><div class="dt">${esc(d.date)}</div><div class="th">${esc(d.title)}</div><div class="ct"><span><i style="background:var(--blue)"></i>${plans.length} planned</span><span><i style="background:var(--orange)"></i>${suggs.length} ideas</span></div></a>`;
-    const planline=plans.map(p=>`<span class="step">${p.t?`<span class="t">${esc(p.t)}</span>`:""}<span>${esc(p.name.split(", ")[0].split(" — ")[0].split(" at ")[0])}</span></span>`).join(`<span class="chev">›</span>`);
+    const planline=plans.map(p=>`<span class="step">${p.t?`<span class="t">${esc(p.t)}</span>`:""}<span>${p.e?`<span class="emo">${p.e}</span>`:""}${esc(p.name.split(", ")[0].split(" — ")[0].split(" at ")[0])}</span></span>`).join(`<span class="chev">›</span>`);
     html+=`<section class="day" id="${d.id}"><div class="wrap">
       <div class="dh"><h2>${esc(d.wd)}</h2><span class="date">${esc(d.date)}</span><span class="sub">${esc(d.sub)}</span></div>
       <div class="planline">${planline}</div>
