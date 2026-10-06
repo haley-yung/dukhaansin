@@ -341,6 +341,7 @@ Dev servers for previewing before deploy:
 - **Gallery**: `vercel dev --yes --listen 3456` (runs both static + API)
 - **Gym SPA**: `cd apps/gym && npm run dev` (port 5173)
 - **Habits SPA**: `cd apps/habits && npm run dev` (port 5174; proxies `/api` → `localhost:3456`)
+- **Static frontend** (no Vercel login needed): `node scripts/static-server.mjs 3458` serves `frontend/` with `/` → `bangkok.html`
 
 Configured in `.claude/launch.json` for `preview_start`.
 

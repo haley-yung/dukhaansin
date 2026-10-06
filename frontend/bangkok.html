@@ -18,6 +18,7 @@
   --blue:#0071e3; --blue-tint:rgba(0,113,227,.10); --on-blue:#ffffff;
   --orange:#ff9500; --orange-text:#b65b00; --orange-tint:rgba(255,149,0,.13);
   --yellow:#ffcc00; --yellow-tint:rgba(255,204,0,.18); --yellow-tint2:rgba(255,204,0,.30);
+  --shop:#af52de; --shop-tint:rgba(175,82,222,.12);
   --glass:rgba(255,255,255,.72);
   --land:#eef0f3; --water:#c7dcf0; --park:#d6e9d3;
   --bts:#7cb342; --silom:#00897b; --mrt:#2155a3; --arl:#d3302f;
@@ -43,15 +44,26 @@ a{color:var(--blue);text-decoration:none}
 .nav .brand{font-weight:700;font-size:15px;color:var(--label);margin-right:14px;letter-spacing:-.01em;flex:none}
 .nav a.day{flex:none;color:var(--label);opacity:.72;font-size:14px;padding:6px 10px;border-radius:8px}
 .nav a.day:hover{opacity:1;background:var(--fill2)}
+.nav a.day{transition:background .25s,color .25s,opacity .25s}
+.nav a.day.on{opacity:1;background:var(--label);color:var(--bg)}
+body.shopping .nav a.day.on{opacity:.72;background:transparent;color:var(--label)}
 .nav .grow{flex:1;min-width:12px}
 .seg{display:inline-flex;background:var(--fill);border-radius:9px;padding:2px;flex:none}
 .seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font:600 13px var(--font);color:var(--label);cursor:pointer;transition:background .2s,box-shadow .2s}
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .seg button:focus-visible,.nav a:focus-visible,.tile:focus-visible,.row:focus-visible{outline:3px solid var(--blue-tint);outline-offset:2px;box-shadow:0 0 0 1.5px var(--blue)}
 
-/* Hero */
-.hero{text-align:center;padding-block:clamp(48px,8vw,88px) 28px}
-.hero h1{font-size:clamp(48px,9vw,88px);font-weight:700;letter-spacing:-.03em;line-height:1}
+/* Hero — soft drifting light behind the title, Apple-keynote style */
+.hero{text-align:center;padding-block:clamp(48px,8vw,88px) 28px;position:relative;isolation:isolate}
+.hero::before,.hero::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(64px);pointer-events:none;will-change:translate}
+.hero::before{width:min(62vw,580px);height:min(62vw,580px);left:50%;top:-12%;transform:translateX(-82%);background:radial-gradient(closest-side,rgba(0,113,227,.24),rgba(0,113,227,0) 72%);animation:drift 18s ease-in-out infinite alternate}
+.hero::after{width:min(52vw,500px);height:min(52vw,500px);left:50%;top:-2%;transform:translateX(2%);background:radial-gradient(closest-side,rgba(255,149,0,.24),rgba(255,149,0,0) 72%);animation:drift 23s ease-in-out infinite alternate-reverse}
+@keyframes drift{from{translate:0 0}to{translate:7% 12%}}
+.hero>*{animation:fadeUp .8s cubic-bezier(.2,.8,.2,1) both}
+.hero>:nth-child(2){animation-delay:.08s}.hero>:nth-child(3){animation-delay:.16s}.hero>:nth-child(4){animation-delay:.24s}
+@keyframes fadeUp{from{opacity:0;translate:0 16px}}
+.hero h1{background:linear-gradient(180deg,#1d1d1f 35%,#5c5c61);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:clamp(48px,9vw,88px);font-weight:700;letter-spacing:-.03em;line-height:1;padding-bottom:.06em}
 .hero .lede{font-size:clamp(19px,2.6vw,25px);color:var(--label2);margin:16px auto 0;max-width:34ch;font-weight:400;line-height:1.3}
 .hero .facts{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .pill{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--label2);box-shadow:var(--shadow-sm)}
@@ -67,8 +79,11 @@ a{color:var(--blue);text-decoration:none}
 /* Day tiles */
 .tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;padding-block:20px 8px}
 @media (max-width:860px){.tiles{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:14px;margin-inline:calc(-1*clamp(16px,4vw,40px));padding-inline:clamp(16px,4vw,40px);scrollbar-width:none}.tiles::-webkit-scrollbar{display:none}.tile{flex:0 0 72%;scroll-snap-align:start}}
-.tile{display:block;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 18px 16px;box-shadow:var(--shadow-sm);color:var(--label);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
-.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.tile{display:block;position:relative;overflow:hidden;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 18px 16px;box-shadow:var(--shadow-sm);color:var(--label);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .35s;animation:fadeUp .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.25s + var(--i,0)*70ms)}
+.tile::after{content:attr(data-emo);position:absolute;right:-4px;bottom:-16px;font-size:68px;line-height:1;opacity:.11;transform:rotate(-10deg);pointer-events:none;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.tile:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:rgba(0,113,227,.28)}
+.tile:hover::after{transform:rotate(0) scale(1.1);opacity:.18}
+.tile>*{position:relative}
 .tile .wd{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .tile .dt{color:var(--label2);font-size:13px;margin-top:2px}
 .tile .th{margin-top:12px;font-size:15px;font-weight:600;line-height:1.3;min-height:2.6em}
@@ -77,12 +92,18 @@ a{color:var(--blue);text-decoration:none}
 
 /* Sections */
 section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--nav-h) + 16px)}
+#days section.day:nth-child(even){background:linear-gradient(180deg,transparent,rgba(0,113,227,.035) 35%,rgba(255,149,0,.03) 70%,transparent)}
+/* Scroll reveal */
+.reveal{opacity:0;translate:0 18px;transition:opacity .7s ease,translate .8s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;translate:0 0}
+.lists .reveal:nth-child(2){transition-delay:.08s}
 .dh{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:6px}
 .dh h2{font-size:clamp(30px,4.6vw,44px);font-weight:700;letter-spacing:-.025em}
 .dh .date{font-size:clamp(18px,2.6vw,24px);color:var(--label2);font-weight:500}
 .dh .sub{width:100%;color:var(--label2);font-size:17px;margin-top:2px}
 .planline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 22px}
-.planline .step{display:inline-flex;gap:8px;align-items:baseline;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:14px;box-shadow:var(--shadow-sm)}
+.planline .step{display:inline-flex;gap:8px;align-items:baseline;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:14px;box-shadow:var(--shadow-sm);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.planline .step:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .planline .step .t{color:var(--blue);font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
 .planline .chev{color:var(--label3);font-size:16px}
 
@@ -110,6 +131,11 @@ section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--n
 .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--font);margin-top:1px}
 .row.plan .n{background:var(--blue);color:var(--on-blue)}
 .row.sugg .n{background:transparent;color:var(--orange-text);border:2.5px solid var(--orange)}
+.row.shop .n{background:var(--shop);color:#fff}
+.row.shop.is-active{background:var(--shop-tint)}
+.row.shop .meta .setting{font-size:14px}
+.row p.shops{font-size:13px;color:var(--label2);margin-top:6px}
+.row p.shops b{color:var(--label);font-weight:600}
 .n.hotel{border-radius:7px;background:var(--label)!important;color:var(--bg)!important;border:0!important}
 .n.none{background:transparent!important;color:var(--label3)!important;border:1.5px dashed var(--sep)!important;font-weight:500}
 .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--label2)}
@@ -127,13 +153,17 @@ section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--n
 .row p.hrs{font-size:13px;color:var(--label2);margin-top:6px;font-variant-numeric:tabular-nums}
 .row p.hrs .flag{color:var(--orange-text);font-weight:600}
 .row p.go b{font-weight:600;color:var(--label2);flex:none}
-body.plans-only .sugg{display:none}
+body.shopping #tiles-wrap,body.shopping #transfer,body.shopping #days,body.shopping #rest,body.shopping .hero .keys{display:none}
+#shopping{display:none}
+body.shopping #shopping{display:block}
 
 /* Map SVG */
-.pin{cursor:pointer}
+.pin{cursor:pointer;transform-box:fill-box;transform-origin:center;animation:pinIn .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*35ms)}
+@keyframes pinIn{from{opacity:0;translate:0 -10px;scale:.5}}
 .pin circle,.pin rect{transform-box:fill-box;transform-origin:center;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
 .pin.plan{filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
 .pin.sugg{filter:drop-shadow(0 1px 3px rgba(0,0,0,.18))}
+.pin.shop{filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
 .pin.is-active circle,.pin.is-active rect{transform:scale(1.3)}
 .stlabel{font:500 10.5px var(--font);fill:var(--label2)}
 .arealabel{font:600 11px var(--font);fill:var(--label3);letter-spacing:.02em}
@@ -147,6 +177,7 @@ body.plans-only .sugg{display:none}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;border-radius:999px;padding:4px 11px;background:var(--fill);color:var(--label)}
 footer{padding-block:48px 56px;color:var(--label3);font-size:12px;text-align:center}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;animation-delay:0s!important;transition-duration:.001s!important}.reveal{opacity:1;translate:none}}
 footer .wrap{max-width:70ch}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -158,7 +189,7 @@ footer .wrap{max-width:70ch}
     <span class="brand">Bangkok Trip</span>
     <a class="day" href="#wed">Wed</a><a class="day" href="#thu">Thu</a><a class="day" href="#fri">Fri</a><a class="day" href="#sat">Sat</a><a class="day" href="#sun">Sun</a><a class="day" href="#rest">More</a>
     <span class="grow"></span>
-    <div class="seg" role="group" aria-label="Show"><button type="button" class="on" data-mode="all">Everything</button><button type="button" data-mode="plan">Plan only</button></div>
+    <div class="seg" role="group" aria-label="Show"><button type="button" class="on" data-mode="all">Everything</button><button type="button" data-mode="shop">行街街</button></div>
   </div>
 </nav>
 
@@ -180,22 +211,22 @@ footer .wrap{max-width:70ch}
     </div>
   </header>
 
-  <div class="wrap"><div class="tiles" id="tiles"></div></div>
+  <div class="wrap" id="tiles-wrap"><div class="tiles" id="tiles"></div></div>
 
   <section class="plain" id="transfer">
     <div class="wrap">
-      <div class="dh"><h2>Getting in and out</h2><span class="sub">Airport Rail Link and one MRT stop, about an hour with bags.</span></div>
+      <div class="dh reveal"><h2>Getting in and out</h2><span class="sub">Airport Rail Link and one MRT stop, about an hour with bags.</span></div>
       <div class="grid">
-        <div class="mapcard" id="map-transfer"></div>
+        <div class="mapcard reveal" id="map-transfer"></div>
         <div class="lists">
-          <div>
+          <div class="reveal">
             <div class="grp-h">Arrival, Wednesday</div>
             <div class="grp">
               <div class="row plan"><span class="n">1</span><div><div class="meta"><span class="time">11:05</span></div><h4>Suvarnabhumi → ARL to Makkasan</h4><p>Immigration and bags take about an hour. The City Line leaves from the basement, 35 THB, around 25 minutes.</p></div></div>
               <div class="row plan"><span class="n">2</span><div><div class="meta"><span class="time">≈ 12:45</span></div><h4>Makkasan → MRT Phetchaburi → Sukhumvit</h4><p>Covered walkway to the MRT, one stop, then exit straight into Terminal 21. Check-in is 14:00; drop bags if the room isn’t ready.</p><p class="go"><b>Instead</b><span>Grab is about 400 THB and 45–70 minutes with the airport-road works. The ARL → Phaya Thai → BTS route also works but means the Siam interchange with suitcases.</span></p></div></div>
             </div>
           </div>
-          <div>
+          <div class="reveal">
             <div class="grp-h">Departure, Sunday</div>
             <div class="grp">
               <div class="row plan"><span class="n">3</span><div><div class="meta"><span class="time">12:00 and 12:45</span></div><h4>Reverse it: MRT → Makkasan → ARL → airport</h4><p>About 40 minutes. Two waves: the CX654 traveller leaves at check-out, around 12:00, to be at the airport by 12:45 for the 15:00 flight. The other two leave by 12:45 to be there by 14:00 for CX706 at 16:25. Sunday afternoons are busy and you’ll have shopping.</p></div></div>
@@ -208,9 +239,21 @@ footer .wrap{max-width:70ch}
 
   <div id="days"></div>
 
+  <section class="plain" id="shopping">
+    <div class="wrap">
+      <div class="dh reveal"><h2>行街街</h2><span class="sub">The malls and markets worth a detour, pinned around the hotel. 🏬 indoor and air-conditioned, 🌤️ open-air, 🏬🌤️ both.</span></div>
+      <div class="grid">
+        <div class="mapcard reveal" id="map-shop"></div>
+        <div class="lists">
+          <div class="reveal"><div class="grp-h">Nearest first from Asok, then the Siam cluster, then the long trips</div><div class="grp" id="shop-list"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="plain" id="rest">
     <div class="wrap">
-      <div class="dh"><h2>Also on the Wishlist</h2><span class="sub">Not slotted: too far, too many meals, or already covered by a cluster above.</span></div>
+      <div class="dh reveal"><h2>Also on the Wishlist</h2><span class="sub">Not slotted: too far, too many meals, or already covered by a cluster above.</span></div>
       <div class="groups" id="groups"></div>
     </div>
   </section>
@@ -223,6 +266,7 @@ footer .wrap{max-width:70ch}
 <script>
 (function(){
 "use strict";
+const body=document.body;
 const HOTEL = {name:"Grande Centre Point Terminal 21", lat:13.7382434, lng:100.5606127};
 const COS = Math.cos(13.74*Math.PI/180);
 
@@ -270,7 +314,7 @@ const AREAS = [
 /* ---------- Content ---------- */
 // kind: plan | sugg · src: list | chat · nopin: items without a map pin
 const DAYS = [
- { id:"wed", wd:"Wednesday", short:"Wed", date:"7 Oct", title:"Arrive, Siam, Vaso", sub:"Land late morning, drop the bags, wander Siam, dinner booked on Lang Suan.",
+ { id:"wed", wd:"Wednesday", short:"Wed", date:"7 Oct", title:"✈️ 準備玩, 🍜 Siam 食嘢, 🍷 Tapas Bar", sub:"Land late morning, drop the bags, wander Siam, dinner booked on Lang Suan.",
    labels:["Asok","Siam","Chit Lom","Phloen Chit","National Stadium","Sam Yan","Lumphini","Ratchathewi","Phetchaburi","Makkasan","Nana"],
    stops:[
     {kind:"plan", e:"✈️", t:"11:05", name:"CX717 lands at Suvarnabhumi", nopin:true, note:"Immigration and bags take about an hour. Keep the 20,000 THB reachable in case of a funds check.", go:"ARL to Makkasan, walk to MRT Phetchaburi, one stop to Sukhumvit. About an hour, around 80 THB."},
@@ -289,7 +333,7 @@ const DAYS = [
     {kind:"sugg", cat:"food", e:"🍽️", name:"Thai Niyom Cuisine", lat:13.741911, lng:100.549135, note:"Bib Gourmand regional Thai; khao soi and the Chiang Mai combo; ฿300–500 a head. Mahatun Plaza ground floor, 5 minutes from Vaso. Last food order 21:00.", hours:"Daily 11:00–22:00"},
     {kind:"sugg", cat:"cafe", e:"☕", name:"Stolen Sala rooftop café", lat:13.7432927, lng:100.5462164, note:"Korean-minimal rooftop café over Central Embassy; drinks ฿100–180, no cocktails, walk-in only. Canvas Ploenchit 7/F. Closes 21:00, so only a quick one after Vaso.", hours:"Tue–Sun 09:00–21:00, closed Mon"}
    ]},
- { id:"thu", wd:"Thursday", short:"Thu", date:"8 Oct", title:"Chinatown, 頭療, 靚景 dinner", sub:"A free morning in Chinatown, head spa at two, dinner facing Wat Arun.",
+ { id:"thu", wd:"Thursday", short:"Thu", date:"8 Oct", title:"💆 Head Spa, 🍽️ Rongros", sub:"A free morning in Chinatown, head spa at two, dinner facing Wat Arun.",
    labels:["Asok","Phrom Phong","Wat Mangkon","Hua Lamphong","Sanam Chai","Sam Yot","Itsaraphap","Siam","Chit Lom","Silom (MRT)","Sukhumvit (MRT)","Saphan Taksin","Lumphini"],
    stops:[
     {kind:"plan", e:"💆", t:"14:00–16:00", badge:"Booked", name:"Be Perfect head spa, Full Dream 120 min × 3", lat:13.734093, lng:100.5681053, note:"Viral Japanese-style head spa. Full Dream 120 min, 1,999 × 3 = 5,997 THB, pay cash (3% on card). Blow-dry adds 10–15 minutes, so out around 16:15. 12/9 Sukhumvit Soi 33.", hours:"Daily 10:00–23:30", go:"MRT Wat Mangkon to Sukhumvit, BTS Asok to Phrom Phong, 8 minutes on foot. About 35 minutes; leave Chinatown by 13:10."},
@@ -305,7 +349,7 @@ const DAYS = [
     {kind:"sugg", cat:"bar", e:"🍸", t:"After dinner", name:"sala rattanakosin eatery & bar", lat:13.7453838, lng:100.49091, note:"Rooftop drinks facing a lit-up Wat Arun and Wat Pho; ฿500–1,000 a head, bar snacks only. 3 minutes from Rongros. Last order 22:00.", hours:"Daily 16:00–22:30"},
     {kind:"sugg", cat:"bar", e:"🍸", name:"TYME, INN A DAY 4/F", lat:13.7450726, lng:100.4910718, note:"Head-on Wat Arun view and the Golden Horizon cocktail; ฿600–1,000 a head plus 17%. Inn A Day, 61 Maharat Rd, same block.", hours:"Daily 16:30–00:00"}
    ]},
- { id:"fri", wd:"Friday", short:"Fri", date:"9 Oct", title:"煮飯仔, Pratunam, COPPER", sub:"Cooking class in Silom, a loose afternoon, the birthday buffet at Gaysorn Amarin.",
+ { id:"fri", wd:"Friday", short:"Fri", date:"9 Oct", title:"🍳 煮飯仔, 🦞 自助餐", sub:"Cooking class in Silom, a loose afternoon, the birthday buffet at Gaysorn Amarin.",
    labels:["Asok","Silom (MRT)","Sala Daeng","Chong Nonsi","Surasak","Siam","Chit Lom","Lumphini","Sukhumvit (MRT)","Phloen Chit","Ratchathewi","Phaya Thai","Makkasan","Sam Yan"],
    stops:[
     {kind:"plan", e:"🍳", t:"08:40–12:20", badge:"Booked", name:"Silom Thai Cooking School 煮飯仔", lat:13.7261788, lng:100.5252297, note:"Bangrak market tour, then five dishes from scratch, max 9 people; ฿1,000–1,500 a head. Skip breakfast, closed shoes. Meet at 6/14 Decho Rd, beside Luxx Hotel Silom.", hours:"Classes daily 09:00–12:20, 13:40–17:00, 18:00–21:00", go:"MRT Sukhumvit to Silom, 4 stops, about 10 minutes, then 12 minutes along Silom Rd. Leave 07:50."},
@@ -319,7 +363,7 @@ const DAYS = [
     {kind:"sugg", cat:"food", e:"🍽️", name:"Lon Lon Local Diner", lat:13.7246309, lng:100.5307626, note:"Khao tom rice soup and Thai-Chinese comfort food; ฿400–600 a head. Inside Trinity Silom Hotel, Silom Soi 3. Only if someone is somehow still hungry.", hours:"Lunch Tue–Fri 11:30–14:30; dinner Mon–Sat 17:30–22:45; closed Sun"},
     {kind:"sugg", cat:"cafe", e:"☕", name:"Fran’s Sathorn", lat:13.7216257, lng:100.5461175, note:"Glasshouse brunch; velvet scrambled egg toast ฿390, ฿400–1,000 a head. Book ahead. 5–10 minutes from MRT Lumphini.", hours:"Daily 08:00–22:00"}
    ]},
- { id:"sat", wd:"Saturday", short:"Sat", date:"10 Oct", title:"JJ Market, Akara Sky Hanuman", sub:"Chatuchak before the heat, a loose afternoon, then the sky bar on Ploenchit at eight.",
+ { id:"sat", wd:"Saturday", short:"Sat", date:"10 Oct", title:"🛒 JJ Market, 🍸 Sky Bar", sub:"Chatuchak before the heat, a loose afternoon, then the sky bar on Ploenchit at eight.",
    labels:["Kamphaeng Phet","Chatuchak Park","Mo Chit","Phahon Yothin","Ari","Victory Monument","Asok","Phrom Phong","Thong Lo","Ekkamai","Phloen Chit","Siam","Lat Phrao","Phetchaburi","Phra Ram 9"],
    stops:[
     {kind:"plan", e:"🛒", wish:true, t:"09:30", badge:"Plan", name:"JJ Market, Chatuchak Weekend Market", lat:13.7999, lng:100.5502, note:"15,000-stall weekend market; ฿50–300 an item, haggle, cash only. Targets: dog clothes in Section 13, Soi 11/5; RIZHON tees in Sections 2–3, 270 THB for three. Unbearable after noon.", hours:"Sat–Sun 09:00–18:00; stalls fill in from about 10:00", go:"MRT Sukhumvit to Kamphaeng Phet, about 20 minutes, exits into the market. Or BTS Asok to Mo Chit, 11 stops."},
@@ -327,17 +371,15 @@ const DAYS = [
     {kind:"sugg", cat:"mall", e:"🛍️", wish:true, name:"Union Mall, Central Ladprao", lat:13.8133637, lng:100.5618612, note:"Cheap teen fashion and vintage booths, ฿100–500 a piece, second-hand zone on 4/F; the likeliest home of the 狗仔盲盒 shop. Central Ladprao next door for big brands. MRT Phahon Yothin exit 5 skywalk.", hours:"Union Mall 11:00–22:00; Central Ladprao 10:00–22:00"},
     {kind:"sugg", cat:"shopping", e:"💍", name:"Ngen Pager Yor, Karen Silver", lat:13.7985118, lng:100.5492189, note:"Handmade Karen hill-tribe silver priced by weight (3 rings about ฿800), cash. Inside JJ, Section 24, No. 040 (Google pins it at Soi 18); ask by case number.", hours:"Sat–Sun 08:30–18:00; Fri 12:00–18:00"},
     {kind:"sugg", cat:"food", e:"🌶️", wish:true, t:"Lunch", name:"Lay Lao, Ari", lat:13.7817476, lng:100.5437851, note:"Michelin-recommended Isan food and Hua Hin seafood; ฿400–700 a head; order the fried pork belly in Lay Lao sauce. 65 Soi Phahonyothin 7; BTS Mo Chit to Ari, 2 stops. Book 062-453-5588.", hours:"Daily 10:30–22:00"},
-    {kind:"sugg", cat:"food", e:"🍣", wish:true, name:"Kushiro Omakase", lat:13.815288, lng:100.5782152, note:"Value omakase with an uni bar, fish flown from Japan; 15-course ฿2,499, Uni Lover ฿4,190. Fixed rounds 12:30, 14:30, 17:30, 19:30; book ahead on Hungry Hub or IG @kushiro.bkk. Ratchada Soi 32, taxi from JJ.", hours:"Daily 11:30–22:30"},
     {kind:"sugg", cat:"food", e:"🦀", name:"Here Hai 爹讓 crab fried rice", lat:13.7302655, lng:100.586342, note:"Bib Gourmand crab fried rice and crab omelette; ฿300–600 a head, cash. Queue 15–60 minutes, or book on LINE @herehai. Ekkamai. Daytime only, so an afternoon stop after JJ rather than dinner.", hours:"Tue–Sun 10:00–15:00, 16:00–17:30; closed Mon", flag:"Closes 17:30"},
     {kind:"sugg", cat:"food", e:"🍜", name:"Baan Kuay Tiew Ruathong", lat:13.7657518, lng:100.5394974, note:"Boat noodles in Boat Noodle Alley, ฿20 a small bowl, order a stack; ฿100–200 a head, cash. 6 minutes from BTS Victory Monument exit 4, on the line home.", hours:"Tue–Sun 09:00–20:30, closed Mon"},
     {kind:"sugg", cat:"food", e:"🦐", name:"Kuang Seafood 光海鮮", lat:13.7590293, lng:100.54218, note:"Thai-Chinese seafood since 1978; curry-powder crab (~฿800–1,170) and giant grilled prawns; ฿400–1,000 a head. Dinner option A. 10 minutes from BTS Victory Monument.", hours:"Daily 11:00–00:30"},
     {kind:"sugg", cat:"food", e:"🍽️", name:"EASY! buddy, theCOMMONS Thonglor", lat:13.7351243, lng:100.5821469, note:"Modern Thai comfort food, #TheBestKrapao and beef jaew fried rice; ฿150–250 a head. theCOMMONS 1/F balcony; FIRST AID KISS café a few doors down. Dinner option B.", hours:"Daily 10:00–21:30"},
     {kind:"sugg", cat:"food", e:"🍛", name:"Phed Mark", lat:13.7202176, lng:100.5838945, note:"Mark Wiens’ fiery pad kaprao with a crispy duck egg; ฿160–280 a plate. 17 seats, 20–30 minute wait; “recommended” spice is already hot. BTS Ekkamai exit 3.", hours:"Daily 10:00–19:00 (official site says Mon–Sat 11:00–17:00)"},
     {kind:"sugg", cat:"cafe", e:"☕", wish:true, name:"BENKOFF", lat:13.7315085, lng:100.581171, note:"Specialty coffee with resident dachshunds Bobby and Billy; ~฿100–200 a drink, only a few seats. NT Tower, 10 minutes from BTS Thong Lo. Afternoon after JJ, before it closes at 16:00.", hours:"Daily 07:30–16:00; closed on the 16th of each month"},
-    {kind:"sugg", cat:"bar", e:"🍸", wish:true, t:"≈ 17:30", name:"Rosewood Bangkok 30/F", lat:13.7436, lng:100.5478, note:"Lennon’s: 6,000-vinyl listening bar on Asia’s 50 Best; cocktails ฿450–700++. Indoor behind sloping glass, not an open-air rooftop. Smart casual, closed shoes, 20+; book a counter seat. 3-minute walk from Akara, so a first drink before the sky bar.", hours:"Daily 17:00–24:00; live music Thu–Sun 20:30–23:30"},
     {kind:"sugg", cat:"spa", e:"♨️", name:"Vata Vayu Private Onsen & Spa", lat:13.7797159, lng:100.5489612, note:"Private onsen suites with fresh water each session; onsen plus treatment 90 min ฿2,880 a person, massage from ฿880. Needs a booking with deposit; last 2-hour slot 19:00. 1.2 km from BTS Ari, take a Grab. Recovery after the market.", hours:"Daily 10:00–22:00"}
    ]},
- { id:"sun", wd:"Sunday", short:"Sun", date:"11 Oct", title:"Phrom Phong, fly home", sub:"One stop down the line for breakfast and the deodorant box, then the airport in two waves.",
+ { id:"sun", wd:"Sunday", short:"Sun", date:"11 Oct", title:"✈️ 走", sub:"One stop down the line for breakfast and the deodorant box, then the airport in two waves.",
    labels:["Asok","Phrom Phong","Nana","Thong Lo","Sukhumvit (MRT)","Phetchaburi","Makkasan","Queen Sirikit","Phloen Chit"],
    stops:[
     {kind:"plan", e:"🧳", t:"12:00", name:"Check out", lat:HOTEL.lat, lng:HOTEL.lng, hotel:true, note:"The CX654 traveller goes straight on to the airport. The other two can leave bags with the concierge for one more hour at EmQuartier."},
@@ -359,9 +401,47 @@ const REST = [
  {h:"Riverside and Thonburi", s:"Pairs with Chinatown if there’s time.", items:["🍜 Kate Teaw Boat Noodles, ICONSIAM 6/F","🦐 Ann Tha Din Daeng seafood","🦀 Somsak Claypot Crab, Krung Thon Buri BTS","🛍️ Neighbourmart, General Post Office"]},
  {h:"Sukhumvit extras", s:"All within three BTS stops of the hotel.", items:["🥩 Franca steaks, Sukhumvit 10","🍱 Ruam Sab Market, Asok (weekday lunch food court)","🌙 SW1 Market, night market by Asok","🧁 Oh My Godmother, EmSphere","🍽️ KINKIN Sukhumvit 47","🥯 Caffè Olives and Bagel Babe (Napha Sap)","☕ FIRST AID KISS, Thonglor","🍽️ MITR STREET"]},
  {h:"Siam and Pratunam extras", s:"Covered by Wednesday’s cluster.", items:["🎬 Lido Connect","🛍️ CentralWorld, Hey studio 5/F","🛍️ Red Corner Plaza","🍜 Sabkoonsong wonton mee","🍝 Pad Thai Mae Thong Bai","🍗 Baan Kook Kai","🍢 Pork Satay Nai Song","🍦 Ice Cream Samosorn","🍞 June Pang","🍞 Nueng Nom Nua","🦀 Somboon Seafood 建興酒家","🍮 Tang Sui Heng","🛍️ Krungthong Plaza","🍜 Thong Smith"]},
- {h:"Too far for this trip", s:"40 minutes or more each way.", items:["🐟 Mae Klong Hua Pla Mo Fai (Taling Chan)","🌙 Save One Go Night Market (Bang Na)","🏬 Cloud 11 (Bang Chak)","🛍️ 1981 Soul&Sold (Ramkhamhaeng)","🏬 Central Rama 9"]},
- {h:"Pinned outside Bangkok", s:"Worth fixing in the Wishlist.", items:["🍵 Love You So Matcha is pinned in St Petersburg, Russia","🍽️ The Moon Eatery is pinned in Chiang Mai"]}
+ {h:"Too far for this trip", s:"40 minutes or more each way.", items:["🐟 Mae Klong Hua Pla Mo Fai (Taling Chan)","🌙 Save One Go Night Market (Bang Na)","🏬 Cloud 11 (Bang Chak)","🛍️ 1981 Soul&Sold (Ramkhamhaeng)","🏬 Central Rama 9"]}
 ];
+
+/* ---------- Shopping guide (行街街) ---------- */
+// setting: indoor | outdoor | mixed · wish: already on the Wishlist / mentioned
+const SHOPS = [
+  {name:"Terminal 21 Asok", setting:"indoor", e:"🛍️", lat:13.7376, lng:100.5602, price:"฿–฿฿", known:"Themed city floors (Tokyo, London, Istanbul, San Francisco), cheap Thai boutiques and the Pier 21 food court.", shops:"Local Thai boutiques on 1/F Tokyo and 2/F London; H&M, Nike, Levi’s; Gourmet Market on LG; Pier 21 on 5/F, meals ฿40–100 on a top-up card.", tip:"Avoid Pier 21 in the 12:00–13:30 office rush.", hours:"Daily 10:00–22:00", go:"You’re in it: lifts from the hotel lobby, or BTS Asok exit 1 skywalk."},
+  {name:"EmQuartier, Emporium, EmSphere", setting:"indoor", e:"🛍️", wish:true, lat:13.732, lng:100.5696, price:"฿฿–฿฿฿", known:"Three linked malls at Phrom Phong: luxury at Emporium, the Helix dining spiral at EmQuartier, street brands and EM Market at EmSphere.", shops:"rati Space (EmQuartier Bldg B 1/F, by Zara); Uniqlo, H&M, Sephora; Helix restaurants 6–9/F; Gourmet Market G/F; EM Market Hall street fashion and sneakers (EmSphere G); IKEA City (EmSphere 3/F); Kinokuniya (Emporium 3/F).", tip:"Eat at the Helix before 18:00 to dodge queues.", hours:"Daily 10:00–22:00", go:"BTS Asok to Phrom Phong, 1 stop. Exit 1 for EmQuartier, exit 6 for Emporium and EmSphere."},
+  {name:"One Bangkok", setting:"mixed", e:"🍱", wish:true, lat:13.726, lng:100.5473, price:"฿฿–฿฿฿", known:"Newest mega-complex: Mitsukoshi food hall, King Power duty-free, Thai souvenirs, luxury at Post 1928.", shops:"MIRR (Parade GF), KAEW Boutique (B1), Mr. Joe 脆皮豬雜湯 (5/F Food Street); Mitsukoshi Depachika; King Power City Boutique 1–2/F; Sarapad Thai souvenirs 3/F; Club 21 designers (The Storeys 1/F).", tip:"It’s a maze, allow extra time.", hours:"Daily 10:00–22:00", go:"MRT Sukhumvit to Lumphini, 3 stops, then the exit 1 tunnel straight into Parade B1. About 10 minutes."},
+  {name:"CentralWorld", setting:"indoor", e:"🛍️", lat:13.7466, lng:100.539, price:"฿฿–฿฿฿", known:"Bangkok’s biggest mall: Central department store, Apple, Kinokuniya, Uniqlo, Zara and H&M, Groove dining wing.", shops:"Hey studio Korean photo booth 5/F; Good Goods Thai souvenirs 1/F; Japan Avenue 3/F and Kinokuniya 6/F in the Siam-end wing; Central Food Hall and SF cinema 7/F; Apple on the Ratchadamri corner.", tip:"Tourist discount card at the 2/F redemption counter, 11:00–20:00.", hours:"Daily 10:00–22:00; Groove bars to midnight", go:"BTS Asok to Chit Lom, 3 stops, then the skywalk. About 15 minutes."},
+  {name:"Platinum Fashion Mall & Pratunam", setting:"mixed", e:"👕", wish:true, lat:13.75, lng:100.5394, price:"฿ cheap", known:"Wholesale fashion hub: 2,000+ stalls in Platinum plus the street stalls and plazas around it. Cheap clothes, bags, shoes.", shops:"Platinum B/F jeans, 1–3/F womenswear, 4/F menswear, 5/F kids and bags, 6/F food court; Zone 3 for bags and shoes; Krungthong Plaza plus sizes to 6XL; Shibuya 19 and Red Corner for more of the same; street stalls in front of Baiyoke Tower.", tip:"Weekdays, cash, no try-ons; buy 3+ pieces per shop for the wholesale price.", hours:"Platinum 09:00–20:00 (08:00 Wed, Sat, Sun); Krungthong 08:00–18:00; Red Corner 09:00–16:00; street stalls ~07:00–15:00", go:"BTS Asok to Chit Lom, skywalk past Gaysorn and Big C, then north on Ratchadamri; 25 minutes door to door. Or BTS Ratchathewi and a 10-minute walk."},
+  {name:"Siam Paragon", setting:"indoor", e:"👜", lat:13.7468, lng:100.535, price:"฿฿฿", known:"Luxury flagships and the Gourmet Market food hall; the snack-souvenir stop.", shops:"Gourmet Market and Gourmet Garden (GF); Louis Vuitton, Dior, Chow Tai Fook (1/F); Kinokuniya (3/F); Paragon Cineplex (5/F); SEA LIFE aquarium (B1).", tip:"The BTS skybridge lands on the M floor.", hours:"Daily 10:00–22:00", go:"BTS Asok to Siam, 4 stops, skybridge straight in. About 12 minutes."},
+  {name:"Siam Center & Siam Discovery", setting:"indoor", e:"👗", lat:13.7463, lng:100.5328, price:"฿฿", known:"Thai designer fashion next door to Paragon, plus Loft stationery and Thai-craft design stores.", shops:"Absolute Siam Store multi-brand Thai streetwear (Siam Center 1/F); Greyhound Original, Kloset, Flynow III, Lyn Around; Loft (Discovery 2/F, behind the escalators); Objects of Desire and ICONCRAFT (Discovery 3/F).", tip:"Free ONESIAM Tourist Card at the info counter for discounts.", hours:"Daily 10:00–22:00", go:"BTS Siam exit 1, 2 minutes on the skywalk."},
+  {name:"Siam Square", setting:"outdoor", e:"💄", wish:true, lat:13.7446, lng:100.5331, price:"฿–฿฿", known:"Open-air sois of Thai streetwear, beauty megastores, sneakers and photo booths; the teen heart of Bangkok.", shops:"EVEANDBOY Centerpoint flagship (3 floors) and The Underground (Siam Square One LG); Beautrium (Soi 7, 4 floors); TRES. (Soi 5); Carnival sneakers (Soi 7); Pony Stone (Soi 2); Lido Connect photo booths; Somtam Nua (Soi 5).", tip:"Street shops open around 11:00–12:00, so go in the afternoon; Siam Square One has the air-con and food.", hours:"Street shops ~11:00–21:00; Siam Square One 10:00–22:00", go:"BTS Siam exit 2 (Soi 3–4, Centerpoint) or exit 4 (Siam Square One, Soi 5–6)."},
+  {name:"MBK Center", setting:"indoor", e:"📱", lat:13.7447, lng:100.5299, price:"฿ cheap", known:"Budget mall: phones and gadgets, cheap clothes, souvenirs, and a 24-hour Don Don Donki.", shops:"Souvenirs and elephant pants (1/F); Don Don Donki 24h (2/F); Mobile Mania phones and cameras (4/F); Food Island and Craft Village souvenirs (6/F).", tip:"Haggle and pay cash at the 4/F and 6/F stalls; expect fakes.", hours:"Daily 10:00–22:00; Donki 24h", go:"BTS Asok to National Stadium, change at Siam, exit 4 covered walkway. Or 5 minutes’ skywalk from Siam."},
+  {name:"ICONSIAM", setting:"indoor", e:"🛥️", lat:13.7268, lng:100.5103, price:"฿฿–฿฿฿", known:"Riverside mega-mall: SookSiam indoor floating market of regional Thai snacks and crafts, Apple, Takashimaya, free fountain show.", shops:"SookSiam (G/F); ICONCRAFT Thai designer souvenirs (4–5/F); Apple (2/F); Siam Takashimaya at the rear; ICONLUXE (G–M/F); River Park fountain show 18:30, 20:00, 21:00.", tip:"Stay for the fountain show; confirm times on the day.", hours:"Daily 10:00–22:00", go:"BTS Asok to Saphan Taksin (change at Siam), exit 2 to Sathorn Pier, ฿12 shuttle boat every 15–20 minutes. About 45 minutes. Or the Gold Line to Charoen Nakhon."},
+  {name:"Chatuchak Weekend Market", setting:"outdoor", e:"🛒", wish:true, lat:13.7999, lng:100.5502, price:"฿ cheap, haggle", known:"15,000 stalls: clothes, vintage tees, souvenirs, homeware, pets, street food. Saturday morning on the plan.", shops:"Sections 2–4 trendy clothes; 5–6 vintage tees and denim; 8–11 handicrafts and souvenirs; 8–13 pets (dog clothes, Section 13); ceramics 11–25; food 23–27; Karen silver, Section 24.", tip:"Arrive by 09:00 before the heat; cash and small notes; orient by the Clock Tower.", hours:"Sat–Sun 09:00–18:00; Fri 18:00–24:00 wholesale night; Wed–Thu plants only", go:"MRT Sukhumvit to Kamphaeng Phet, about 20 minutes, exit 2 straight into the market."},
+  {name:"Union Mall", setting:"indoor", e:"👕", wish:true, lat:13.8137, lng:100.5619, price:"฿ cheap, haggle", known:"Teen streetwear, Thai indie designers and second-hand booths; the likeliest home of the 狗仔盲盒 shop.", shops:"Independent streetwear boutiques 1–3/F; Thai Young Designer zone; vintage booths upstairs; O.T. Urban Market second-hand fair 4/F on Wednesdays, ~300 stalls from ฿5; Central Ladprao next door.", tip:"Student night-market booths appear after 18:00; bargain freely.", hours:"Daily 11:00–22:00; O.T. Urban Market 4/F Wed 15:00–22:00", go:"MRT Sukhumvit to Phahon Yothin, about 22 minutes, exit 5 escalators straight in."}
+];
+const SETTING={indoor:"🏬 Indoor",outdoor:"🌤️ Open-air",mixed:"🏬🌤️ Indoor + open-air"};
+function shopRowHTML(p){
+  if(p.hotel) return `<div class="row plan" data-id="${p.id}" tabindex="0"><span class="n hotel">H</span><div><div class="meta"><span class="cap-b plan">Base</span></div><h4><span class="emo">🏨</span>${esc(p.name)}</h4><p>${esc(p.note)}</p></div></div>`;
+  return `<div class="row shop${p.wish?" wish":""}" data-id="${p.id}" tabindex="0"><span class="n">${p.n}</span><div>
+    <div class="meta"><span class="setting">${SETTING[p.setting]||""}</span>${p.price?`<span class="cap-b src">${esc(p.price)}</span>`:""}</div>
+    <h4>${p.e?`<span class="emo">${p.e}</span>`:""}${esc(p.name)}</h4>
+    <p>${esc(p.known)}</p>
+    ${p.shops?`<p class="shops"><b>Look for</b> ${esc(p.shops)}</p>`:""}
+    ${p.tip?`<p class="shops">${esc(p.tip)}</p>`:""}
+    ${p.hours?`<p class="hrs">🕒 ${esc(p.hours)}`+(p.flag?` · <span class="flag">${esc(p.flag)}</span>`:"")+`</p>`:""}
+    ${p.go?`<p class="go"><b>Getting there</b><span>${esc(p.go)}</span></p>`:""}
+  </div></div>`;
+}
+let shopDrawn=false;
+function drawShop(){
+  const el=document.getElementById("map-shop"), list=document.getElementById("shop-list"); if(!el||!list) return;
+  const hotel={id:"shop-h", n:"H", kind:"plan", hotel:true, name:HOTEL.name, lat:HOTEL.lat, lng:HOTEL.lng, note:"Home base at Asok. Terminal 21 is downstairs, BTS Asok and MRT Sukhumvit at the door."};
+  SHOPS.forEach((p,i)=>{ p.id="shop-"+i; p.n=i+1; p.kind="shop"; });
+  if(!shopDrawn){ list.innerHTML=[hotel,...SHOPS].map(shopRowHTML).join(""); shopDrawn=true; }
+  renderMap(el,{pins:[hotel,...SHOPS], labels:["Siam","Chit Lom","Phloen Chit","Asok","Phrom Phong","National Stadium","Ratchathewi","Mo Chit","Kamphaeng Phet","Phahon Yothin","Lumphini","Saphan Taksin","Krung Thon Buri","Sam Yan","Silom (MRT)"], aria:"Shopping map"});
+  wire();
+}
 
 /* ---------- Map renderer ---------- */
 function makeFit(points, w, h, pad){
@@ -445,6 +525,7 @@ function renderMap(el, opts){
   for(const q of order){
     const p=q.p, id=p.id, x=q.x.toFixed(1), y=q.y.toFixed(1);
     if(p.hotel) s+=`<g class="pin plan" data-id="${id}" tabindex="0"><rect x="${(q.x-11).toFixed(1)}" y="${(q.y-11).toFixed(1)}" width="22" height="22" rx="7" fill="var(--label)" stroke="var(--card)" stroke-width="2"/><text x="${x}" y="${(q.y+4).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="11.5" fill="var(--bg)">${p.n}</text><title>${esc(p.name)}</title></g>`;
+    else if(p.kind==="shop") s+=`<g class="pin shop" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="12" fill="var(--shop)" stroke="var(--card)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4.2).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="12" fill="#fff">${p.n}</text><title>${esc(p.name)}</title></g>`;
     else if(p.kind==="plan") s+=`<g class="pin plan" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="12" fill="var(--blue)" stroke="var(--card)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4.2).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="12" fill="var(--on-blue)">${p.n}</text><title>${esc(p.name)}</title></g>`;
     else s+=`<g class="pin sugg" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="11" fill="var(--card)" stroke="var(--orange)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="11" fill="var(--orange-text)">${p.n}</text><title>${esc(p.name)}</title></g>`;
   }
@@ -454,6 +535,7 @@ function renderMap(el, opts){
   s+=`<text x="${w-18}" y="22" text-anchor="middle" class="stlabel" font-weight="600">N</text><path d="M${w-18} 26 l-4 10 4-3 4 3z" fill="var(--label3)"/>`;
   s+=`</svg><div class="cap"><span><i style="background:var(--bts)"></i>BTS Sukhumvit</span><span><i style="background:var(--silom)"></i>BTS Silom</span><span><i style="background:var(--mrt)"></i>MRT Blue</span><span><i style="background:var(--arl)"></i>Airport Rail Link</span><span><i style="background:var(--water);height:6px;border-radius:3px"></i>Chao Phraya</span></div>`;
   el.innerHTML=s;
+  el.querySelectorAll(".pin").forEach((g,i)=>g.style.setProperty("--i",i));
 }
 
 /* ---------- Build ---------- */
@@ -478,29 +560,31 @@ function build(){
     d.stops=[...d.stops.filter(p=>p.kind!=="sugg"), ...d.stops.filter(p=>p.kind==="sugg").sort((a,b)=>(CAT_ORDER[a.cat]??9)-(CAT_ORDER[b.cat]??9)||(b.wish?1:0)-(a.wish?1:0)||a.idx-b.idx)];
     let n=0; d.stops.forEach((p,i)=>{ p.id=`${d.id}-${i}`; if(!p.nopin){ n++; p.n=n; } });
     const plans=d.stops.filter(p=>p.kind==="plan"), suggs=d.stops.filter(p=>p.kind==="sugg");
-    tiles+=`<a class="tile" href="#${d.id}"><div class="wd">${esc(d.short)}</div><div class="dt">${esc(d.date)}</div><div class="th">${esc(d.title)}</div><div class="ct"><span><i style="background:var(--blue)"></i>${plans.length} planned</span><span><i style="background:var(--orange)"></i>${suggs.length} ideas</span></div></a>`;
+    const emo=(d.title.match(/^\S+/)||[""])[0];
+    tiles+=`<a class="tile" href="#${d.id}" style="--i:${DAYS.indexOf(d)}" data-emo="${esc(emo)}"><div class="wd">${esc(d.short)}</div><div class="dt">${esc(d.date)}</div><div class="th">${esc(d.title)}</div><div class="ct"><span><i style="background:var(--blue)"></i>${plans.length} planned</span><span><i style="background:var(--orange)"></i>${suggs.length} ideas</span></div></a>`;
     const planline=plans.map(p=>`<span class="step">${p.t?`<span class="t">${esc(p.t)}</span>`:""}<span>${p.e?`<span class="emo">${p.e}</span>`:""}${esc(p.name.split(", ")[0].split(" — ")[0].split(" at ")[0])}</span></span>`).join(`<span class="chev">›</span>`);
     html+=`<section class="day" id="${d.id}"><div class="wrap">
-      <div class="dh"><h2>${esc(d.wd)}</h2><span class="date">${esc(d.date)}</span><span class="sub">${esc(d.sub)}</span></div>
-      <div class="planline">${planline}</div>
+      <div class="dh reveal"><h2>${esc(d.wd)}</h2><span class="date">${esc(d.date)}</span><span class="sub">${esc(d.sub)}</span></div>
+      <div class="planline reveal">${planline}</div>
       <div class="grid">
-        <div class="mapcard" id="map-${d.id}"></div>
+        <div class="mapcard reveal" id="map-${d.id}"></div>
         <div class="lists">
-          <div><div class="grp-h">The plan</div><div class="grp">${plans.map(rowHTML).join("")}</div></div>
-          <div class="sugg"><div class="grp-h">Suggestions — malls first, then shops, then food</div><div class="grp">${suggs.map(rowHTML).join("")}</div></div>
+          <div class="reveal"><div class="grp-h">The plan</div><div class="grp">${plans.map(rowHTML).join("")}</div></div>
+          <div class="sugg reveal"><div class="grp-h">Suggestions — malls first, then shops, then food</div><div class="grp">${suggs.map(rowHTML).join("")}</div></div>
         </div>
       </div>
     </div></section>`;
   }
   document.getElementById("tiles").innerHTML=tiles;
   document.getElementById("days").innerHTML=html;
-  document.getElementById("groups").innerHTML=REST.map(g=>`<div class="group"><h3>${esc(g.h)}</h3><div class="why">${esc(g.s)}</div><div class="chips">${g.items.map(i=>`<span class="chip">${esc(i)}</span>`).join("")}</div></div>`).join("");
+  document.getElementById("groups").innerHTML=REST.map(g=>`<div class="group reveal"><h3>${esc(g.h)}</h3><div class="why">${esc(g.s)}</div><div class="chips">${g.items.map(i=>`<span class="chip">${esc(i)}</span>`).join("")}</div></div>`).join("");
 }
 function drawAll(){
   for(const d of DAYS){ const el=document.getElementById("map-"+d.id); if(el) renderMap(el,{pins:d.stops, labels:d.labels, aria:`Map for ${d.wd}`}); }
   const tr=document.getElementById("map-transfer");
   if(tr) renderMap(tr,{pins:[{id:"tr-0",n:1,kind:"plan",name:"Suvarnabhumi Airport",lat:13.6906,lng:100.7520},{id:"tr-1",n:2,kind:"plan",name:"Makkasan ARL to MRT Phetchaburi",lat:13.7504,lng:100.5620},{id:"tr-2",n:"H",kind:"plan",hotel:true,name:HOTEL.name,lat:HOTEL.lat,lng:HOTEL.lng}],
     labels:["Suvarnabhumi","Makkasan","Phetchaburi","Hua Mak","Lat Krabang","Phaya Thai","Ramkhamhaeng","Ban Thap Chang"], route:false, height:Math.round(Math.min(380, Math.max(300,(tr.clientWidth||700)*0.5))), aria:"Airport to hotel"});
+  if(body.classList.contains("shopping")) drawShop();
   wire();
 }
 function wire(){
@@ -516,12 +600,18 @@ function wire(){
         if(el.classList.contains("pin")){ const r=document.querySelector(`.row[data-id="${id}"]`); if(r) r.scrollIntoView({block:"nearest",behavior:"smooth"}); } } };
   });
 }
-const body=document.body, seg=document.querySelector(".seg");
-function setMode(m){ body.classList.toggle("plans-only",m==="plan"); seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); try{ localStorage.setItem("bkk711.mode",m); }catch(e){} }
-seg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) setMode(b.dataset.mode); });
-try{ if(localStorage.getItem("bkk711.mode")==="plan") setMode("plan"); }catch(e){}
+const seg=document.querySelector(".seg");
+function setMode(m){ if(m!=="shop") m="all"; body.classList.toggle("shopping",m==="shop"); if(m==="shop") requestAnimationFrame(()=>drawShop()); seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); try{ localStorage.setItem("bkk711.mode",m); }catch(e){} }
+seg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b){ const was=body.classList.contains("shopping"); setMode(b.dataset.mode); if(was!==body.classList.contains("shopping")) scrollTo({top:0,behavior:"smooth"}); } });
+try{ if(localStorage.getItem("bkk711.mode")==="shop") setMode("shop"); }catch(e){}
+document.querySelectorAll(".nav a.day").forEach(a=>a.addEventListener("click",()=>{ if(body.classList.contains("shopping")) setMode("all"); }));
 
 build(); drawAll();
+// Scroll reveals + active day in the nav
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }),{threshold:.06,rootMargin:"0px 0px -6% 0px"});
+document.querySelectorAll(".reveal").forEach(x=>io.observe(x));
+const navIO=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) document.querySelectorAll(".nav a.day").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id)); }),{rootMargin:"-40% 0px -55% 0px"});
+document.querySelectorAll("section.day,#rest").forEach(x=>navIO.observe(x));
 let rt; addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(drawAll,160); });
 })();
 </script>
