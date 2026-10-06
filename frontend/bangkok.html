@@ -7,10 +7,18 @@
 <meta name="description" content="Bangkok, 7–11 October 2026: day-by-day plan, maps and Wishlist.">
 <meta name="theme-color" content="#fbfbfd">
 <meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap"></noscript>
 <style>
 /* Plan — Apple HIG feel, light only. Color: ground #fbfbfd, card #fff, label #1d1d1f, secondary #6e6e73, blue #0071e3, orange #ff9500.
    Type: the system stack (SF Pro on Apple devices); large title 700 with tight tracking, 17px headlines, 15px body, 13px footnotes.
-   Layout: centered hero, a row of day tiles, then per day a sticky map card (left) beside white inset-grouped lists (right); stacks on phones. */
+   Layout: centered hero, a row of day tiles, then per day a sticky map card (left) beside white inset-grouped lists (right); stacks on phones.
+   Maps: "Matcha Latte" — cream card with a stitched dashed border, latte land with a dot grain, matcha parks, milky river, cream-cased transit lines
+   (the Airport Rail Link dashed), mochi-squircle pins (raspberry plan, cream + caramel ring suggestion, espresso hotel, deep-matcha shop) with a leaf on
+   wishlist stops, a caramel stitched route, a leaf compass, chip legend and a hover/tap callout. Nunito (rounded) for numerals and small-caps labels;
+   list number badges and hero keys mirror the pins. */
 :root{
   --bg:#fbfbfd; --card:#ffffff; --card2:#f5f5f7; --border:rgba(0,0,0,.06);
   --label:#1d1d1f; --label2:#6e6e73; --label3:#86868b;
@@ -18,10 +26,17 @@
   --blue:#0071e3; --blue-tint:rgba(0,113,227,.10); --on-blue:#ffffff;
   --orange:#ff9500; --orange-text:#b65b00; --orange-tint:rgba(255,149,0,.13);
   --yellow:#ffcc00; --yellow-tint:rgba(255,204,0,.18); --yellow-tint2:rgba(255,204,0,.30);
-  --shop:#af52de; --shop-tint:rgba(175,82,222,.12);
+  --shop:#5A7D3C; --shop-tint:rgba(90,125,60,.08); --shop-glow:#9DBB78;
   --glass:rgba(255,255,255,.72);
-  --land:#eef0f3; --water:#c7dcf0; --park:#d6e9d3;
-  --bts:#7cb342; --silom:#00897b; --mrt:#2155a3; --arl:#d3302f;
+  --land:#F2EBDF; --water:#D5E1E6; --park:#CFE0BD;
+  --bts:#7A9B57; --silom:#3A6448; --mrt:#567AA8; --arl:#CC6B4A;
+  /* Matcha Latte map palette */
+  --m-card:#FFFDF8; --m-ink:#3B2A22; --m-ink2:#665C54; --m-ink3:#5E544C; --m-chip:#FBF6EE; --m-chip-line:#EADFCF; --m-stitch:#E8D8C2; --m-border:rgba(74,50,38,.09);
+  --m-plan:#C14568; --m-plan-glow:#E07A8F; --m-plan-tint:rgba(224,122,143,.12);
+  --m-caramel:#A8763F; --m-caramel-text:#7F4F2A; --m-caramel-tint:rgba(168,118,63,.10);
+  --m-espresso:#4A3226; --m-route:#8F6334; --m-leaf:#7A9B57; --m-park-ink:#3F5C38; --m-halo:#FAF5EC; --m-casing:#FBF6EC; --m-dot:#FFF8EC;
+  --m-shadow:0 2px 6px rgba(74,50,38,.10),0 14px 36px rgba(74,50,38,.07);
+  --font-round:"Nunito",-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Text","Noto Sans TC","PingFang TC",sans-serif;
   --shadow:0 1px 2px rgba(0,0,0,.03),0 10px 28px rgba(0,0,0,.05);
   --shadow-sm:0 1px 2px rgba(0,0,0,.04),0 3px 10px rgba(0,0,0,.04);
   --r-lg:22px; --r:16px; --r-sm:10px;
@@ -70,11 +85,11 @@ body.shopping .nav a.day.on{opacity:.72;background:transparent;color:var(--label
 .pill b{color:var(--label);font-weight:600}
 .keys{display:flex;flex-wrap:wrap;gap:10px 26px;justify-content:center;margin-top:28px;font-size:13px;color:var(--label2)}
 .key{display:inline-flex;align-items:center;gap:8px}
-.dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font:700 11px var(--font);flex:none}
-.dot.plan{background:var(--blue);color:var(--on-blue);box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.dot.sugg{background:var(--card);color:var(--orange-text);border:2.5px solid var(--orange)}
+.dot{width:22px;height:22px;border-radius:8px;display:inline-grid;place-items:center;font:800 11px var(--font-round);flex:none}
+.dot.plan{background:var(--m-plan);color:#fff;box-shadow:0 0 0 2.5px rgba(224,122,143,.35)}
+.dot.sugg{background:var(--m-card);color:var(--m-caramel-text);border:2.2px solid var(--m-caramel)}
 .dot.wish{background:var(--yellow);color:var(--label);font-size:11px}
-.dot.hotel{border-radius:6px;background:var(--label);color:var(--bg)}
+.dot.hotel{background:var(--m-espresso);color:var(--m-dot)}
 
 /* Day tiles */
 .tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;padding-block:20px 8px}
@@ -109,11 +124,21 @@ section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--n
 
 .grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}
 @media (max-width:880px){.grid{grid-template-columns:1fr}}
-.mapcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);position:sticky;top:calc(var(--nav-h) + 16px + env(safe-area-inset-top,0px))}
-@media (max-width:880px){.mapcard{position:static}}
-.mapcard svg{display:block;width:100%;height:auto}
-.mapcard .cap{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px 12px;font-size:12px;color:var(--label2)}
-.mapcard .cap i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.mapcard{position:sticky;top:calc(var(--nav-h) + 16px + env(safe-area-inset-top,0px));background:var(--m-card);border:1px solid var(--m-border);border-radius:var(--r-lg);box-shadow:var(--m-shadow);padding:13px 13px 11px;display:grid;gap:10px;color:var(--m-ink)}
+.mapcard::before{content:"";position:absolute;inset:6px;border:1.5px dashed var(--m-stitch);border-radius:16px;pointer-events:none}
+@media (max-width:880px){.mapcard{position:relative;top:auto}}
+@media (max-width:600px){.mapcard{padding:10px 10px 9px;border-radius:18px}.mapcard::before{inset:5px;border-radius:13px}}
+.maptile{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(74,50,38,.08);background:var(--land);line-height:0}
+.maptile svg{display:block;width:100%;height:auto}
+.mapcard .cap{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:10.5px;font-weight:600;line-height:1;color:var(--m-ink3)}
+.mapcard .cap .k{display:inline-flex;align-items:center;gap:5px;padding:4px 6px 4px 5px;border-radius:999px;background:var(--m-chip);border:1px solid var(--m-chip-line);white-space:nowrap}
+.mapcard .cap .k.sw{padding:3px 6px 3px 4px}
+.mapcard .cap .k i{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.mapcard .cap .k svg{width:12px;height:12px;display:block;flex:none}
+.mapcard .cap .sep{width:1px;height:14px;background:var(--m-stitch)}
+.mapcard .cap .count{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font:700 11px/1 var(--font-round);color:#8A5A33;background:var(--m-chip);border:1px solid var(--m-chip-line);border-radius:999px;padding:6px 10px 6px 9px}
+.mapcard .cap .count i{display:inline-block;width:8px;height:8px;border-radius:3px;flex:none}
+.mapcard .cap .count b{color:#C9B9A4;font-weight:600;padding:0 1px}
 
 /* Inset grouped lists */
 .lists{display:grid;gap:22px}
@@ -122,21 +147,21 @@ section.day,section.plain{padding-block:56px 12px;scroll-margin-top:calc(var(--n
 .row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:14px;padding:14px 18px 15px 16px;position:relative;cursor:default;transition:background .2s}
 .row+.row::before{content:"";position:absolute;left:58px;right:0;top:0;height:1px;background:var(--sep)}
 .row:hover{background:var(--fill2)}
-.row.is-active{background:var(--blue-tint)}
-.row.sugg.is-active{background:var(--orange-tint)}
+.row.is-active{background:var(--m-plan-tint)}
+.row.sugg.is-active{background:var(--m-caramel-tint)}
 .row.wish{background:var(--yellow-tint)}
 .row.wish:hover,.row.wish.is-active{background:var(--yellow-tint2)}
 .row h4 .emo{margin-right:6px}
 .planline .step .emo{margin-right:2px}
-.n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--font);margin-top:1px}
-.row.plan .n{background:var(--blue);color:var(--on-blue)}
-.row.sugg .n{background:transparent;color:var(--orange-text);border:2.5px solid var(--orange)}
-.row.shop .n{background:var(--shop);color:#fff}
+.n{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;font:800 12px var(--font-round);margin-top:1px}
+.row.plan .n{background:var(--m-plan);color:#fff;box-shadow:0 0 0 3px rgba(224,122,143,.35)}
+.row.sugg .n{background:var(--m-card);color:var(--m-caramel-text);border:2.2px solid var(--m-caramel)}
+.row.shop .n{background:var(--shop);color:#fff;box-shadow:0 0 0 3px rgba(157,187,120,.35)}
 .row.shop.is-active{background:var(--shop-tint)}
 .row.shop .meta .setting{font-size:14px}
 .row p.shops{font-size:13px;color:var(--label2);margin-top:6px}
 .row p.shops b{color:var(--label);font-weight:600}
-.n.hotel{border-radius:7px;background:var(--label)!important;color:var(--bg)!important;border:0!important}
+.n.hotel{border-radius:10px;background:var(--m-espresso)!important;color:var(--m-dot)!important;border:0!important;box-shadow:none!important}
 .n.none{background:transparent!important;color:var(--label3)!important;border:1.5px dashed var(--sep)!important;font-weight:500}
 .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--label2)}
 .meta .time{font-weight:600;font-variant-numeric:tabular-nums}
@@ -157,17 +182,27 @@ body.shopping #tiles-wrap,body.shopping #transfer,body.shopping #days,body.shopp
 #shopping{display:none}
 body.shopping #shopping{display:block}
 
-/* Map SVG */
+/* Map SVG — Matcha Latte */
 .pin{cursor:pointer;transform-box:fill-box;transform-origin:center;animation:pinIn .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*35ms)}
 @keyframes pinIn{from{opacity:0;translate:0 -10px;scale:.5}}
-.pin circle,.pin rect{transform-box:fill-box;transform-origin:center;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
-.pin.plan{filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
-.pin.sugg{filter:drop-shadow(0 1px 3px rgba(0,0,0,.18))}
-.pin.shop{filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
-.pin.is-active circle,.pin.is-active rect{transform:scale(1.3)}
-.stlabel{font:500 10.5px var(--font);fill:var(--label2)}
-.arealabel{font:600 11px var(--font);fill:var(--label3);letter-spacing:.02em}
-.lmlabel{font:500 11px var(--font);fill:var(--label2)}
+.pin .body,.pin .glow,.pin .shade{transform-box:fill-box;transform-origin:center;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.pin.is-active .body,.pin.is-active .glow,.pin.is-active .shade{transform:scale(1.22)}
+.pin:focus{outline:none}
+.pin:focus-visible .body{stroke:var(--m-ink);stroke-width:3}
+.mnum{font:800 11.5px var(--font-round);text-anchor:middle;fill:var(--m-caramel-text);pointer-events:none}
+.mnum.plan,.mnum.shop{font-size:12.5px;fill:#fff}
+.mnum.hotel{font-size:13.5px;fill:var(--m-dot)}
+.stlabel{font:600 10.5px var(--font);fill:var(--m-ink2)}
+.arealabel{font:800 10.5px var(--font-round);fill:var(--m-ink3);letter-spacing:1.2px}
+.lmlabel{font:600 11px var(--font);fill:var(--m-ink2)}
+.pklabel{font:italic 600 10.5px var(--font);fill:var(--m-park-ink)}
+.sclabel{font:700 10.5px var(--font-round);fill:var(--m-ink2);letter-spacing:.2px}
+.nlabel{font:800 8.5px var(--font-round);fill:var(--m-ink);text-anchor:middle}
+.callout{opacity:0;pointer-events:none;translate:0 4px;transition:opacity .22s,translate .3s cubic-bezier(.2,.8,.2,1)}
+.callout.is-active{opacity:1;translate:0 0}
+.ctitle{font:800 13.5px var(--font-round);fill:var(--m-ink)}
+.csub{font:600 10.5px var(--font);fill:var(--m-ink2)}
+.cbadge{font:800 11px var(--font-round);fill:#fff;letter-spacing:.2px}
 
 /* Rest of list */
 .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
@@ -290,7 +325,7 @@ const LINES = [
  {color:"var(--bts)", st:["Mo Chit","Saphan Khwai","Ari","Sanam Pao","Victory Monument","Phaya Thai","Ratchathewi","Siam","Chit Lom","Phloen Chit","Nana","Asok","Phrom Phong","Thong Lo","Ekkamai","Phra Khanong","On Nut"]},
  {color:"var(--silom)", st:["National Stadium","Siam","Ratchadamri","Sala Daeng","Chong Nonsi","Saint Louis","Surasak","Saphan Taksin","Krung Thon Buri","Wongwian Yai"]},
  {color:"var(--mrt)", st:["Kamphaeng Phet","Chatuchak Park","Phahon Yothin","Lat Phrao","Ratchadaphisek","Sutthisan","Huai Khwang","Thailand Cultural Centre","Phra Ram 9","Phetchaburi","Sukhumvit (MRT)","Queen Sirikit","Khlong Toei","Lumphini","Silom (MRT)","Sam Yan","Hua Lamphong","Wat Mangkon","Sam Yot","Sanam Chai","Itsaraphap"]},
- {color:"var(--arl)", st:["Phaya Thai","Ratchaprarop","Makkasan","Ramkhamhaeng","Hua Mak","Ban Thap Chang","Lat Krabang","Suvarnabhumi"]}
+ {color:"var(--arl)", dash:"10 8", st:["Phaya Thai","Ratchaprarop","Makkasan","Ramkhamhaeng","Hua Mak","Ban Thap Chang","Lat Krabang","Suvarnabhumi"]}
 ];
 const LABELPOS = {"Siam":"b","National Stadium":"l","Ratchathewi":"l","Chit Lom":"t","Phloen Chit":"b","Nana":"t","Asok":"b","Phrom Phong":"b","Thong Lo":"b","Ekkamai":"b","Phra Khanong":"b",
  "Ratchadamri":"l","Sala Daeng":"r","Chong Nonsi":"r","Surasak":"b","Saphan Taksin":"b","Krung Thon Buri":"b","Wongwian Yai":"b","Sam Yan":"l","Hua Lamphong":"b","Wat Mangkon":"t","Sam Yot":"t","Sanam Chai":"b","Itsaraphap":"l",
@@ -443,7 +478,7 @@ function drawShop(){
   wire();
 }
 
-/* ---------- Map renderer ---------- */
+/* ---------- Map renderer — Matcha Latte ---------- */
 function makeFit(points, w, h, pad){
   let minLat=Infinity,maxLat=-Infinity,minLng=Infinity,maxLng=-Infinity;
   for(const p of points){ minLat=Math.min(minLat,p[0]); maxLat=Math.max(maxLat,p[0]); minLng=Math.min(minLng,p[1]); maxLng=Math.max(maxLng,p[1]); }
@@ -460,48 +495,52 @@ function makeFit(points, w, h, pad){
 }
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
 const pathOf=(fit,pts)=>pts.map((p,i)=>(i?"L":"M")+fit.xy(p[0],p[1]).map(v=>v.toFixed(1)).join(" ")).join(" ");
+const n1=v=>(+v).toFixed(1);
+// mochi squircle of radius r, centred on 0 0
+const MOCHI=r=>{ const c=+(r*0.8).toFixed(2); return `M0 -${r} C${c} -${r} ${r} -${c} ${r} 0 C${r} ${c} ${c} ${r} 0 ${r} C-${c} ${r} -${r} ${c} -${r} 0 C-${r} -${c} -${c} -${r} 0 -${r} Z`; };
+const LEAF="M0 0 C-0.8 -4.6 3.2 -8.6 7.6 -8.2 C8.2 -3.6 4.6 0.4 0 0 Z";
+const SPARK="M0 -3.2 C0.3 -1.2 1.2 -0.3 3.2 0 C1.2 0.3 0.3 1.2 0 3.2 C-0.3 1.2 -1.2 0.3 -3.2 0 C-1.2 -0.3 -0.3 -1.2 0 -3.2 Z";
+const STN_N={}; for(const L of LINES) for(const n of L.st) STN_N[n]=(STN_N[n]||0)+1;
+const PIN_R={hotel:14.5,plan:13,shop:13,sugg:12};
+const shortName=p=>p.hotel?"Grande Centre Point":String(p.name).split(", ")[0].split(" — ")[0].split(" – ")[0].split(" - ")[0].split(" at ")[0].split(": ")[0];
+
+// One pin: an outer group (hover/active, wiring) around an inner group translated to the pin,
+// so the scaled parts keep their fill-box centred on the pin in every engine.
+function pinSVG(mid,o){
+  const cls=o.kind==="hotel"?"plan hotel":o.kind;
+  const attrs=o.id?` data-id="${o.id}" tabindex="0" role="button" aria-label="${esc(o.n)}: ${esc(o.name)}"`:"";
+  let g=`<g class="pin ${cls}"${attrs}><g transform="translate(${n1(o.x)} ${n1(o.y)})">`;
+  if(o.kind==="hotel") g+=`<use class="shade" href="#mo145-${mid}" y="2" fill="var(--m-espresso)" opacity=".16"/><use class="body" href="#mo145-${mid}" fill="var(--m-espresso)" stroke="var(--m-card)" stroke-width="2"/><text class="mnum hotel" y="4.8">${o.n}</text>`;
+  else if(o.kind==="sugg") g+=`<use class="shade" href="#mo12-${mid}" y="1.6" fill="var(--m-espresso)" opacity=".12"/><use class="body" href="#mo12-${mid}" fill="var(--m-card)" stroke="var(--m-caramel)" stroke-width="2.2"/><text class="mnum" y="4">${o.n}</text>`;
+  else { const fill=o.kind==="shop"?"var(--shop)":"var(--m-plan)", glow=o.kind==="shop"?"var(--shop-glow)":"var(--m-plan-glow)";
+    g+=`<use class="shade" href="#mo13-${mid}" y="2" fill="var(--m-espresso)" opacity=".14"/><use class="glow" href="#mo13-${mid}" fill="none" stroke="${glow}" stroke-width="6" opacity=".35"/><use class="body" href="#mo13-${mid}" fill="${fill}" stroke="var(--m-card)" stroke-width="2"/><text class="mnum ${o.kind}" y="4.4">${o.n}</text>`; }
+  if(o.wish){ const [ldx,ldy]=o.kind==="sugg"?[6.5,11]:[7,12]; g+=`<use href="#leaf-${mid}" transform="translate(${ldx} -${ldy}) rotate(-30)" fill="var(--m-leaf)" stroke="var(--m-card)" stroke-width="1.6" stroke-linejoin="round" paint-order="stroke"/>`; }
+  g+=`</g><title>${esc(o.name)}</title></g>`;
+  return g;
+}
 
 function renderMap(el, opts){
-  const w=Math.max(300, Math.round(el.clientWidth||760));
+  if(!el.clientWidth) return; // hidden (e.g. day maps while in 行街街 mode): drawn by drawAll when shown
+  const cs=getComputedStyle(el);
+  const w=Math.max(260, Math.round(el.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0)-2)); // -2 = .maptile borders
   const h=opts.height||Math.round(Math.min(600, Math.max(380, w*0.74)));
+  const mid=(el.id||"map").replace(/[^a-z0-9]/gi,"");
   const pinned=opts.pins.filter(p=>p.lat!=null);
   const fit=makeFit(pinned.map(p=>[p.lat,p.lng]).concat([[HOTEL.lat,HOTEL.lng]]), w, h, 36);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(opts.aria||"Map")}">`;
-  s+=`<rect width="${w}" height="${h}" fill="var(--land)"/>`;
-  for(const pk of PARKS) s+=`<path d="${pathOf(fit,pk.pts)} Z" fill="var(--park)"/>`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="group" aria-label="${esc(opts.aria||"Map")}">`;
+  s+=`<defs><pattern id="grain-${mid}" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1" fill="var(--m-card)" opacity=".8"/></pattern>`
+    +`<path id="mo13-${mid}" d="${MOCHI(13)}"/><path id="mo12-${mid}" d="${MOCHI(12)}"/><path id="mo145-${mid}" d="${MOCHI(14.5)}"/><path id="leaf-${mid}" d="${LEAF}"/></defs>`;
+  // ground
+  s+=`<rect width="${w}" height="${h}" fill="var(--land)"/><rect width="${w}" height="${h}" fill="url(#grain-${mid})"/>`;
+  for(const pk of PARKS) s+=`<path d="${pathOf(fit,pk.pts)} Z" fill="var(--park)" stroke="var(--park)" stroke-width="10" stroke-linejoin="round"/>`;
   const rw=Math.max(6, 330/fit.mpp);
   s+=`<path d="${pathOf(fit,RIVER)}" fill="none" stroke="var(--water)" stroke-width="${rw.toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`;
-  for(const L of LINES) s+=`<path d="${pathOf(fit,L.st.map(n=>ST[n]))}" fill="none" stroke="${L.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
-  // pins first so labels can avoid them
+  // transit: cream casing, then colour (the Airport Rail Link is dashed so it never relies on hue alone)
+  const lineD=LINES.map(L=>pathOf(fit,L.st.map(n=>ST[n])));
+  s+=`<g fill="none" stroke="var(--m-casing)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">`+lineD.map(d=>`<path d="${d}"/>`).join("")+`</g>`;
+  s+=`<g fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">`+LINES.map((L,i)=>`<path d="${lineD[i]}" stroke="${L.color}"${L.dash?` stroke-dasharray="${L.dash}"`:""}/>`).join("")+`</g>`;
+  // pins: project, then nudge overlapping ones apart, so labels can avoid their final spots
   const P=pinned.map(p=>{ const [x,y]=fit.xy(p.lat,p.lng); return {p, x, y, ox:x, oy:y}; });
-  const avoid=P.map(q=>[q.ox,q.oy]).concat([fit.xy(HOTEL.lat,HOTEL.lng)]);
-  const nearPin=(x,y,r)=>avoid.some(([px,py])=>Math.hypot(px-x,py-y)<r);
-  const coarse=fit.mpp>15;
-  const keyLabels=new Set((opts.labels||[]).slice(0,6));
-  const labelSet=new Set(opts.labels||[]);
-  const drawn=new Set();
-  for(const L of LINES) for(const n of L.st){
-    if(drawn.has(n)) continue; drawn.add(n);
-    const [lat,lng]=ST[n]; if(!fit.inside(lat,lng,-6)) continue;
-    const [x,y]=fit.xy(lat,lng);
-    s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="var(--card)" stroke="var(--label2)" stroke-width="1.3"/>`;
-    if(labelSet.has(n) && (!coarse || keyLabels.has(n)) && !nearPin(x,y,16)){
-      const pos=LABELPOS[n]||"r"; const nm=n.replace(" (MRT)","");
-      let lx=x+7, ly=y+3.5, anchor="start";
-      if(pos==="l"){ lx=x-7; anchor="end"; } if(pos==="t"){ lx=x; ly=y-7; anchor="middle"; } if(pos==="b"){ lx=x; ly=y+14; anchor="middle"; }
-      s+=`<text class="stlabel" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" paint-order="stroke" stroke="var(--land)" stroke-width="3" stroke-linejoin="round">${esc(nm)}</text>`;
-    }
-  }
-  for(const a of AREAS){
-    if(!fit.inside(a.lat,a.lng,26)) continue;
-    if(coarse && !a.lm) continue;
-    const [x,y]=fit.xy(a.lat,a.lng);
-    if(nearPin(x,y,a.lm?22:34)) continue;
-    if(a.lm) s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="var(--label2)"/><text class="lmlabel" x="${(x+6).toFixed(1)}" y="${(y+4).toFixed(1)}" paint-order="stroke" stroke="var(--land)" stroke-width="3">${esc(a.n)}</text>`;
-    else if(a.park){ if(fit.mpp<22) s+=`<text class="lmlabel" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" opacity=".8">${esc(a.n)}</text>`; }
-    else s+=`<text class="arealabel" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" paint-order="stroke" stroke="var(--land)" stroke-width="4" stroke-linejoin="round">${esc(a.n)}</text>`;
-  }
-  // nudge overlapping pins apart
   const minD=28;
   for(let it=0; it<90; it++){
     let moved=false;
@@ -512,37 +551,134 @@ function renderMap(el, opts){
     for(const q of P){ q.x=Math.min(w-18,Math.max(18,q.x)); q.y=Math.min(h-18,Math.max(18,q.y)); }
     if(!moved) break;
   }
+  const avoid=P.map(q=>[q.x,q.y]).concat([fit.xy(HOTEL.lat,HOTEL.lng)]);
+  const nearPin=(x,y,r)=>avoid.some(([px,py])=>Math.hypot(px-x,py-y)<r);
+  const coarse=fit.mpp>15;
+  const keyLabels=new Set((opts.labels||[]).slice(0,6));
+  const labelSet=new Set(opts.labels||[]);
+  const drawn=new Set(), placed=[]; let dots="", slabels="";
+  for(const L of LINES) for(const n of L.st){
+    if(drawn.has(n)) continue; drawn.add(n);
+    const [lat,lng]=ST[n]; if(!fit.inside(lat,lng,-6)) continue;
+    const [x,y]=fit.xy(lat,lng);
+    const inter=STN_N[n]>1;
+    dots+=`<circle cx="${n1(x)}" cy="${n1(y)}" r="${inter?4.4:3.2}"${inter?' stroke-width="1.6"':""}/>`;
+    if(labelSet.has(n) && (!coarse || keyLabels.has(n))){
+      // place the label box clear of pins, the frame and other labels; flip to the other side first, then give up
+      const nm=n.replace(" (MRT)",""); const ew=nm.length*6.1;
+      const place=p=>p==="l"?[x-7,y+3.5,"end"]:p==="t"?[x,y-7,"middle"]:p==="b"?[x,y+14,"middle"]:[x+7,y+3.5,"start"];
+      const box=([bx,by,an])=>{ const l=an==="start"?bx:an==="middle"?bx-ew/2:bx-ew; return [l,by-8,l+ew,by+2]; };
+      const hits=b=>b[0]<4||b[2]>w-4||b[1]<2||b[3]>h-2
+        ||avoid.some(([px,py])=>{ const qx=Math.max(b[0],Math.min(px,b[2])), qy=Math.max(b[1],Math.min(py,b[3])); return Math.hypot(px-qx,py-qy)<15; })
+        ||placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]);
+      const pos=LABELPOS[n]||"r"; let Lb=place(pos);
+      if(hits(box(Lb))){ Lb=place({l:"r",r:"l",t:"b",b:"t"}[pos]); if(hits(box(Lb))) Lb=null; }
+      if(Lb){ placed.push(box(Lb)); const [lx,ly,anchor]=Lb; slabels+=`<text class="stlabel" x="${n1(lx)}" y="${n1(ly)}" text-anchor="${anchor}">${esc(nm)}</text>`; }
+    }
+  }
+  s+=`<g fill="var(--m-dot)" stroke="var(--m-caramel)" stroke-width="1.3">${dots}</g>`;
+  s+=`<g paint-order="stroke" stroke="var(--m-halo)" stroke-width="3" stroke-linejoin="round">${slabels}</g>`;
+  let alabels="";
+  for(const a of AREAS){
+    if(!fit.inside(a.lat,a.lng,26)) continue;
+    if(coarse && !a.lm) continue;
+    const [x,y]=fit.xy(a.lat,a.lng);
+    if(nearPin(x,y,a.lm?22:34)) continue;
+    if(a.lm) alabels+=`<circle cx="${n1(x)}" cy="${n1(y)}" r="2.5" fill="var(--m-route)" stroke="none"/><text class="lmlabel" x="${n1(x+6)}" y="${n1(y+4)}">${esc(a.n)}</text>`;
+    else if(a.park){ if(fit.mpp<22) alabels+=`<text class="pklabel" x="${n1(x)}" y="${n1(y)}" text-anchor="middle" stroke="#DCE9CF">${esc(a.n)}</text>`; }
+    else alabels+=`<text class="arealabel" x="${n1(x)}" y="${n1(y)}" text-anchor="middle" stroke-width="3.5">${esc(a.n.toUpperCase())}</text>`;
+  }
+  s+=`<g paint-order="stroke" stroke="var(--m-halo)" stroke-width="3" stroke-linejoin="round">${alabels}</g>`;
+  // today's route: caramel stitching from the hotel through the plan stops
   const planSeq=opts.route===false?[]:P.filter(q=>q.p.kind==="plan"&&!q.p.hotel);
   if(planSeq.length){
     const [hx,hy]=fit.xy(HOTEL.lat,HOTEL.lng);
-    let d=`M${hx.toFixed(1)} ${hy.toFixed(1)}`; for(const q of planSeq) d+=` L${q.ox.toFixed(1)} ${q.oy.toFixed(1)}`;
-    s+=`<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity=".6"/>`;
+    const pts=`${n1(hx)},${n1(hy)} `+planSeq.map(q=>`${n1(q.ox)},${n1(q.oy)}`).join(" ");
+    s+=`<g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4.5"><polyline points="${pts}" stroke="var(--m-card)" stroke-width="5.6" opacity=".9"/><polyline points="${pts}" stroke="var(--m-route)" stroke-width="2.4"/></g>`;
   }
-  if(!pinned.some(p=>p.hotel)){ const [hx,hy]=fit.xy(HOTEL.lat,HOTEL.lng);
-    s+=`<g class="pin plan"><rect x="${(hx-10).toFixed(1)}" y="${(hy-10).toFixed(1)}" width="20" height="20" rx="6" fill="var(--label)" stroke="var(--card)" stroke-width="2"/><text x="${hx.toFixed(1)}" y="${(hy+4).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="11" fill="var(--bg)">H</text><title>${esc(HOTEL.name)}</title></g>`; }
-  const order=P.slice().sort((a,b)=>(a.p.kind==="plan")-(b.p.kind==="plan"));
-  for(const q of order) if(Math.hypot(q.x-q.ox,q.y-q.oy)>7) s+=`<line class="${q.p.kind}" x1="${q.ox.toFixed(1)}" y1="${q.oy.toFixed(1)}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" stroke="var(--label3)" stroke-width="1" opacity=".7"/>`;
-  for(const q of order){
-    const p=q.p, id=p.id, x=q.x.toFixed(1), y=q.y.toFixed(1);
-    if(p.hotel) s+=`<g class="pin plan" data-id="${id}" tabindex="0"><rect x="${(q.x-11).toFixed(1)}" y="${(q.y-11).toFixed(1)}" width="22" height="22" rx="7" fill="var(--label)" stroke="var(--card)" stroke-width="2"/><text x="${x}" y="${(q.y+4).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="11.5" fill="var(--bg)">${p.n}</text><title>${esc(p.name)}</title></g>`;
-    else if(p.kind==="shop") s+=`<g class="pin shop" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="12" fill="var(--shop)" stroke="var(--card)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4.2).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="12" fill="#fff">${p.n}</text><title>${esc(p.name)}</title></g>`;
-    else if(p.kind==="plan") s+=`<g class="pin plan" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="12" fill="var(--blue)" stroke="var(--card)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4.2).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="12" fill="var(--on-blue)">${p.n}</text><title>${esc(p.name)}</title></g>`;
-    else s+=`<g class="pin sugg" data-id="${id}" tabindex="0"><circle cx="${x}" cy="${y}" r="11" fill="var(--card)" stroke="var(--orange)" stroke-width="2.5"/><text x="${x}" y="${(q.y+4).toFixed(1)}" text-anchor="middle" font-family="var(--font)" font-weight="700" font-size="11" fill="var(--orange-text)">${p.n}</text><title>${esc(p.name)}</title></g>`;
+  if(!pinned.some(p=>p.hotel)){ const [hx,hy]=fit.xy(HOTEL.lat,HOTEL.lng); s+=pinSVG(mid,{kind:"hotel",x:hx,y:hy,n:"H",name:HOTEL.name}); }
+  const rank=q=>q.p.hotel?3:q.p.kind==="plan"?2:q.p.kind==="shop"?1:0;
+  const order=P.slice().sort((a,b)=>rank(a)-rank(b));
+  let leaders="", adots="";
+  for(const q of order) if(Math.hypot(q.x-q.ox,q.y-q.oy)>7){ leaders+=`<line x1="${n1(q.ox)}" y1="${n1(q.oy)}" x2="${n1(q.x)}" y2="${n1(q.y)}"/>`; adots+=`<circle cx="${n1(q.ox)}" cy="${n1(q.oy)}" r="2"/>`; }
+  if(leaders) s+=`<g stroke="var(--m-route)" stroke-width="1.2" stroke-linecap="round" opacity=".85">${leaders}</g><g fill="var(--m-route)" opacity=".85">${adots}</g>`;
+  for(const q of order){ const p=q.p; s+=pinSVG(mid,{kind:p.hotel?"hotel":p.kind, x:q.x, y:q.y, n:p.hotel?"H":p.n, name:p.name, id:p.id, wish:p.wish}); }
+  // callouts (shown for the active pin; sized after render in fitCallouts)
+  let co="";
+  for(const q of order){ const p=q.p; if(!p.id) continue;
+    const kind=p.hotel?"hotel":p.kind;
+    const sub=p.t||(p.hotel?"Hotel":p.kind==="sugg"?"Suggestion":p.kind==="shop"?(p.price||"Shopping"):"");
+    co+=`<g class="callout" data-id="${p.id}" data-x="${n1(q.x)}" data-y="${n1(q.y)}" data-r="${PIN_R[kind]||12}" aria-hidden="true"><path class="cbg" d="" fill="var(--m-espresso)" opacity=".12" transform="translate(0 2.5)"/><path class="cbg" d="" fill="var(--m-card)" stroke="#E6D9C6" stroke-width="1"/><text class="ctitle">${esc(shortName(p))}</text>${sub?`<text class="csub">${esc(sub)}</text>`:""}${p.badge?`<rect class="cbadge-bg" height="18" rx="9" fill="var(--m-plan)"/><path class="cspark" d="${SPARK}" fill="var(--m-dot)"/><text class="cbadge">${esc(p.badge)}</text>`:""}</g>`;
   }
+  s+=`<g class="callouts">${co}</g>`;
+  // stitched scale bar
   let scaleM=1000; if(1000/fit.mpp>w*0.3) scaleM=500; if(1000/fit.mpp<40) scaleM=2000;
-  const sl=scaleM/fit.mpp, sx=18, sy=h-18;
-  s+=`<path d="M${sx} ${sy-5} V${sy} H${(sx+sl).toFixed(1)} V${sy-5}" fill="none" stroke="var(--label3)" stroke-width="1.5"/><text x="${(sx+sl/2).toFixed(1)}" y="${sy-9}" text-anchor="middle" class="stlabel">${scaleM>=1000?(scaleM/1000)+" km":scaleM+" m"}</text>`;
-  s+=`<text x="${w-18}" y="22" text-anchor="middle" class="stlabel" font-weight="600">N</text><path d="M${w-18} 26 l-4 10 4-3 4 3z" fill="var(--label3)"/>`;
-  s+=`</svg><div class="cap"><span><i style="background:var(--bts)"></i>BTS Sukhumvit</span><span><i style="background:var(--silom)"></i>BTS Silom</span><span><i style="background:var(--mrt)"></i>MRT Blue</span><span><i style="background:var(--arl)"></i>Airport Rail Link</span><span><i style="background:var(--water);height:6px;border-radius:3px"></i>Chao Phraya</span></div>`;
-  el.innerHTML=s;
+  const sl=scaleM/fit.mpp, sx=18, sy=h-20;
+  s+=`<g><text class="sclabel" x="${sx}" y="${sy-10}" paint-order="stroke" stroke="var(--m-halo)" stroke-width="3" stroke-linejoin="round">${scaleM>=1000?(scaleM/1000)+" km":scaleM+" m"}</text><line x1="${sx}" y1="${sy}" x2="${n1(sx+sl)}" y2="${sy}" stroke="var(--m-halo)" stroke-width="6" stroke-linecap="round"/><line x1="${sx}" y1="${sy}" x2="${n1(sx+sl)}" y2="${sy}" stroke="var(--m-route)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="4 4.5"/><circle cx="${sx}" cy="${sy}" r="3" fill="var(--m-dot)" stroke="var(--m-caramel)" stroke-width="1.3"/><circle cx="${n1(sx+sl)}" cy="${sy}" r="3" fill="var(--m-dot)" stroke="var(--m-caramel)" stroke-width="1.3"/></g>`;
+  // leaf compass
+  s+=`<g transform="translate(${w-40} 30)"><circle cy="1.5" r="15" fill="var(--m-espresso)" opacity=".1"/><circle r="15" fill="var(--m-card)" stroke="#E6D9C6"/><path d="M0 -11.5 C4.6 -8 4.8 -2 0 2.5 C-4.8 -2 -4.6 -8 0 -11.5 Z" fill="var(--m-leaf)"/><path d="M0 -9.5 V1" fill="none" stroke="var(--m-park-ink)" stroke-width=".9" stroke-linecap="round"/><text class="nlabel" y="11.5">N</text></g>`;
+  s+=`</svg>`;
+  // legend chips
+  const kinds=new Set(pinned.map(p=>p.hotel?"hotel":p.kind));
+  const chip=(sw,label,cls)=>`<span class="k${cls?" "+cls:""}">${sw}<span>${label}</span></span>`;
+  const sq=(fill,stroke,i,rx)=>{ i=i||1.5; rx=rx||3.2; return `<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="${i}" y="${i}" width="${12-2*i}" height="${12-2*i}" rx="${rx}" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="1.5"`:""}/></svg>`; };
+  let cap=`<div class="cap">`
+    +chip(`<i style="background:var(--bts)"></i>`,"BTS Sukhumvit")+chip(`<i style="background:var(--silom)"></i>`,"BTS Silom")+chip(`<i style="background:var(--mrt)"></i>`,"MRT Blue")
+    +chip(`<i style="width:14px;height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--arl) 0 5px,transparent 5px 8px)"></i>`,"Airport Rail Link")
+    +chip(`<i style="background:var(--water);box-shadow:inset 0 0 0 1px #B7C9D1"></i>`,"Chao Phraya")
+    +`<span class="sep"></span>`+chip(sq("var(--m-espresso)",null,1,3.5),"Hotel","sw");
+  if(kinds.has("plan")) cap+=chip(sq("var(--m-plan)","var(--m-plan-glow)",1.75,3),"Plan","sw");
+  if(kinds.has("sugg")) cap+=chip(sq("var(--m-card)","var(--m-caramel)"),"Suggestion","sw");
+  if(kinds.has("shop")) cap+=chip(sq("var(--shop)","var(--shop-glow)",1.75,3),"Shop","sw");
+  if(pinned.some(p=>p.wish)) cap+=chip(`<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${LEAF}" transform="translate(4.8 11.45) rotate(-30)" fill="var(--m-leaf)" stroke="var(--m-ink)" stroke-width=".6" stroke-linejoin="round"/></svg>`,"Mentioned before","sw");
+  const nPlan=pinned.filter(p=>p.kind==="plan"&&!p.hotel).length, nSugg=pinned.filter(p=>p.kind==="sugg").length, nShop=pinned.filter(p=>p.kind==="shop").length;
+  if(nSugg) cap+=`<span class="count">${nPlan?`<i style="background:var(--m-plan);box-shadow:0 0 0 1.5px var(--m-plan-glow)"></i>${nPlan} plans<b>·</b>`:""}<i style="background:var(--m-card);box-shadow:inset 0 0 0 1.5px var(--m-caramel)"></i>${nSugg} ideas</span>`;
+  else if(nShop) cap+=`<span class="count"><i style="background:var(--shop);box-shadow:0 0 0 1.5px var(--shop-glow)"></i>${nShop} shops</span>`;
+  cap+=`</div>`;
+  el.innerHTML=`<div class="maptile">${s}</div>${cap}`;
   el.querySelectorAll(".pin").forEach((g,i)=>g.style.setProperty("--i",i));
+  const sep=el.querySelector(".cap .sep"); // hide the divider tick when the legend wraps around it
+  if(sep){ const a=sep.previousElementSibling, b=sep.nextElementSibling; sep.hidden=!a||!b||a.offsetTop!==b.offsetTop; }
+  fitCallouts(el.querySelector("svg"));
 }
+
+// Size and place each callout bubble around its pin once the text can be measured (measure pass, then write pass)
+function fitCallouts(svg){
+  if(!svg||!svg.viewBox) return;
+  const W=svg.viewBox.baseVal.width, H=svg.viewBox.baseVal.height;
+  const est=(t,size)=>{ let n=0; for(const ch of t) n+=/[⺀-鿿豈-﫿＀-￯]/.test(ch)?1:0.58; return n*size; };
+  const tw=(t,size)=>{ let L=0; try{ L=t.getComputedTextLength(); }catch(e){} return L>0?L:est(t.textContent,size); };
+  const items=[...svg.querySelectorAll(".callout")].map(g=>{
+    const title=g.querySelector(".ctitle"), sub=g.querySelector(".csub"), badge=g.querySelector(".cbadge");
+    return {g,title,sub,badge,bbg:g.querySelector(".cbadge-bg"),spark:g.querySelector(".cspark"), t1:tw(title,13.5), s1:sub?tw(sub,10.5):0, b1:badge?tw(badge,11)+27:0};
+  });
+  items.forEach(({g,title,sub,badge,bbg,spark,t1,s1,b1})=>{
+    const cx=+g.dataset.x, cy=+g.dataset.y, r=+g.dataset.r;
+    const pad=13, gap=10, R=13;
+    const line2=s1+(badge?(sub?gap:0)+b1:0);
+    let bw=Math.round(Math.max(t1,line2)+pad*2); const bh=(sub||badge)?46:30;
+    const maxBw=W-8;
+    if(bw>maxBw){ const avail=maxBw-pad*2; if(t1>avail){ title.setAttribute("textLength",n1(avail)); title.setAttribute("lengthAdjust","spacingAndGlyphs"); } bw=maxBw; }
+    const x=Math.round(Math.min(Math.max(4,cx-bw/2), Math.max(4,W-bw-4)));
+    const tip=r+4; const above=cy-tip-6-bh>=4;
+    const y=Math.round(above? cy-tip-6-bh : cy+tip+6);
+    const tx=Math.min(Math.max(x+R+6,cx), x+bw-R-6);
+    const d=above
+      ?`M${x+R} ${y} H${x+bw-R} A${R} ${R} 0 0 1 ${x+bw} ${y+R} V${y+bh-R} A${R} ${R} 0 0 1 ${x+bw-R} ${y+bh} H${n1(tx+6)} L${n1(cx)} ${n1(cy-tip)} L${n1(tx-6)} ${y+bh} H${x+R} A${R} ${R} 0 0 1 ${x} ${y+bh-R} V${y+R} A${R} ${R} 0 0 1 ${x+R} ${y} Z`
+      :`M${x+R} ${y} H${n1(tx-6)} L${n1(cx)} ${n1(cy+tip)} L${n1(tx+6)} ${y} H${x+bw-R} A${R} ${R} 0 0 1 ${x+bw} ${y+R} V${y+bh-R} A${R} ${R} 0 0 1 ${x+bw-R} ${y+bh} H${x+R} A${R} ${R} 0 0 1 ${x} ${y+bh-R} V${y+R} A${R} ${R} 0 0 1 ${x+R} ${y} Z`;
+    g.querySelectorAll("path.cbg").forEach(p=>p.setAttribute("d",d));
+    title.setAttribute("x",x+pad); title.setAttribute("y",y+((sub||badge)?19:20));
+    if(sub){ sub.setAttribute("x",x+pad); sub.setAttribute("y",y+37); }
+    if(badge){ const bx=x+pad+(sub?s1+gap:0), by=y+24; bbg.setAttribute("x",n1(bx)); bbg.setAttribute("y",by); bbg.setAttribute("width",n1(b1)); spark.setAttribute("transform",`translate(${n1(bx+10)} ${by+9})`); badge.setAttribute("x",n1(bx+19)); badge.setAttribute("y",by+13); }
+  });
+}
+
 
 /* ---------- Build ---------- */
 // Suggestion order: malls → shops and markets → food → cafés → bars → spa → activities
 const CAT_ORDER={mall:0,shopping:1,market:1,food:2,cafe:3,bar:4,spa:5,activity:6,other:7};
 function rowHTML(p){
-  const n=p.nopin?`<span class="n none">–</span>`:(p.hotel?`<span class="n hotel">${p.n}</span>`:`<span class="n">${p.n}</span>`);
+  const n=p.nopin?`<span class="n none">–</span>`:(p.hotel?`<span class="n hotel">H</span>`:`<span class="n">${p.n}</span>`);
   const badge=p.badge?`<span class="cap-b ${p.badge==="Booked"?"booked":"plan"}">${esc(p.badge)}</span>`:(p.kind==="sugg"?`<span class="cap-b sugg">Suggestion</span>`:"");
   const t=p.t?`<span class="time">${esc(p.t)}</span>`:"";
   return `<div class="row ${p.kind}${p.wish?" wish":""}" data-id="${p.id}" tabindex="0">${n}<div>
@@ -561,7 +697,7 @@ function build(){
     let n=0; d.stops.forEach((p,i)=>{ p.id=`${d.id}-${i}`; if(!p.nopin){ n++; p.n=n; } });
     const plans=d.stops.filter(p=>p.kind==="plan"), suggs=d.stops.filter(p=>p.kind==="sugg");
     const emo=(d.title.match(/^\S+/)||[""])[0];
-    tiles+=`<a class="tile" href="#${d.id}" style="--i:${DAYS.indexOf(d)}" data-emo="${esc(emo)}"><div class="wd">${esc(d.short)}</div><div class="dt">${esc(d.date)}</div><div class="th">${esc(d.title)}</div><div class="ct"><span><i style="background:var(--blue)"></i>${plans.length} planned</span><span><i style="background:var(--orange)"></i>${suggs.length} ideas</span></div></a>`;
+    tiles+=`<a class="tile" href="#${d.id}" style="--i:${DAYS.indexOf(d)}" data-emo="${esc(emo)}"><div class="wd">${esc(d.short)}</div><div class="dt">${esc(d.date)}</div><div class="th">${esc(d.title)}</div><div class="ct"><span><i style="background:var(--m-plan)"></i>${plans.length} planned</span><span><i style="background:var(--m-card);box-shadow:inset 0 0 0 1.5px var(--m-caramel)"></i>${suggs.length} ideas</span></div></a>`;
     const planline=plans.map(p=>`<span class="step">${p.t?`<span class="t">${esc(p.t)}</span>`:""}<span>${p.e?`<span class="emo">${p.e}</span>`:""}${esc(p.name.split(", ")[0].split(" — ")[0].split(" at ")[0])}</span></span>`).join(`<span class="chev">›</span>`);
     html+=`<section class="day" id="${d.id}"><div class="wrap">
       <div class="dh reveal"><h2>${esc(d.wd)}</h2><span class="date">${esc(d.date)}</span><span class="sub">${esc(d.sub)}</span></div>
@@ -583,7 +719,7 @@ function drawAll(){
   for(const d of DAYS){ const el=document.getElementById("map-"+d.id); if(el) renderMap(el,{pins:d.stops, labels:d.labels, aria:`Map for ${d.wd}`}); }
   const tr=document.getElementById("map-transfer");
   if(tr) renderMap(tr,{pins:[{id:"tr-0",n:1,kind:"plan",name:"Suvarnabhumi Airport",lat:13.6906,lng:100.7520},{id:"tr-1",n:2,kind:"plan",name:"Makkasan ARL to MRT Phetchaburi",lat:13.7504,lng:100.5620},{id:"tr-2",n:"H",kind:"plan",hotel:true,name:HOTEL.name,lat:HOTEL.lat,lng:HOTEL.lng}],
-    labels:["Suvarnabhumi","Makkasan","Phetchaburi","Hua Mak","Lat Krabang","Phaya Thai","Ramkhamhaeng","Ban Thap Chang"], route:false, height:Math.round(Math.min(380, Math.max(300,(tr.clientWidth||700)*0.5))), aria:"Airport to hotel"});
+    labels:["Suvarnabhumi","Makkasan","Phetchaburi","Hua Mak","Lat Krabang","Phaya Thai","Ramkhamhaeng","Ban Thap Chang"], route:false, height:Math.round(Math.min(380, Math.max(300,tr.clientWidth*0.5))), aria:"Airport to hotel"});
   if(body.classList.contains("shopping")) drawShop();
   wire();
 }
@@ -594,6 +730,7 @@ function wire(){
     const on=()=>all().forEach(x=>x.classList.add("is-active"));
     const off=()=>all().forEach(x=>{ if(x.dataset.locked!=="1") x.classList.remove("is-active"); });
     el.onmouseenter=on; el.onmouseleave=off; el.onfocus=on; el.onblur=off;
+    el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); el.onclick(); } };
     el.onclick=()=>{ const was=el.dataset.locked==="1";
       document.querySelectorAll("[data-locked]").forEach(x=>{ x.classList.remove("is-active"); delete x.dataset.locked; });
       if(!was){ all().forEach(x=>{ x.classList.add("is-active"); x.dataset.locked="1"; });
@@ -601,18 +738,20 @@ function wire(){
   });
 }
 const seg=document.querySelector(".seg");
-function setMode(m){ if(m!=="shop") m="all"; body.classList.toggle("shopping",m==="shop"); if(m==="shop") requestAnimationFrame(()=>drawShop()); seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); try{ localStorage.setItem("bkk711.mode",m); }catch(e){} }
+function setMode(m){ if(m!=="shop") m="all"; body.classList.toggle("shopping",m==="shop"); if(m==="shop") requestAnimationFrame(drawShop); else drawAll(); seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); try{ localStorage.setItem("bkk711.mode",m); }catch(e){} }
 seg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b){ const was=body.classList.contains("shopping"); setMode(b.dataset.mode); if(was!==body.classList.contains("shopping")) scrollTo({top:0,behavior:"smooth"}); } });
 try{ if(localStorage.getItem("bkk711.mode")==="shop") setMode("shop"); }catch(e){}
 document.querySelectorAll(".nav a.day").forEach(a=>a.addEventListener("click",()=>{ if(body.classList.contains("shopping")) setMode("all"); }));
 
 build(); drawAll();
+if(document.fonts) document.fonts.addEventListener("loadingdone",()=>document.querySelectorAll(".maptile svg").forEach(fitCallouts));
 // Scroll reveals + active day in the nav
 const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }),{threshold:.06,rootMargin:"0px 0px -6% 0px"});
 document.querySelectorAll(".reveal").forEach(x=>io.observe(x));
 const navIO=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) document.querySelectorAll(".nav a.day").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id)); }),{rootMargin:"-40% 0px -55% 0px"});
 document.querySelectorAll("section.day,#rest").forEach(x=>navIO.observe(x));
-let rt; addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(drawAll,160); });
+let rt, lastW=document.documentElement.clientWidth;
+addEventListener("resize",()=>{ const cw=document.documentElement.clientWidth; if(cw===lastW) return; lastW=cw; clearTimeout(rt); rt=setTimeout(drawAll,160); });
 })();
 </script>
 
