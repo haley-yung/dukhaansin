@@ -10,7 +10,7 @@
 
 Three things that share one domain:
 
-1. **Photography portfolio** at `dukhaansin.com` — a public, editorial gallery of albums with full-bleed photos and a masonry lightbox.
+1. **Photography portfolio** at `dukhaansin.com/gallery` (the root `dukhaansin.com` currently serves a Bangkok trip itinerary page, `frontend/bangkok.html`) — a public, editorial gallery of albums with full-bleed photos and a masonry lightbox.
 2. **Admin CMS** at `dukhaansin.com/admin` — password-gated tool to create albums, upload + reorder + resize photos, and set covers. JWT auth.
 3. **Personal apps** at `dukhaansin.com/app` — standalone Vite + React SPAs:
    - `/app/gym` — a workout + PR + body metrics tracker
@@ -45,7 +45,9 @@ Defined in `vercel.json`:
 
 | URL                         | Serves                                |
 |-----------------------------|----------------------------------------|
-| `/`                         | `frontend/index.html` (gallery home)   |
+| `/`                         | `frontend/bangkok.html` (Bangkok trip) |
+| `/bangkok`, `/bkk`          | `frontend/bangkok.html` (aliases)      |
+| `/gallery`                  | `frontend/gallery.html` (gallery home) |
 | `/album/:slug`              | `frontend/album.html` (photo viewer)   |
 | `/admin`                    | `frontend/admin/index.html`            |
 | `/admin/login`              | `frontend/admin/login.html`            |
@@ -104,7 +106,8 @@ apps/                            # React SPAs (build into frontend/app/)
       App.jsx                    # one-file SPA (~1450 lines, Apple/iOS design language)
 
 frontend/                        # Vercel outputDirectory — everything served static
-  index.html                     # Public gallery home (editorial list of albums)
+  bangkok.html                   # Bangkok trip itinerary — served at / (and /bangkok, /bkk)
+  gallery.html                   # Public gallery home (editorial list of albums) — served at /gallery
   album.html                     # Public album viewer (masonry + lightbox)
   404.html                       # Custom 404
   admin/
